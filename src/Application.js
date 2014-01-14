@@ -447,12 +447,7 @@ define('Sage/Platform/Mobile/Application', [
          * @param {domNode} domNode Optional. A DOM node to place the view in. 
          */
         registerView: function(view, domNode) {
-            var route;
-            for (route in view.routes) {
-                if (view.routes.hasOwnProperty(route)) {
-                    this.router.register(route, lang.hitch(view, view.routes[route]));
-                }
-            }
+
 
             this.views[view.id] = view;
 
@@ -463,6 +458,17 @@ define('Sage/Platform/Mobile/Application', [
             view._placeAt = domNode || this._rootDomNode;
 
             this.onRegistered(view);
+
+            aspect.before(view, 'show', lang.hitch(view, function() {
+                var view = this;
+                if (view && !view._started) {
+                    view.init();
+                    view.placeAt(view._placeAt, 'first');
+                    view._started = true;
+                    view._placeAt = null;
+                }
+            }));
+
 
             return this;
         },
@@ -543,13 +549,6 @@ define('Sage/Platform/Mobile/Application', [
                     view = this.views[key.id];
                 }
 
-                if (view && !view._started) {
-                    view.init();
-                    view.placeAt(view._placeAt, 'first');
-                    view._started = true;
-                    view._placeAt = null;
-                }
-                
                 return view;
             }
             return null;

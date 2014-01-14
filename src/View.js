@@ -87,6 +87,9 @@ define('Sage/Platform/Mobile/View', [
          * @property {String/Boolean}
          */
         serviceName: false,
+        constructor: function() {
+            this.initRoutes();
+        },
         /**
          * Called from {@link App#_viewTransitionTo Applications view transition handler} and returns
          * the fully customized toolbar layout.
@@ -117,6 +120,17 @@ define('Sage/Platform/Mobile/View', [
         init: function() {
             this.startup();
             this.initConnects();
+        },
+        initRoutes: function() {
+            var route;
+
+            this.registerDefaultRoute();
+
+            for (route in this.routes) {
+                if (this.routes.hasOwnProperty(route)) {
+                    App.router.register(route, lang.hitch(this, this.routes[route]));
+                }
+            }
         },
         /**
          * Establishes this views connections to various events
@@ -159,13 +173,17 @@ define('Sage/Platform/Mobile/View', [
          * @property {Object}
          * @see http://dojotoolkit.org/reference-guide/1.9/dojo/router.html#dojo-router
          */
-        routes: {
-            // Register a generic route for legacy ReUI id's
-            '_:viewId': function(evt) {
-                if (this.id === evt.params.viewId) {
-                    this.show();
-                }
+        routes: null, 
+        onDefaultRoute: function(evt) {
+            this.show();
+        },
+        registerDefaultRoute: function() {
+            if (this.routes !== null) {
+                return;
             }
+
+            var router = App.router;
+            router.register('_' + this.id, lang.hitch(this, this.onDefaultRoute));
         },
         /**
          * The onBeforeTransitionAway event.
