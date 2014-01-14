@@ -26,28 +26,28 @@ define('Sage/Platform/Mobile/Application', [
     'dojo/_base/json',
     'dojo/_base/array',
     'dojo/_base/connect',
+    'dojo/aspect',
     'dojo/_base/declare',
     'dojo/_base/lang',
     'dojo/_base/window',
     'dojo/string',
     'dojo/router',
     'dojo/has',
-    'dojo/_base/sniff',
     'dojo/dom-construct',
     'snap',
-    'dojo/_base/sniff',
+    'dojo/sniff',
     'dojox/mobile/sniff'
 ], function(
     json,
     array,
     connect,
+    aspect,
     declare,
     lang,
     win,
     string,
     router,
     has,
-    sniff,
     domConstruct,
     snap,
     sniff,
@@ -119,10 +119,23 @@ define('Sage/Platform/Mobile/Application', [
         snapper: null,
 
         /**
+         * @property {String}
+         * Current orientation of the application. Can be landscape or portrait.
+         */
+        currentOrientation: 'portrait',
+
+        /**
          * Array of all connections for App
          * @property {Object[]}
          */
         _connects: null,
+
+        /**
+         * Array of handles for App
+         * @property {Object[]}
+         */
+        _signals: null,
+
         /**
          * Array of all subscriptions for App
          */
@@ -161,6 +174,7 @@ define('Sage/Platform/Mobile/Application', [
          */
         constructor: function(options) {
             this._connects = [];
+            this._signals = [];
             this._subscribes = [];
             
             this.customizations = {};
@@ -184,6 +198,10 @@ define('Sage/Platform/Mobile/Application', [
 
             array.forEach(this._subscribes, function(handle){
                 connect.unsubscribe(handle);
+            });
+
+            array.forEach(this._signals, function(signal) {
+                signal.remove();
             });
 
             this.uninitialize();
@@ -226,6 +244,23 @@ define('Sage/Platform/Mobile/Application', [
             this._connects.push(connect.connect(win.body(), 'aftertransition', this, this._onAfterTransition));
             this._connects.push(connect.connect(win.body(), 'show', this, this._onActivate));
         },
+
+        /**
+         * Establishes signals/handles from dojo's newer APIs
+         */
+        initSignals: function() {
+            this._signals.push(aspect.after(window.ReUI, 'setOrientation', lang.hitch(this, function(result, args) {
+                var value;
+                if (args && args.length > 0) {
+                    value = args[0];
+                    this.currentOrientation = value;
+                    this.onSetOrientation(value);
+                    connect.publish('/app/setOrientation', [value]);
+                }
+            })));
+        },
+        onSetOrientation: function(value) {
+        },
         /**
          * Loops through connections and calls {@link #registerService registerService} on each.
          */
@@ -239,14 +274,6 @@ define('Sage/Platform/Mobile/Application', [
         initModules: function() {
             for (var i = 0; i < this.modules.length; i++)
                 this.modules[i].init(this);
-        },
-        /**
-         * Loops through views and calls their `init()` function.
-         */
-        initViews: function() {
-            for (var n in this.views) {
-                this.views[n].init(); // todo: change to startup
-            }
         },
         /**
          * Loops through (tool)bars and calls their `init()` function.
@@ -266,11 +293,11 @@ define('Sage/Platform/Mobile/Application', [
          */
         init: function() {
             this.initConnects();
+            this.initSignals();
             this.initCaching();
             this.initServices();
             this.initModules();
             this.initToolbars();
-            this.initViews();
             this.initReUI();
             this.initRoutes();
         },
@@ -291,7 +318,7 @@ define('Sage/Platform/Mobile/Application', [
          */
         _clearSDataRequestCache: function() {
             var check = function(k) {
-                return /^sdata\.cache/i.test(k);
+                return (/^sdata\.cache/i).test(k);
             };
 
             if (window.localStorage)
@@ -429,15 +456,11 @@ define('Sage/Platform/Mobile/Application', [
 
             this.views[view.id] = view;
 
-            if (this._started) {
-                view.init();
-            }
-
             if (!domNode) {
                 this._createViewContainers();
             }
 
-            view.placeAt(domNode || this._rootDomNode, 'first');
+            view._placeAt = domNode || this._rootDomNode;
 
             this.onRegistered(view);
 
@@ -512,13 +535,22 @@ define('Sage/Platform/Mobile/Application', [
          * @return {View} view The requested view.
          */
         getView: function(key) {
-            if (key)
-            {
-                if (typeof key === 'string')
-                    return this.views[key];
+            var view;
+            if (key) {
+                if (typeof key === 'string') {
+                    view = this.views[key];
+                } else if (typeof key.id === 'string') {
+                    view = this.views[key.id];
+                }
 
-                if (typeof key === 'object' && typeof key.id === 'string')
-                    return this.views[key.id];
+                if (view && !view._started) {
+                    view.init();
+                    view.placeAt(view._placeAt, 'first');
+                    view._started = true;
+                    view._placeAt = null;
+                }
+                
+                return view;
             }
             return null;
         },
@@ -641,16 +673,18 @@ define('Sage/Platform/Mobile/Application', [
          * @return {Object/Boolean} context History data context if found, false if not.
          */
         queryNavigationContext: function(predicate, depth, scope) {
-            if (typeof depth !== 'number')
-            {
+            var i, j, list;
+
+            if (typeof depth !== 'number') {
                 scope = depth;
                 depth = 0;
             }
 
-            var list = ReUI.context.history || [],
-                depth = depth || 0;
+            list = ReUI.context.history || [];
 
-            for (var i = list.length - 2, j = 0; i >= 0 && (depth <= 0 || j < depth); i--, j++)
+            depth = depth || 0;
+
+            for (i = list.length - 2, j = 0; i >= 0 && (depth <= 0 || j < depth); i--, j++)
                 if (predicate.call(scope || this, list[i].data))
                     return list[i].data;
 
@@ -756,9 +790,16 @@ define('Sage/Platform/Mobile/Application', [
         showLeftDrawer: function() {
         },
         /**
-         * Loads Snap.js and assigns the instance to App.snapper. This method would typically be called before navigating to the initial view, so the login page does not contain the menu.
+         * Override this function to load a view in the right drawer.
          */
-        loadSnapper: function() {
+        showRightDrawer: function() {
+        },
+        /**
+         * Loads Snap.js and assigns the instance to App.snapper. This method would typically be called before navigating to the initial view, so the login page does not contain the menu.
+         * @param {DOMNode} element Optional. Snap.js options.element property. If not provided defaults to the "viewContaienr" DOMNode.
+         * @param {Object} options Optional. Snap.js options object. A default is provided if this is undefined. Providing options will override the element parameter.
+         */
+        loadSnapper: function(element, options) {
             // TODO: Provide a domNode param and default to viewContainer if not provided
             var snapper, view;
 
@@ -766,10 +807,10 @@ define('Sage/Platform/Mobile/Application', [
                 return;
             }
 
-            snapper = new snap({
-                element: document.getElementById('viewContainer'),
+            snapper = new snap(options || {
+                element: element || document.getElementById('viewContainer'),
                 dragger: null,
-                disable: 'right', // use 'none' to do both
+                disable: 'none',
                 addBodyClasses: true,
                 hyperextensible: false,
                 resistance: 0.1,
@@ -787,7 +828,8 @@ define('Sage/Platform/Mobile/Application', [
             this.snapper = snapper;
 
             this.showLeftDrawer();
-        },
+            this.showRightDrawer();
+        }
     });
 });
 

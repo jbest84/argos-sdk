@@ -34,9 +34,13 @@ define('Sage/Platform/Mobile/List', [
     'dojo/dom',
     'dojo/string',
     'dojo/window',
+    'dojo/Deferred',
+    'dojo/promise/all',
+    'dojo/when',
     'Sage/Platform/Mobile/ErrorManager',
     'Sage/Platform/Mobile/View',
-    'Sage/Platform/Mobile/SearchWidget'
+    'Sage/Platform/Mobile/SearchWidget',
+    'Sage/Platform/Mobile/RelatedViewManager'
 ], function(
     declare,
     lang,
@@ -49,9 +53,13 @@ define('Sage/Platform/Mobile/List', [
     dom,
     string,
     win,
+    Deferred,
+    all,
+    when,
     ErrorManager,
     View,
-    SearchWidget
+    SearchWidget,
+    RelatedViewManager
 ) {
 
     /**
@@ -249,9 +257,10 @@ define('Sage/Platform/Mobile/List', [
          * @param {Boolean} val The state that `singleSelection` should be in.
          */
         useSingleSelection: function(val) {
-            if (this.singleSelection != !!val) //false != undefined = true, false != !!undefined = false
-            {
-                this.singleSelection = val;
+            if (val && typeof val !== 'undefined' && val !== null) {
+                this.singleSelection = true;
+            } else {
+                this.singleSelection = false;
             }
         },
         /**
@@ -300,24 +309,11 @@ define('Sage/Platform/Mobile/List', [
          */
         widgetTemplate: new Simplate([
             '<div id="{%= $.id %}" title="{%= $.titleText %}" class="overthrow list {%= $.cls %}" {% if ($.resourceKind) { %}data-resource-kind="{%= $.resourceKind %}"{% } %}>',
-            '{%! $.listHeaderTemplate %}',
-            '<a href="#" class="android-6059-fix">fix for android issue #6059</a>',                
+            '<div data-dojo-attach-point="searchNode"></div>',
             '{%! $.emptySelectionTemplate %}',
             '<ul class="list-content" data-dojo-attach-point="contentNode"></ul>',
             '{%! $.moreTemplate %}',
             '{%! $.listActionTemplate %}',
-            '</div>'
-        ]),
-        /**
-         * @property {Simplate}
-         * The template used to render the list views header menu.
-         *
-         */
-        listHeaderTemplate: new Simplate([
-            '<div class="list-header list-header-hidden" data-dojo-attach-point="listHeader">',
-                '<div data-dojo-attach-point="searchNode"></div>',
-                '<div class="list-hash-tags" data-dojo-attach-point="hashTagsNode">',
-                '</div>',
             '</div>'
         ]),
         /**
@@ -332,11 +328,6 @@ define('Sage/Platform/Mobile/List', [
          */
         loadingTemplate: new Simplate([
             '<li class="list-loading-indicator"><div>{%= $.loadingText %}</div></li>'
-        ]),
-        hashTagFavoriteTemplate: new Simplate([
-            '<div class="button" data-action="hashTagFavoriteClick" data-key="{%= $.text %}">',
-                '{%= $.text %}',
-            '</div>'
         ]),
         /**
          * @property {Simplate}
@@ -395,6 +386,7 @@ define('Sage/Platform/Mobile/List', [
                     '<img src="{%= $$.icon || $$.selectIcon %}" class="icon" />',
                 '</button>',
                 '<div class="list-item-content" data-snap-ignore="true">{%! $$.itemTemplate %}</div>',
+                '<div id="list-item-content-related"></div>',
             '</li>'
         ]),
         /**
@@ -652,6 +644,18 @@ define('Sage/Platform/Mobile/List', [
          * The class constructor to use for the search widget
          */
         searchWidgetClass: SearchWidget,
+
+        /**
+         * @property {Boolean}
+         * Flag to indicate the default search term has been set.
+         */
+        defaultSearchTermSet: false,
+
+        /**
+         * @property {String}
+         * The default search term to use
+         */
+        defaultSearchTerm: '',
         /**
          * @property {Object}
          * The selection model for the view
@@ -681,6 +685,16 @@ define('Sage/Platform/Mobile/List', [
          * @property {Boolean} Indicates if the list is loading
          */
         listLoading: false,
+
+        /**
+         * The related view definitions for related views for each row.
+         */
+        relatedViews: null,
+
+        /**
+         * The related view managers for each related view definition.
+         */
+        relatedViewManagers: null,
 
         /**
          * Setter method for the selection model, also binds the various selection model select events
@@ -716,17 +730,14 @@ define('Sage/Platform/Mobile/List', [
          * Extends dijit Widget postCreate to setup the selection model, search widget and bind
          * to the global refresh publish
          */
+        _onScrollHandle: null,
         postCreate: function() {
             this.inherited(arguments);
 
-            if (this._selectionModel == null)
+            if (this._selectionModel === null)
                 this.set('selectionModel', new ConfigurableSelectionModel());
 
             this.subscribe('/app/refresh', this._onRefresh);
-
-            if (this.continuousScrolling) {
-                this.connect(this.domNode, 'onscroll', this.onScroll);
-            }
 
             if (this.enableSearch) {
                 var searchWidgetCtor = lang.isString(this.searchWidgetClass)
@@ -751,7 +762,6 @@ define('Sage/Platform/Mobile/List', [
          */
         startup: function() {
             this.inherited(arguments);
-            var hashTag, node, text;
 
             if (this.searchWidget)
                 this.searchWidget.configure({
@@ -759,16 +769,8 @@ define('Sage/Platform/Mobile/List', [
                     'formatSearchQuery': lang.hitch(this, this.formatSearchQuery)
                 });
 
-                if (this.hashTagQueries) {
-                    for (hashTag in this.hashTagQueries) {
-                        if (this.hashTagQueries.hasOwnProperty(hashTag)) {
-                            text = this.hashTagQueriesText[hashTag] || hashTag;
-                            node = domConstruct.toDom(this.hashTagFavoriteTemplate.apply({text: text}));
-                            domConstruct.place(node, this.hashTagsNode, 'last');
-                        }
-                    }
-                }
             this.createActions(this._createCustomizedLayout(this.createActionLayout(), 'actions'));
+            this.relatedViews = this._createCustomizedLayout(this.createRelatedViewLayout(), 'relatedViews');
         },
         /**
          * Extends dijit Widget to destroy the search widget before destroying the view.
@@ -781,8 +783,21 @@ define('Sage/Platform/Mobile/List', [
 
                 delete this.searchWidget;
             }
-            
+            this.destroyRelatedViewWidgets();
             this.inherited(arguments);
+        },
+        /**
+        * Shows overrides the view class to set options for the list view and then calls the inherited show method on the view.
+        * @param {Object} options The navigation options passed from the previous view.
+        * @param transitionOptions {Object} Optional transition object that is forwarded to ReUI.
+        */
+       show: function(options, transitionOptions) {
+           if (options){
+               if (options.resetSearch) {
+                   this.defaultSearchTermSet = false;
+               }
+           }
+           this.inherited(arguments);
         },
         /**
          * Sets and returns the toolbar item layout definition, this method should be overriden in the view
@@ -793,18 +808,11 @@ define('Sage/Platform/Mobile/List', [
         createToolLayout: function() {
             return this.tools || (this.tools = {
                 'tbar': [{
-                        id: 'new',
-                        action: 'navigateToInsertView',
-                        security: App.getViewSecurity(this.insertView, 'insert')
-                    }, {
-                        id: 'toggleListHeaderMenu',
-                        action: 'toggleListHeaderMenu'
-                    }
-                ]
+                    id: 'new',
+                    action: 'navigateToInsertView',
+                    security: App.getViewSecurity(this.insertView, 'insert')
+                }]
             });
-        },
-        toggleListHeaderMenu: function() {
-            domClass.toggle(this.listHeader, 'list-header-hidden');
         },
         /**
          * Sets and returns the list-action actions layout definition, this method should be overriden in the view
@@ -826,7 +834,7 @@ define('Sage/Platform/Mobile/List', [
                 var action = actions[i],
                     options = {
                         actionIndex: i,
-                        hasAccess: (action.security && App.hasAccessTo(this.expandExpression(action.security))) || true
+                        hasAccess: (!actions.security || (action.security && App.hasAccessTo(this.expandExpression(action.security)))) ? true : false
                     },
                     actionTemplate = action.template || this.listActionItemTemplate;
 
@@ -917,12 +925,14 @@ define('Sage/Platform/Mobile/List', [
          */
         showActionPanel: function(rowNode) {
             this.checkActionState();
-
             domClass.add(rowNode, 'list-action-selected');
-            domConstruct.place(this.actionsNode, rowNode, 'after');
 
-            if (this.actionsNode.offsetTop + this.actionsNode.clientHeight + 48 > document.documentElement.clientHeight)
-                this.actionsNode.scrollIntoView(false);
+            this.onApplyRowActionPanel(this.actionsNode, rowNode);
+
+            domConstruct.place(this.actionsNode, rowNode, 'after');
+        },
+        onApplyRowActionPanel: function(actionNodePanel, rowNode) {
+
         },
         /**
          * Sets the `this.options.source` to passed param after adding the views resourceKind. This function is used so
@@ -1163,10 +1173,40 @@ define('Sage/Platform/Mobile/List', [
          */
         configureSearch: function() {
             this.query = this.options && this.options.query || this.query || null;
-            if (this.searchWidget)
+            if (this.searchWidget) {
                 this.searchWidget.configure({
                     'context': this.getContext()
                 });
+            }
+
+            this._setDefaultSearchTerm();
+        },
+        _setDefaultSearchTerm: function() {
+            if (!this.defaultSearchTerm || this.defaultSearchTermSet) {
+                return;
+            }
+
+            var searchQuery;
+            if (typeof this.defaultSearchTerm === 'function') {
+                this.setSearchTerm(this.defaultSearchTerm());
+            } else {
+                this.setSearchTerm(this.defaultSearchTerm);
+            }
+
+            searchQuery = this.getSearchQuery();
+            if (searchQuery) {
+                this.query = searchQuery;
+            } else {
+                this.query = '';
+            }
+
+            this.defaultSearchTermSet = true;
+        },
+        getSearchQuery:function(){
+            if (this.searchWidget) {
+                return this.searchWidget.getFormattedSearchQuery();
+            }
+            return null;
         },
         /**
          * Creates SDataResourceCollectionRequest instance and sets a number of known properties.
@@ -1320,45 +1360,52 @@ define('Sage/Platform/Mobile/List', [
          * @param {Object} feed The SData result
          */
         processFeed: function(feed) {
-            if (!this.feed) this.set('listContent', '');
+            var docfrag, entry, i, related, remaining, rowNode;
+
+            if (!this.feed) {
+                this.set('listContent', '');
+            }
 
             this.feed = feed;
-            if (this.feed['$totalResults'] === 0)
-            {
-                this.set('listContent', this.noDataTemplate.apply(this));                
-            }
-            else if (feed['$resources'])
-            {
-                var o = [];
 
-                for (var i = 0; i < feed['$resources'].length; i++)
-                {
-                    var entry = feed['$resources'][i];
-
+            if (this.feed['$totalResults'] === 0) {
+                this.set('listContent', this.noDataTemplate.apply(this));
+            } else if (feed['$resources']) {
+                docfrag = document.createDocumentFragment();
+                for (i = 0; i < feed['$resources'].length; i++) {
+                    entry = feed['$resources'][i];
                     entry['$descriptor'] = entry['$descriptor'] || feed['$descriptor'];
 
                     this.entries[entry.$key] = entry;
+                    rowNode = domConstruct.toDom(this.rowTemplate.apply(entry, this));
+                    docfrag.appendChild(rowNode);
+                    this.onApplyRowTemplate(entry, rowNode);
+                    if (this.relatedViews.length > 0) {
+                        this.onProcessRelatedViews(entry, rowNode, feed);
+                    }
 
-                    o.push(this.rowTemplate.apply(entry, this));
                 }
 
-                if (o.length > 0)
-                    domConstruct.place(o.join(''), this.contentNode, 'last');
+                if (docfrag.childNodes.length > 0) {
+                    domConstruct.place(docfrag, this.contentNode, 'last');
+                }
             }
 
             // todo: add more robust handling when $totalResults does not exist, i.e., hide element completely
-            if (typeof this.feed['$totalResults'] !== 'undefined')
-            {
-                var remaining = this.feed['$totalResults'] - (this.feed['$startIndex'] + this.feed['$itemsPerPage'] - 1);
+            if (typeof this.feed['$totalResults'] !== 'undefined') {
+                remaining = this.feed['$totalResults'] - (this.feed['$startIndex'] + this.feed['$itemsPerPage'] - 1);
                 this.set('remainingContent', string.substitute(this.remainingText, [remaining]));
             }
 
             domClass.toggle(this.domNode, 'list-has-more', this.hasMoreData());
 
-            if (this.options.allowEmptySelection)
+            if (this.options.allowEmptySelection) {
                 domClass.add(this.domNode, 'list-has-empty-opt');
+            }
 
             this._loadPreviousSelections();
+        },
+        onApplyRowTemplate: function(entry, rowNode) {
         },
         /**
          * Deterimines if there is more data to be shown by inspecting the last feed result.
@@ -1410,14 +1457,18 @@ define('Sage/Platform/Mobile/List', [
 
             domClass.remove(this.domNode, 'list-loading');
             this.listLoading = false;
+
+            if (!this._onScrollHandle && this.continuousScrolling) {
+                this._onScrollHandle = this.connect(this.domNode, 'onscroll', this.onScroll);
+            }
         },
         /**
          * Initiates the SData request.
          */
         requestData: function() {
+
             domClass.add(this.domNode, 'list-loading');
             this.listLoading = true;
-
             var request = this.createRequest();
             request.read({
                 success: this.onRequestDataSuccess,
@@ -1425,12 +1476,6 @@ define('Sage/Platform/Mobile/List', [
                 aborted: this.onRequestDataAborted,
                 scope: this
             });
-        },
-        hashTagFavoriteClick: function(params) {
-            if (params.key) {
-                this.setSearchTerm('#' + params.key); 
-                this.search();
-            }
         },
         /**
          * Handler for the more button. Simply calls {@link #requestData requestData} which already has the info for
@@ -1575,32 +1620,109 @@ define('Sage/Platform/Mobile/List', [
                 this._selectionModel.resumeEvents();
             }
 
-            this.requestedFirstPage = false;
             this.entries = {};
             this.feed = false;
-            this.query = false; // todo: rename to searchQuery
 
-            if (all !== false && this.searchWidget) this.searchWidget.clear();
+            if (this._onScrollHandle) {
+                this.disconnect(this._onScrollHandle);
+                this._onScrollHandle = null;
+            }
+
+            if (all === true && this.searchWidget) {
+                this.searchWidget.clear();
+                this.query = false; // todo: rename to searchQuery
+                this.hasSearched = false;
+            }
 
             domClass.remove(this.domNode, 'list-has-more');
 
             this.set('listContent', this.loadingTemplate.apply(this));
+            this.destroyRelatedViewWidgets();
         },
         search: function() {
             if (this.searchWidget) {
                 this.searchWidget.search();
             }
         },
-        appendSearchTerm: function(value) {
-            if (this.searchWidget) {
-                var existing = this.searchWidget.get('queryValue');
-                this.setSearchTerm(existing + ' ' + value);
-            }
-        },
+        /**
+        * Sets the query value on the serach widget
+        */
         setSearchTerm: function(value) {
             if (this.searchWidget) {
                 this.searchWidget.set('queryValue', value);
             }
+        },
+        /**
+         * Sets and returns the related view definition, this method should be overriden in the view
+         * so that you may define the related views that will be add to each row in the list.
+         * @return {Object} this.relatedViews
+         */
+        createRelatedViewLayout: function() {
+            return this.relatedViews || (this.relatedViews = {});
+        },
+        /**
+         *  Destroies all of the realted view widgets, that was added.
+         */
+        destroyRelatedViewWidgets: function() {
+            if (this.relatedViewManagers) {
+                for (var relatedViewId in this.relatedViewManagers) {
+                    this.relatedViewManagers[relatedViewId].destroyViews();
+                }
+            }
+        },
+        /**
+         * Gets the related view mnagager for a related view definition. 
+         * If a manager is not found a new Related View Manager is created and returned.
+         * @return {Object} RelatedViewManager
+         */
+       getRelatedViewManager: function(relatedView) {
+            var relatedViewManager, options;
+            if (!this.relatedViewManagers){
+                this.relatedViewManagers = {};
+            }
+            if (this.relatedViewManagers[relatedView.id]) {
+                relatedViewManager = this.relatedViewManagers[relatedView.id];
+            } else {
+                options = { id:relatedView.id,
+                    relatedViewConfig: relatedView
+                };
+                relatedViewManager = new RelatedViewManager(options);
+                this.relatedViewManagers[relatedView.id] = relatedViewManager;
+            }
+            return relatedViewManager;
+       },
+        /**
+         * called form Process feed method to process each entry and row node and add the realted view widgets for all realted views defined.
+         *
+         * Add the each entry and row to the RelateView manager wich in turn creates the new related view and renders its content with in the current row.`
+         *
+         * @param {Object} entry the current entry from the feed.
+         * @param {Object} rownode the current dom node to add the widget to.
+         * @param {Object} feed the sData feed.
+         */
+        onProcessRelatedViews: function(entry, rowNode, feed) {
+            var relatedViewManager,i;
+            if (this.options && this.options.simpleMode && (this.options.simpleMode === true)) {
+                return;
+            }
+            if (this.relatedViews.length > 0) {
+                try {
+                    for (i = 0; i < this.relatedViews.length; i++) {
+                        if (this.relatedViews[i].enabled) {
+                            relatedViewManager = this.getRelatedViewManager(this.relatedViews[i]);
+                            if (relatedViewManager) {
+                                relatedViewManager.addView(entry, rowNode);
+                            }
+                        }
+                    }
+                }
+                catch (error) {
+                    console.log('Error processing related views:' + error );
+
+                }
+            }
         }
+
     });
 });
+ 

@@ -32,10 +32,17 @@ define("dojox/mobile/View", [
 		// summary:
 		//		A widget that represents a view that occupies the full screen
 		// description:
-		//		View acts as a container for any HTML and/or widgets. An entire
-		//		HTML page can have multiple View widgets and the user can
-		//		navigate through the views back and forth without page
-		//		transitions.
+		//		View is a container widget for any HTML element and/or Dojo widgets.
+		//		As a Dojo widget container it can itself contain View widgets
+		//		forming a set of nested views. A Dojo Mobile application is usually
+		//		made of multiple View widgets and the user can navigate through
+		//		the views back and forth with animated transition effects.
+		//		
+		//		When using several sibling views (direct children of the same
+		//		element), you can use the 'selected' attribute to define whether
+		//		the view should be displayed when the application is launched.
+		//		If no view has selected=true, the first sibling view is displayed
+		//		at startup time.
 
 		// selected: Boolean
 		//		If true, the view is displayed at startup time.
@@ -124,8 +131,8 @@ define("dojox/mobile/View", [
 				});
 			}
 
-			if(this.domNode.style.visibility != "visible"){ // this check is to avoid screen flickers
-				this.domNode.style.visibility = "visible";
+			if(this.domNode.style.visibility === "hidden"){ // this check is to avoid screen flickers
+				this.domNode.style.visibility = "inherit";
 			}
 
 			// Need to call inherited first - so that child widgets get started
@@ -379,7 +386,8 @@ define("dojox/mobile/View", [
 					toNode.style.top = "0px";
 					if(scrollTop > 1 || toTop !== 0){
 						fromNode.style.top = toTop - scrollTop + "px";
-						if(config["mblHideAddressBar"] !== false){
+						// address bar hiding does not work on iOS 7+.
+						if(!(has("ios") >= 7) && config["mblHideAddressBar"] !== false){
 							this.defer(function(){ // iPhone needs setTimeout (via defer)
 								win.global.scrollTo(0, (toTop || 1));
 							});
@@ -392,7 +400,7 @@ define("dojox/mobile/View", [
 				connect.publish("/dojox/mobile/beforeTransitionIn", [toWidget].concat(lang._toArray(this._arguments)));
 			}
 			toNode.style.display = "none";
-			toNode.style.visibility = "visible";
+			toNode.style.visibility = "inherit";
 
 			common.fromView = this;
 			common.toView = toWidget;

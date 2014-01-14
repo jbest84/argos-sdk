@@ -1,3 +1,5 @@
+require({cache:{
+'url:dojox/calendar/templates/SimpleColumnView.html':"<div data-dojo-attach-events=\"keydown:_onKeyDown\">\t\n\t<div data-dojo-attach-point=\"header\" class=\"dojoxCalendarHeader\">\n\t\t<div class=\"dojoxCalendarYearColumnHeader\" data-dojo-attach-point=\"yearColumnHeader\">\n\t\t\t<table><tr><td><span data-dojo-attach-point=\"yearColumnHeaderContent\"></span></td></tr></table>\t\t\n\t\t</div>\n\t\t<div data-dojo-attach-point=\"columnHeader\" class=\"dojoxCalendarColumnHeader\">\n\t\t\t<table data-dojo-attach-point=\"columnHeaderTable\" class=\"dojoxCalendarColumnHeaderTable\" cellpadding=\"0\" cellspacing=\"0\"></table>\n\t\t</div>\n\t</div>\t\n\t<div data-dojo-attach-point=\"vScrollBar\" class=\"dojoxCalendarVScrollBar\">\n\t\t<div data-dojo-attach-point=\"vScrollBarContent\" style=\"visibility:hidden;position:relative; width:1px; height:1px;\" ></div>\n\t</div>\t\n\t<div data-dojo-attach-point=\"scrollContainer\" class=\"dojoxCalendarScrollContainer\">\n\t\t<div data-dojo-attach-point=\"sheetContainer\" style=\"position:relative;left:0;right:0;margin:0;padding:0\">\n\t\t\t<div data-dojo-attach-point=\"rowHeader\" class=\"dojoxCalendarRowHeader\">\n\t\t\t\t<table data-dojo-attach-point=\"rowHeaderTable\" class=\"dojoxCalendarRowHeaderTable\" cellpadding=\"0\" cellspacing=\"0\"></table>\n\t\t\t</div>\n\t\t\t<div data-dojo-attach-point=\"grid\" class=\"dojoxCalendarGrid\">\n\t\t\t\t<table data-dojo-attach-point=\"gridTable\" class=\"dojoxCalendarGridTable\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%\"></table>\n\t\t\t</div>\n\t\t\t<div data-dojo-attach-point=\"itemContainer\" class=\"dojoxCalendarContainer\" data-dojo-attach-event=\"mousedown:_onGridMouseDown,mouseup:_onGridMouseUp,ondblclick:_onGridDoubleClick,touchstart:_onGridTouchStart,touchmove:_onGridTouchMove,touchend:_onGridTouchEnd\">\n\t\t\t\t<table data-dojo-attach-point=\"itemContainerTable\" class=\"dojoxCalendarContainerTable\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%\"></table>\n\t\t\t</div>\n\t\t</div> \n\t</div>\n</div>\n\n"}});
 define("dojox/calendar/SimpleColumnView", [
 "./ViewBase", 
 "dijit/_TemplatedMixin", 
@@ -224,14 +226,10 @@ function(
 			renderData.endTime = new renderData.dateClassObj(renderData.dates[renderData.columnCount-1]);
 			renderData.endTime.setHours(renderData.maxHours);
 			
-			if(this.displayedItemsInvalidated){
-				this.displayedItemsInvalidated = false;
+			if(this.displayedItemsInvalidated && !this._isEditing){
+				 // while editing in no live layout we must not to recompute items (duplicate renderers)
 				this._computeVisibleItems(renderData);
-				
-				if(this._isEditing){					
-					this._endItemEditing(null, false);
-				}
-				
+								
 			}else if (this.renderData){
 				renderData.items = this.renderData.items;
 			}
@@ -353,7 +351,7 @@ function(
 			//		Returns the visible first time of day.
 			// tags:
 			//		protected
-			// returns: Integer[]
+			// returns: Object
 
 			var v = (this.get("maxHours") - this.get("minHours")) * 
 				this._getScrollPosition() / this.renderData.sheetHeight;
@@ -369,7 +367,7 @@ function(
 			//		Returns the visible last time of day.
 			// tags:
 			//		protected
-			// returns: Integer[]
+			// returns: Integer[]					
 
 			var v = (this.get("maxHours") - this.get("minHours")) * 
 				(this._getScrollPosition() + this.scrollContainer.offsetHeight) / this.renderData.sheetHeight;
@@ -380,12 +378,27 @@ function(
 			};
 		},
 		
+		// startTimeOfDay: Object
+		//		First time (hour/minute) of day displayed, if reachable. 
+		//		An object containing "hours" and "minutes" properties.
+		startTimeOfDay: 0,
+			
 		_setStartTimeOfDayAttr: function(value){
-			this._setStartTimeOfDay(value.hours, value.minutes, value.duration, value.easing);
+			if(this.renderData){
+				this._setStartTimeOfDay(value.hours, value.minutes, value.duration, value.easing);
+			}else{
+				this._startTimeOfDayInvalidated = true;
+			}
+			this._set("startTimeOfDay", value);
+			
 		},
 		
 		_getStartTimeOfDayAttr: function(){
-			return this._getStartTimeOfDay();
+			if(this.renderData){
+				return this._getStartTimeOfDay();
+			}else{
+				return this._get("startTimeOfDay");
+			}
 		},
 		
 		_setStartTimeOfDay: function(hour, minutes, maxDuration, easing){
@@ -580,6 +593,17 @@ function(
 			this._buildRowHeader(renderData, oldRenderData);
 			this._buildGrid(renderData, oldRenderData);
 			this._buildItemContainer(renderData, oldRenderData);
+			this._commitProperties(renderData);
+		},
+		
+		_commitProperties: function(renderData){
+			if(this._startTimeOfDayInvalidated){
+				this._startTimeOfDayInvalidated = false;
+				var v = this.startTimeOfDay;
+				if(v != null){
+					this._setStartTimeOfDay(v.hours, v.minutes == undefined ? 0 : v.minutes); // initial position, no animation
+				}
+			}
 		},
 		
 		_configureScrollBar: function(renderData){
@@ -1748,5 +1772,3 @@ function(
 		
 	});
 });
-require({cache:{
-'url:dojox/calendar/templates/SimpleColumnView.html':"<div data-dojo-attach-events=\"keydown:_onKeyDown\">\t\n\t<div data-dojo-attach-point=\"header\" class=\"dojoxCalendarHeader\">\n\t\t<div class=\"dojoxCalendarYearColumnHeader\" data-dojo-attach-point=\"yearColumnHeader\">\n\t\t\t<table><tr><td><span data-dojo-attach-point=\"yearColumnHeaderContent\"></span></td></tr></table>\t\t\n\t\t</div>\n\t\t<div data-dojo-attach-point=\"columnHeader\" class=\"dojoxCalendarColumnHeader\">\n\t\t\t<table data-dojo-attach-point=\"columnHeaderTable\" class=\"dojoxCalendarColumnHeaderTable\" cellpadding=\"0\" cellspacing=\"0\"></table>\n\t\t</div>\n\t</div>\t\n\t<div data-dojo-attach-point=\"vScrollBar\" class=\"dojoxCalendarVScrollBar\">\n\t\t<div data-dojo-attach-point=\"vScrollBarContent\" style=\"visibility:hidden;position:relative; width:1px; height:1px;\" ></div>\n\t</div>\t\n\t<div data-dojo-attach-point=\"scrollContainer\" class=\"dojoxCalendarScrollContainer\">\n\t\t<div data-dojo-attach-point=\"sheetContainer\" style=\"position:relative;left:0;right:0;margin:0;padding:0\">\n\t\t\t<div data-dojo-attach-point=\"rowHeader\" class=\"dojoxCalendarRowHeader\">\n\t\t\t\t<table data-dojo-attach-point=\"rowHeaderTable\" class=\"dojoxCalendarRowHeaderTable\" cellpadding=\"0\" cellspacing=\"0\"></table>\n\t\t\t</div>\n\t\t\t<div data-dojo-attach-point=\"grid\" class=\"dojoxCalendarGrid\">\n\t\t\t\t<table data-dojo-attach-point=\"gridTable\" class=\"dojoxCalendarGridTable\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%\"></table>\n\t\t\t</div>\n\t\t\t<div data-dojo-attach-point=\"itemContainer\" class=\"dojoxCalendarContainer\" data-dojo-attach-event=\"mousedown:_onGridMouseDown,mouseup:_onGridMouseUp,ondblclick:_onGridDoubleClick,touchstart:_onGridTouchStart,touchmove:_onGridTouchMove,touchend:_onGridTouchEnd\">\n\t\t\t\t<table data-dojo-attach-point=\"itemContainerTable\" class=\"dojoxCalendarContainerTable\" cellpadding=\"0\" cellspacing=\"0\" style=\"width:100%\"></table>\n\t\t\t</div>\n\t\t</div> \n\t</div>\n</div>\n\n"}});

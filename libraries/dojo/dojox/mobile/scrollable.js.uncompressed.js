@@ -7,11 +7,13 @@ define("dojox/mobile/scrollable", [
 	"dojo/dom-class",
 	"dojo/dom-construct",
 	"dojo/dom-style",
+	"dojo/dom-geometry",
 	"dojo/touch",
 	"./sniff",
 	"./_css3",
 	"./_maskUtils"
-], function(dojo, connect, event, lang, win, domClass, domConstruct, domStyle, touch, has, css3, maskUtils){
+], function(dojo, connect, event, lang, win, domClass, domConstruct, domStyle,
+			domGeom, touch, has, css3, maskUtils){
 
 	// module:
 	//		dojox/mobile/scrollable
@@ -114,15 +116,21 @@ define("dojox/mobile/scrollable", [
 		height: "",
 
 		// scrollType: Number
-		//		- 1: use -webkit-transform:translate3d(x,y,z) style, use -webkit-animation for slide anim
+		//		- 1: use (-webkit-)transform:translate3d(x,y,z) style, use (-webkit-)animation for slide animation
 		//		- 2: use top/left style,
-		//		- 3: use -webkit-transform:translate3d(x,y,z) style, use -webkit-transition for slide anim
-		//		- 0: use default value (2 in case of Android < 3, 3 if iOS6, otherwise 1)
+		//		- 3: use (-webkit-)transform:translate3d(x,y,z) style, use (-webkit-)transition for slide animation
+		//		- 0: use default value (3 for Android, iOS6+, and BlackBerry; otherwise 1)
 		scrollType: 0,
 		
-		// for Tooltip.js
+		// _parentPadBorderExtentsBottom: [private] Number
+		//		For Tooltip.js.
 		_parentPadBorderExtentsBottom: 0,
-		
+
+		// _moved: [private] Boolean
+		//		Flag that signals if the user have moved in (one of) the scroll
+		//		direction(s) since touch start (a move under the threshold is ignored).
+		_moved: false,
+
 		init: function(/*Object?*/params){
 			// summary:
 			//		Initialize according to the given params.
@@ -154,11 +162,12 @@ define("dojox/mobile/scrollable", [
 				// flag for whether to use -webkit-transform:translate3d(x,y,z) or top/left style.
 				// top/left style works fine as a workaround for input fields auto-scrolling issue,
 				// so use top/left in case of Android by default.
-				this._useTopLeft = this.scrollType ? this.scrollType === 2 : has('android') < 3;
+				this._useTopLeft = this.scrollType ? this.scrollType === 2 : false;
 				// Flag for using webkit transition on transform, instead of animation + keyframes.
 				// (keyframes create a slight delay before the slide animation...)
 				if(!this._useTopLeft){
-					this._useTransformTransition = this.scrollType ? this.scrollType === 3 : has("ios") >= 6;
+					this._useTransformTransition = 
+						this.scrollType ? this.scrollType === 3 : has("ios") >= 6 || has("android") || has("bb");
 				}
 				if(!this._useTopLeft){
 					if(this._useTransformTransition){
@@ -219,6 +228,35 @@ define("dojox/mobile/scrollable", [
 				};
 				win.global.addEventListener("scroll", this._onScroll, true);
 			}
+			// #17062: Ensure auto-scroll when navigating focusable fields
+			if(!this.disableTouchScroll && this.domNode.addEventListener){
+				this._onFocusScroll = function(e){
+					if(!_this.domNode || _this.domNode.style.display === 'none'){ return; }
+					var node = win.doc.activeElement;
+					var nodeRect, scrollableRect;
+					if(node){
+						nodeRect = node.getBoundingClientRect();
+						scrollableRect = _this.domNode.getBoundingClientRect();
+						if(nodeRect.height < _this.getDim().d.h){
+							// do not call scrollIntoView for elements with a height
+							// larger than the height of scrollable's content display
+							// area (it would be ergonomically harmful).
+							
+							if(nodeRect.top < (scrollableRect.top + _this.fixedHeaderHeight)){
+								// scrolling towards top (to bring into the visible area an element
+								// located above it).
+								_this.scrollIntoView(node, true);
+							}else if((nodeRect.top + nodeRect.height) > 
+								(scrollableRect.top + scrollableRect.height - _this.fixedFooterHeight)){
+								// scrolling towards bottom (to bring into the visible area an element
+								// located below it).
+								_this.scrollIntoView(node, false);
+							} // else do nothing (the focused node is already visible)
+						}
+					}
+				};
+				this.domNode.addEventListener("focus", this._onFocusScroll, true);
+			}
 		},
 
 		isTopLevel: function(){
@@ -242,6 +280,11 @@ define("dojox/mobile/scrollable", [
 				win.global.removeEventListener("scroll", this._onScroll, true);
 				this._onScroll = null;
 			}
+			
+			if(this._onFocusScroll && this.domNode.removeEventListener){
+				this.domNode.removeEventListener("focus", this._onFocusScroll, true);
+				this._onFocusScroll = null;
+			} 
 		},
 
 		findDisp: function(/*DomNode*/node){
@@ -296,7 +339,7 @@ define("dojox/mobile/scrollable", [
 			for(var n = this.domNode; n && n.tagName != "BODY"; n = n.offsetParent){
 				n = this.findDisp(n); // find the first displayed view node
 				if(!n){ break; }
-				top += n.offsetTop;
+				top += n.offsetTop + domGeom.getBorderExtents(n).h;
 			}
 
 			// adjust the height of this view
@@ -305,7 +348,7 @@ define("dojox/mobile/scrollable", [
 				dh = screenHeight - top - this._appFooterHeight; // default height
 			if(this.height === "inherit"){
 				if(this.domNode.offsetParent){
-					h = this.domNode.offsetParent.offsetHeight + "px";
+					h = domGeom.getContentBox(this.domNode.offsetParent).h - domGeom.getBorderExtents(this.domNode).h + "px";
 				}
 			}else if(this.height === "auto"){
 				var parent = this.domNode.offsetParent;
@@ -345,6 +388,9 @@ define("dojox/mobile/scrollable", [
 		},
 
 		onFlickAnimationEnd: function(e){
+			if(has("ios")){
+				this._keepInputCaretInActiveElement();
+			}
 			if(e){
 				var an = e.animationName;
 				if(an && an.indexOf("scrollableViewScroll2") === -1){
@@ -426,6 +472,7 @@ define("dojox/mobile/scrollable", [
 			this._posX = [this.touchStartX];
 			this._posY = [this.touchStartY];
 			this._locked = false;
+			this._moved = false;
 
 			if(!this.isFormElement(e.target)){
 				this.propagatable ? e.preventDefault() : event.stop(e);
@@ -455,15 +502,16 @@ define("dojox/mobile/scrollable", [
 				}
 				if(this._v && this._h){ // scrollDir="hv"
 					if(dy < this.threshold &&
-					   dx < this.threshold){
+						dx < this.threshold){
 						return;
 					}
 				}else{
 					if(this._v && dy < this.threshold ||
-					   (this._h || this._f) && dx < this.threshold){
+						(this._h || this._f) && dx < this.threshold){
 						return;
 					}
 				}
+				this._moved = true;
 				this.addCover();
 				this.showScrollBar();
 			}
@@ -496,6 +544,7 @@ define("dojox/mobile/scrollable", [
 			var max = 10;
 			var n = this._time.length; // # of samples
 			if(n >= 2){
+				this._moved = true;
 				// Check the direction of the finger move.
 				// If the direction has been changed, discard the old data.
 				var d0, d1;
@@ -524,6 +573,25 @@ define("dojox/mobile/scrollable", [
 			this._posY.push(y);
 		},
 
+		_keepInputCaretInActiveElement: function(){
+			var activeElement = win.doc.activeElement;
+			var initialValue;
+			if(activeElement && (activeElement.tagName == "INPUT" || activeElement.tagName == "TEXTAREA")){
+				initialValue = activeElement.value;
+				if(activeElement.type == "number" || activeElement.type == "week"){
+					if(initialValue){
+						activeElement.value = activeElement.value + 1;
+					}else{
+						activeElement.value = (activeElement.type == "week") ? "2013-W10" : 1;
+					}
+					activeElement.value = initialValue;
+				}else{
+					activeElement.value = activeElement.value + " ";
+					activeElement.value = initialValue;
+				}
+			}
+		},
+
 		onTouchEnd: function(/*Event*/e){
 			// summary:
 			//		User-defined function to handle touchEnd events.
@@ -539,15 +607,9 @@ define("dojox/mobile/scrollable", [
 				}
 				this._conn = null;
 
-				var n = this._time.length; // # of samples
 				var clicked = false;
-				if(!this._aborted){
-					if(n <= 1){
-						clicked = true;
-					}else if(n == 2 && Math.abs(this._posY[1] - this._posY[0]) < 4
-						&& has('touch')){ // for desktop browsers, posY could be the same, since we're using clientY, see onTouchMove()
-						clicked = true;
-					}
+				if(!this._aborted && !this._moved){
+					clicked = true;
 				}
 				if(clicked){ // clicked, not dragged or flicked
 					this.hideScrollBar();
@@ -578,7 +640,6 @@ define("dojox/mobile/scrollable", [
 			}
 
 			if(this.adjustDestination(to, pos, dim) === false){ return; }
-
 			if(this.constraint){
 				if(this.scrollDir == "v" && dim.c.h < dim.d.h){ // content is shorter than display
 					this.slideTo({y:0}, 0.3, "ease-out"); // go back to the top
@@ -686,31 +747,16 @@ define("dojox/mobile/scrollable", [
 			this.scrollTo(this.getPos());
 			this.stopAnimation();
 		},
-		_forceRendering: function(elt){
-			// tags:
-			//		private
-			//		There are issues with Android > 3: No acceleration and no way to stop the scrolling.
-			//		This workaround improves the scrolling behaviour.
-			if(has("android") >= 4.1){
-				var tmp = elt.style.display;
-				elt.style.display = "none";
-				elt.offsetHeight; // Accessing offsetHeight forces the rendering
-				elt.style.display = tmp;
-			}
-		},
+
 		stopAnimation: function(){
 			// summary:
 			//		Stops the currently running animation.
-
-			this._forceRendering(this.containerNode);
 			domClass.remove(this.containerNode, "mblScrollableScrollTo2");
 			if(this._scrollBarV){
 				this._scrollBarV.className = "";
-				this._forceRendering(this._scrollBarV);
 			}
 			if(this._scrollBarH){
 				this._scrollBarH.className = "";
-				this._forceRendering(this._scrollBarH);
 			}
 			if(this._useTransformTransition || this._useTopLeft){
 				this.containerNode.style[css3.name("transition")] = "";
@@ -836,6 +882,9 @@ define("dojox/mobile/scrollable", [
 					if(this._h || this._f){
 						s.left = to.x + "px";
 					}
+				}
+				if(has("ios")){
+					this._keepInputCaretInActiveElement();
 				}
 				if(!doNotMoveScrollBar){
 					this.scrollScrollBarTo(this.calcScrollBarPos(to));
@@ -1219,7 +1268,7 @@ define("dojox/mobile/scrollable", [
 				// | dojo.require("dojo.fx.easing");
 				//
 				// This module itself does not make dependency on them.
-				// TODO: for 2.0 the dojo global is going away.   Use require("dojo/fx") and require("dojo/fx/easing") instead.
+				// TODO: for 2.0 the dojo global is going away. Use require("dojo/fx") and require("dojo/fx/easing") instead.
 				var s = dojo.fx.slideTo({
 					node: node,
 					duration: duration*1000,

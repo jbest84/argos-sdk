@@ -49,7 +49,7 @@ define('Sage/Platform/Mobile/Store/SData', [
             var match,
                 result = [];
 
-            while (match = parseOrderByRE.exec(expression))
+            while ((match = parseOrderByRE.exec(expression)))
             {
                 result.push({
                     attribute: match[1],
@@ -104,8 +104,10 @@ define('Sage/Platform/Mobile/Store/SData', [
                 var contractName = utility.expand(this.scope || this, getOptions.contractName || this.contractName),
                     resourceKind = utility.expand(this.scope || this, getOptions.resourceKind || this.resourceKind),
                     resourceProperty = utility.expand(this.scope || this, getOptions.resourceProperty || this.resourceProperty),
+                     resourcePredicate;
+                if (id) {
                     resourcePredicate = /\s+/.test(id) ? id : string.substitute("'${0}'", [id]);
-
+                }
                 if (resourceProperty)
                 {
                     request = new Sage.SData.Client.SDataResourcePropertyRequest(this.service)
@@ -204,12 +206,15 @@ define('Sage/Platform/Mobile/Store/SData', [
                 }
             }
 
-            var where = utility.expand(this.scope || this, this.where),
-                query = utility.expand(this.scope || this, query),
+            var where = utility.expand(this.scope || this, queryOptions.where || this.where),
                 conditions = [];
 
-            if (where)
+
+            if (where) {
                 conditions.push(where);
+            }
+
+            query = utility.expand(this.scope || this, query);
 
             if (query)
                 conditions.push(query);

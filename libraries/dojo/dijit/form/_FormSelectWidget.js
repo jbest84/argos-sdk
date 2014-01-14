@@ -29,14 +29,14 @@ return _10[_f];
 }
 return null;
 },addOption:function(_12){
-_1.forEach([].concat(_12),function(i){
+_1.forEach(_9.isArray(_12)?_12:[_12],function(i){
 if(i&&_9.isObject(i)){
 this.options.push(i);
 }
 },this);
 this._loadChildren();
 },removeOption:function(_13){
-var _14=this.getOptions([].concat(_13));
+var _14=this.getOptions(_9.isArray(_13)?_13:[_13]);
 _1.forEach(_14,function(_15){
 if(_15){
 this.options=_1.filter(this.options,function(_16){
@@ -47,7 +47,7 @@ this._removeOptionItem(_15);
 },this);
 this._loadChildren();
 },updateOption:function(_17){
-_1.forEach([].concat(_17),function(i){
+_1.forEach(_9.isArray(_17)?_17:[_17],function(i){
 var _18=this.getOptions({value:i.value}),k;
 if(_18){
 for(k in i){
@@ -101,6 +101,10 @@ this.removeOption(this.options);
 if(this._queryRes&&this._queryRes.close){
 this._queryRes.close();
 }
+if(this._observeHandle&&this._observeHandle.remove){
+this._observeHandle.remove();
+this._observeHandle=null;
+}
 if(_1b.query){
 this._set("query",_1b.query);
 this._set("queryOptions",_1b.queryOptions);
@@ -127,7 +131,7 @@ _1.forEach(_27,function(i){
 this._addOptionForItem(i);
 },this);
 if(this._queryRes.observe){
-this._queryRes.observe(_9.hitch(this,function(_29,_2a,_2b){
+this._observeHandle=this._queryRes.observe(_9.hitch(this,function(_29,_2a,_2b){
 if(_2a==_2b){
 this._onSetItem(_29);
 }else{
@@ -326,6 +330,10 @@ h.remove();
 }
 if(this._queryRes&&this._queryRes.close){
 this._queryRes.close();
+}
+if(this._observeHandle&&this._observeHandle.remove){
+this._observeHandle.remove();
+this._observeHandle=null;
 }
 this.inherited(arguments);
 },_addOptionItem:function(){

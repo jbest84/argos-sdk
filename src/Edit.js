@@ -177,8 +177,7 @@ define('Sage/Platform/Mobile/Edit', [
             '<h2 data-action="toggleSection" class="{% if ($.collapsed || $.options.collapsed) { %}collapsed{% } %}">',
             '{%: ($.title || $.options.title) %}<button class="collapsed-indicator" aria-label="{%: $$.toggleCollapseText %}"></button>',
             '</h2>',
-            '<fieldset class="{%= ($.cls || $.options.cls) %}">',
-            '<a href="#" class="android-6059-fix">fix for android issue #6059</a>'
+            '<fieldset class="{%= ($.cls || $.options.cls) %}">'
         ]),
         /**
          * @property {Simplate}
@@ -454,7 +453,7 @@ define('Sage/Platform/Mobile/Edit', [
         createRequest: function() {
             var request = new Sage.SData.Client.SDataSingleResourceRequest(this.getService());
 
-            var key = (this.entry && this.entry['$key']) || this.options.key
+            var key = (this.entry && this.entry['$key']) || this.options.key;
             if (key)
                 request.setResourceSelector(string.substitute("'${0}'", [key]));
 
@@ -536,11 +535,12 @@ define('Sage/Platform/Mobile/Edit', [
                 }),
                 sectionQueue = [],
                 sectionStarted = false,
-                content = [];
+                content = [],
+                current;
             
             for (var i = 0; i < rows.length; i++)
             {
-                var current = rows[i];
+                current = rows[i];
 
                 if (current['children'] || current['as'])
                 {
@@ -577,9 +577,9 @@ define('Sage/Platform/Mobile/Edit', [
 
             domConstruct.place(content.join(''), this.contentNode, 'last');
 
-            for (var i = 0; i < sectionQueue.length; i++)
+            for (i = 0; i < sectionQueue.length; i++)
             {
-                var current = sectionQueue[i];
+                current = sectionQueue[i];
 
                 this.processLayout(current);
             }
@@ -936,8 +936,9 @@ define('Sage/Platform/Mobile/Edit', [
         disable: function() {
             this.busy = true;
 
-            if (App.bars.tbar)
-                App.bars.tbar.disable();
+            if (App.bars.tbar) {
+                App.bars.tbar.disableTool('save');
+            }
 
             domClass.add(this.domNode, 'busy');
         },
@@ -947,8 +948,9 @@ define('Sage/Platform/Mobile/Edit', [
         enable: function() {
             this.busy = false;
 
-            if (App.bars.tbar)
-                App.bars.tbar.enable();
+            if (App.bars.tbar) {
+                App.bars.tbar.enableTool('save');
+            }
 
             domClass.remove(this.domNode, 'busy');
         },
@@ -990,7 +992,9 @@ define('Sage/Platform/Mobile/Edit', [
             this.enable();
 
             connect.publish('/app/refresh', [{
-                resourceKind: this.resourceKind
+                resourceKind: this.resourceKind,
+                key: entry['$key'],
+                data: entry
             }]);
 
             this.onInsertCompleted(entry);

@@ -1,3 +1,5 @@
+require({cache:{
+'url:dojox/layout/resources/FloatingPane.html':"<div class=\"dojoxFloatingPane\" id=\"${id}\">\n\t<div tabindex=\"0\" role=\"button\" class=\"dojoxFloatingPaneTitle\" dojoAttachPoint=\"focusNode\">\n\t\t<span dojoAttachPoint=\"closeNode\" dojoAttachEvent=\"onclick: close\" class=\"dojoxFloatingCloseIcon\"></span>\n\t\t<span dojoAttachPoint=\"maxNode\" dojoAttachEvent=\"onclick: maximize\" class=\"dojoxFloatingMaximizeIcon\">&thinsp;</span>\n\t\t<span dojoAttachPoint=\"restoreNode\" dojoAttachEvent=\"onclick: _restore\" class=\"dojoxFloatingRestoreIcon\">&thinsp;</span>\t\n\t\t<span dojoAttachPoint=\"dockNode\" dojoAttachEvent=\"onclick: minimize\" class=\"dojoxFloatingMinimizeIcon\">&thinsp;</span>\n\t\t<span dojoAttachPoint=\"titleNode\" class=\"dijitInline dijitTitleNode\"></span>\n\t</div>\n\t<div dojoAttachPoint=\"canvas\" class=\"dojoxFloatingPaneCanvas\">\n\t\t<div dojoAttachPoint=\"containerNode\" role=\"region\" tabindex=\"-1\" class=\"${contentClass}\">\n\t\t</div>\n\t\t<span dojoAttachPoint=\"resizeHandle\" class=\"dojoxFloatingResizeHandle\"></span>\n\t</div>\n</div>\n"}});
 define("dojox/layout/Dock", ["dojo/_base/lang", "dojo/_base/window", "dojo/_base/declare",
 		"dojo/_base/fx", "dojo/on", "dojo/_base/array", "dojo/_base/sniff",
 		"dojo/window", "dojo/dom", "dojo/dom-class", "dojo/dom-geometry", "dojo/dom-construct",
@@ -15,7 +17,7 @@ var Dock = declare("dojox.layout.Dock",[_WidgetBase, _TemplatedMixin],{
 	//		A widget that attaches to a node and keeps track of incoming / outgoing FloatingPanes
 	//		and handles layout
 
-	templateString: '<div class="dojoxDock"><ul dojo-dojo-attach-point="containerNode" class="dojoxDockList"></ul></div>',
+	templateString: '<div class="dojoxDock"><ul data-dojo-attach-point="containerNode" class="dojoxDockList"></ul></div>',
 
 	// _docked: [private] Array
 	//		array of panes currently in our dock
@@ -109,5 +111,3 @@ var DockNode = declare("dojox.layout._DockNode",[_WidgetBase, _TemplatedMixin],{
 return Dock;
 });
 
-require({cache:{
-'url:dojox/layout/resources/FloatingPane.html':"<div class=\"dojoxFloatingPane\" id=\"${id}\">\n\t<div tabindex=\"0\" role=\"button\" class=\"dojoxFloatingPaneTitle\" dojoAttachPoint=\"focusNode\">\n\t\t<span dojoAttachPoint=\"closeNode\" dojoAttachEvent=\"onclick: close\" class=\"dojoxFloatingCloseIcon\"></span>\n\t\t<span dojoAttachPoint=\"maxNode\" dojoAttachEvent=\"onclick: maximize\" class=\"dojoxFloatingMaximizeIcon\">&thinsp;</span>\n\t\t<span dojoAttachPoint=\"restoreNode\" dojoAttachEvent=\"onclick: _restore\" class=\"dojoxFloatingRestoreIcon\">&thinsp;</span>\t\n\t\t<span dojoAttachPoint=\"dockNode\" dojoAttachEvent=\"onclick: minimize\" class=\"dojoxFloatingMinimizeIcon\">&thinsp;</span>\n\t\t<span dojoAttachPoint=\"titleNode\" class=\"dijitInline dijitTitleNode\"></span>\n\t</div>\n\t<div dojoAttachPoint=\"canvas\" class=\"dojoxFloatingPaneCanvas\">\n\t\t<div dojoAttachPoint=\"containerNode\" role=\"region\" tabindex=\"-1\" class=\"${contentClass}\">\n\t\t</div>\n\t\t<span dojoAttachPoint=\"resizeHandle\" class=\"dojoxFloatingResizeHandle\"></span>\n\t</div>\n</div>\n"}});

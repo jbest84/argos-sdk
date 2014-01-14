@@ -87,7 +87,7 @@ define("dojo/i18n", ["./_base/kernel", "require", "./has", "./_base/array", "./_
 			// summary:
 			//		get the root bundle which instructs which other bundles are required to construct the localized bundle
 			require([bundlePathAndName], function(root){
-				var current = lang.clone(root.root),
+				var current = lang.clone(root.root || root.ROOT),// 1.6 built bundle defined ROOT
 					availableLocales = getAvailableLocales(!root._v1x && root, locale, bundlePath, bundleName);
 				require(availableLocales, function(){
 					for (var i = 1; i<availableLocales.length; i++){
@@ -265,7 +265,7 @@ define("dojo/i18n", ["./_base/kernel", "require", "./has", "./_base/array", "./_
 				bundleName = match[5] || match[4],
 				bundlePathAndName = bundlePath + bundleName,
 				localeSpecified = (match[5] && match[4]),
-				targetLocale =	localeSpecified || dojo.locale,
+				targetLocale =	localeSpecified || dojo.locale || "",
 				loadTarget = bundlePathAndName + "/" + targetLocale,
 				loadList = localeSpecified ? [targetLocale] : getLocalesToLoad(targetLocale),
 				remaining = loadList.length,

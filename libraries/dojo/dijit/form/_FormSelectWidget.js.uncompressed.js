@@ -162,7 +162,7 @@ define("dijit/form/_FormSelectWidget", [
 			//		of the option is empty or missing, a separator is created instead.
 			//		Passing in an array of options will yield slightly better performance
 			//		since the children are only loaded once.
-			array.forEach([].concat(option), function(i){
+			array.forEach(lang.isArray(option) ? option : [option], function(i){
 				if(i && lang.isObject(i)){
 					this.options.push(i);
 				}
@@ -179,7 +179,7 @@ define("dijit/form/_FormSelectWidget", [
 			//		You can also pass in an array of those values for a slightly
 			//		better performance since the children are only loaded once.
 			//		For numeric option values, specify {value: number} as the argument.
-			var oldOpts = this.getOptions([].concat(valueOrIdx));
+			var oldOpts = this.getOptions(lang.isArray(valueOrIdx) ? valueOrIdx : [valueOrIdx]);
 			array.forEach(oldOpts, function(option){
 				// We can get null back in our array - if our option was not found.  In
 				// that case, we don't want to blow up...
@@ -199,7 +199,7 @@ define("dijit/form/_FormSelectWidget", [
 			//		is matched based on the value of the entered option.  Passing
 			//		in an array of new options will yield better performance since
 			//		the children will only be loaded once.
-			array.forEach([].concat(newOption), function(i){
+			array.forEach(lang.isArray(newOption) ? newOption : [newOption], function(i){
 				var oldOpt = this.getOptions({ value: i.value }), k;
 				if(oldOpt){
 					for(k in i){
@@ -303,9 +303,15 @@ define("dijit/form/_FormSelectWidget", [
 				this.removeOption(this.options);
 			}
 
-			// Cancel listener for updates to old store
+			// Cancel listener for updates to old (dojo.data) store
 			if(this._queryRes && this._queryRes.close){
 				this._queryRes.close();
+			}
+			
+			// Cancel listener for updates to new (dojo.store) store
+			if(this._observeHandle && this._observeHandle.remove){
+				this._observeHandle.remove();
+				this._observeHandle = null;
 			}
 
 			// If user has specified new query and query options along with this new store, then use them.
@@ -352,7 +358,8 @@ define("dijit/form/_FormSelectWidget", [
 
 					// Register listener for store updates
 					if(this._queryRes.observe){
-						this._queryRes.observe(lang.hitch(this, function(object, deletedFrom, insertedInto){
+						// observe returns yet another handle that needs its own explicit gc
+						this._observeHandle = this._queryRes.observe(lang.hitch(this, function(object, deletedFrom, insertedInto){
 							if(deletedFrom == insertedInto){
 								this._onSetItem(object);
 							}else{
@@ -666,6 +673,12 @@ define("dijit/form/_FormSelectWidget", [
 			// Cancel listener for store updates
 			if(this._queryRes && this._queryRes.close){
 				this._queryRes.close();
+			}
+
+			// Cancel listener for updates to new (dojo.store) store
+			if(this._observeHandle && this._observeHandle.remove){
+				this._observeHandle.remove();
+				this._observeHandle = null;
 			}
 
 			this.inherited(arguments);
