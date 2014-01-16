@@ -311,7 +311,7 @@ define('Sage/Platform/Mobile/List', [
             '<div id="{%= $.id %}" title="{%= $.titleText %}" class="overthrow list {%= $.cls %}" {% if ($.resourceKind) { %}data-resource-kind="{%= $.resourceKind %}"{% } %}>',
             '<div data-dojo-attach-point="searchNode"></div>',
             '{%! $.emptySelectionTemplate %}',
-            '<ul class="list-content" data-dojo-attach-point="contentNode"></ul>',
+            '<ul class="list-content row" data-dojo-attach-point="contentNode"></ul>',
             '{%! $.moreTemplate %}',
             '{%! $.listActionTemplate %}',
             '</div>'
@@ -381,7 +381,7 @@ define('Sage/Platform/Mobile/List', [
          * The template used to render a row in the view.  This template includes {@link #itemTemplate}.
          */
         rowTemplate: new Simplate([
-            '<li data-action="activateEntry" data-key="{%= $.$key %}" data-descriptor="{%: $.$descriptor %}">',
+            '<li data-action="activateEntry" data-key="{%= $.$key %}" data-descriptor="{%: $.$descriptor %}" class="col-md-6">',
                 '<button data-action="selectEntry" class="list-item-selector button">',
                     '<img src="{%= $$.icon || $$.selectIcon %}" class="icon" />',
                 '</button>',
@@ -420,7 +420,7 @@ define('Sage/Platform/Mobile/List', [
          * The template used to render the single list action row.
          */
         listActionTemplate: new Simplate([
-            '<li data-dojo-attach-point="actionsNode" class="actions-row"></li>'
+            '<div data-dojo-attach-point="actionsNode" class="actions-row"></div>'
         ]),
         /**
          * @property {Simplate}
@@ -929,7 +929,7 @@ define('Sage/Platform/Mobile/List', [
 
             this.onApplyRowActionPanel(this.actionsNode, rowNode);
 
-            domConstruct.place(this.actionsNode, rowNode, 'after');
+            domConstruct.place(this.actionsNode, rowNode, 'last');
         },
         onApplyRowActionPanel: function(actionNodePanel, rowNode) {
 
