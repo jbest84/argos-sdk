@@ -249,7 +249,7 @@ define('Sage/Platform/Mobile/Application', [
          * Establishes signals/handles from dojo's newer APIs
          */
         initSignals: function() {
-            this._signals.push(aspect.after(window.ReUI, 'setOrientation', lang.hitch(this, function(result, args) {
+            /*this._signals.push(aspect.after(window.ReUI, 'setOrientation', lang.hitch(this, function(result, args) {
                 var value;
                 if (args && args.length > 0) {
                     value = args[0];
@@ -257,7 +257,7 @@ define('Sage/Platform/Mobile/Application', [
                     this.onSetOrientation(value);
                     connect.publish('/app/setOrientation', [value]);
                 }
-            })));
+            })));*/
         },
         onSetOrientation: function(value) {
         },
@@ -298,7 +298,7 @@ define('Sage/Platform/Mobile/Application', [
             this.initServices();
             this.initModules();
             this.initToolbars();
-            this.initReUI();
+            //this.initReUI();
             this.initRoutes();
         },
         /**
@@ -455,17 +455,18 @@ define('Sage/Platform/Mobile/Application', [
                 this._createViewContainers();
             }
 
-            view._placeAt = domNode || this._rootDomNode;
+            view.srcNodeRef = domNode || this._rootDomNode;
+            view._visible = false; // HACK: dojox/mobile/View will attempt to show the view on startup if _visible is not defined(we need to place the view into the dom before this happens)
 
             this.onRegistered(view);
 
-            aspect.before(view, 'show', lang.hitch(view, function() {
+            view.__signal = aspect.before(view, 'show', lang.hitch(view, function() {
                 var view = this;
                 if (view && !view._started) {
+                    view.__signal.remove();
                     view.init();
-                    view.placeAt(view._placeAt, 'first');
+                    view.placeAt(view.srcNodeRef, 'first');
                     view._started = true;
-                    view._placeAt = null;
                 }
             }));
 

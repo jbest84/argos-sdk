@@ -30,16 +30,18 @@ define('Sage/Platform/Mobile/View', [
     'dijit/_WidgetBase',
     'Sage/Platform/Mobile/_ActionMixin',
     'Sage/Platform/Mobile/_CustomizationMixin',
-    'Sage/Platform/Mobile/_Templated'
+    'Sage/Platform/Mobile/_Templated',
+    'dojox/mobile/View'
 ], function(
     declare,
     lang,
     _WidgetBase,
     _ActionMixin,
     _CustomizationMixin,
-    _Templated
+    _Templated,
+    View
 ) {
-    return declare('Sage.Platform.Mobile.View', [_WidgetBase, _ActionMixin, _CustomizationMixin, _Templated], {
+    return declare('Sage.Platform.Mobile.View', [View, _ActionMixin, _CustomizationMixin, _Templated], {
         /**
          * This map provides quick access to HTML properties, most notably the selected property of the container
          */
@@ -175,7 +177,7 @@ define('Sage/Platform/Mobile/View', [
          */
         routes: null, 
         onDefaultRoute: function(evt) {
-            this.show();
+            this.show(true, true);
         },
         registerDefaultRoute: function() {
             if (this.routes !== null) {
@@ -259,7 +261,8 @@ define('Sage/Platform/Mobile/View', [
                 this.set('title', this.titleText);
             }
 
-            ReUI.show(this.domNode, lang.mixin(transitionOptions || {}, {tag: this.getTag(), data: this.getContext()}));
+            this.inherited(arguments);
+            //ReUI.show(this.domNode, lang.mixin(transitionOptions || {}, {tag: this.getTag(), data: this.getContext()}));
         },
         /**
          * Expands the passed expression if it is a function.
