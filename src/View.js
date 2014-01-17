@@ -41,6 +41,9 @@ define('Sage/Platform/Mobile/View', [
     _Templated,
     View
 ) {
+
+    var mobileShow = View.prototype.show;
+
     return declare('Sage.Platform.Mobile.View', [View, _ActionMixin, _CustomizationMixin, _Templated], {
         /**
          * This map provides quick access to HTML properties, most notably the selected property of the container
@@ -84,6 +87,7 @@ define('Sage/Platform/Mobile/View', [
          * May be defined along with {@link App#hasAccessTo Application hasAccessTo} to incorporate View restrictions.
          */
         security: null,
+        options: null,
         /**
          * May be used to specify the service name to use for data requests. Setting false will force the use of the default service.
          * @property {String/Boolean}
@@ -91,6 +95,7 @@ define('Sage/Platform/Mobile/View', [
         serviceName: false,
         constructor: function() {
             this.initRoutes();
+            this.options = {};
         },
         /**
          * Called from {@link App#_viewTransitionTo Applications view transition handler} and returns
@@ -177,7 +182,14 @@ define('Sage/Platform/Mobile/View', [
          */
         routes: null, 
         onDefaultRoute: function(evt) {
-            this.show(true, true);
+            console.dir(evt);
+            var oldView;
+            if (evt.oldPath) {
+                oldView = App.getView(evt.oldPath);
+                oldView.performTransition('#' + evt.newPath, 1, 'slide');
+            } else {
+                this.show(true, true);
+            }
         },
         registerDefaultRoute: function() {
             if (this.routes !== null) {
@@ -185,7 +197,7 @@ define('Sage/Platform/Mobile/View', [
             }
 
             var router = App.router;
-            router.register('_' + this.id, lang.hitch(this, this.onDefaultRoute));
+            router.register(this.id, lang.hitch(this, this.onDefaultRoute));
         },
         /**
          * The onBeforeTransitionAway event.
@@ -261,8 +273,7 @@ define('Sage/Platform/Mobile/View', [
                 this.set('title', this.titleText);
             }
 
-            this.inherited(arguments);
-            //ReUI.show(this.domNode, lang.mixin(transitionOptions || {}, {tag: this.getTag(), data: this.getContext()}));
+            mobileShow.call(this, true, true);
         },
         /**
          * Expands the passed expression if it is a function.
@@ -291,6 +302,7 @@ define('Sage/Platform/Mobile/View', [
          * Called after the view has been transitioned (slide animation complete) to.
          */
         transitionTo: function() {
+            debugger;
             if (this.refreshRequired)
             {
                 this.refreshRequired = false;

@@ -151,6 +151,7 @@ define('Sage/Platform/Mobile/Application', [
         modules: null,
         views: null,
         router: router,
+        primaryActiveView: null,
         /**
          * Toolbar instances by key name
          * @property {Object}
@@ -193,7 +194,11 @@ define('Sage/Platform/Mobile/Application', [
          */
         destroy: function() {
             array.forEach(this._connects, function(handle) {
-                connect.disconnect(handle);
+                if (handle.remove) {
+                    handle.remove();
+                } else {
+                    connect.disconnect(handle);
+                }
             });
 
             array.forEach(this._subscribes, function(handle){
@@ -212,17 +217,8 @@ define('Sage/Platform/Mobile/Application', [
         uninitialize: function() {
 
         },
-        /**
-         * Cleans up URL to prevent ReUI url handling and then invokes ReUI.
-         */
-        initReUI: function() {
-            // prevent ReUI from attempting to load the URLs view as we handle that ourselves.
-            // todo: add support for handling the URL?
-            window.location.hash = '';
-
-            ReUI.init();
-        },
         initRoutes: function() {
+            window.location.hash = '';
             this.router.startup();
         },
         /**
@@ -240,9 +236,14 @@ define('Sage/Platform/Mobile/Application', [
          */
         initConnects: function() {
             this._connects.push(connect.connect(window, 'resize', this, this.onResize));
-            this._connects.push(connect.connect(win.body(), 'beforetransition', this, this._onBeforeTransition));
-            this._connects.push(connect.connect(win.body(), 'aftertransition', this, this._onAfterTransition));
-            this._connects.push(connect.connect(win.body(), 'show', this, this._onActivate));
+
+            this._connects.push(connect.subscribe('/dojox/mobile/beforeTransitionOut', lang.hitch(this, this._beforeViewTransitionAway)));
+            this._connects.push(connect.subscribe('/dojox/mobile/beforeTransitionIn', lang.hitch(this, this._beforeViewTransitionTo)));
+
+            this._connects.push(connect.subscribe('/dojox/mobile/afterTransitionOut', lang.hitch(this, this._viewTransitionAway)));
+            this._connects.push(connect.subscribe('/dojox/mobile/afterTransitionIn', lang.hitch(this, this._viewTransitionTo)));
+
+            this._connects.push(connect.subscribe('/dojox/mobile/startView', lang.hitch(this, this._startView)));
         },
 
         /**
@@ -298,7 +299,6 @@ define('Sage/Platform/Mobile/Application', [
             this.initServices();
             this.initModules();
             this.initToolbars();
-            //this.initReUI();
             this.initRoutes();
         },
         /**
@@ -447,8 +447,6 @@ define('Sage/Platform/Mobile/Application', [
          * @param {domNode} domNode Optional. A DOM node to place the view in. 
          */
         registerView: function(view, domNode) {
-
-
             this.views[view.id] = view;
 
             if (!domNode) {
@@ -457,19 +455,11 @@ define('Sage/Platform/Mobile/Application', [
 
             view.srcNodeRef = domNode || this._rootDomNode;
             view._visible = false; // HACK: dojox/mobile/View will attempt to show the view on startup if _visible is not defined(we need to place the view into the dom before this happens)
+            view.init();
+            view.placeAt(view.srcNodeRef, 'first');
+            view._started = true;
 
             this.onRegistered(view);
-
-            view.__signal = aspect.before(view, 'show', lang.hitch(view, function() {
-                var view = this;
-                if (view && !view._started) {
-                    view.__signal.remove();
-                    view.init();
-                    view.placeAt(view.srcNodeRef, 'first');
-                    view._started = true;
-                }
-            }));
-
 
             return this;
         },
@@ -523,10 +513,7 @@ define('Sage/Platform/Mobile/Application', [
          * @return {View} Returns the active view instance, if no view is active returns null.
          */
         getPrimaryActiveView: function() {
-            var el = ReUI.getCurrentPage() || ReUI.getCurrentDialog();
-            if (el) return this.getView(el);
-
-            return null;
+            return this.primaryActiveView;
         },
         /**
          * Determines if any registered view has been registered with the provided key.
@@ -596,7 +583,7 @@ define('Sage/Platform/Mobile/Application', [
         },
         onBeforeViewTransitionAway: function(view) {
         },
-        onBeforeViewTransitionTo: function(view) {
+        onBeforeViewTransitionTo: function(view, moveTo, dir, transition, context, method) {
         },
         onViewTransitionAway: function(view) {
         },
@@ -604,37 +591,19 @@ define('Sage/Platform/Mobile/Application', [
         },
         onViewActivate: function(view, tag, data) {
         },
-        _onBeforeTransition: function(evt) {
-            var view = this.getView(evt.target);
-            if (view)
-            {
-                if (evt.out)
-                    this._beforeViewTransitionAway(view);
-                else
-                    this._beforeViewTransitionTo(view);
-            }
+        _startView: function(view) {
+            console.log('startView');
+            this.primaryActiveView = view;
+            this._viewActivate(view);
         },
-        _onAfterTransition: function(evt) {
-            var view = this.getView(evt.target);
-            if (view)
-            {
-                if (evt.out)
-                    this._viewTransitionAway(view);
-                else
-                    this._viewTransitionTo(view);
-            }
-        },
-        _onActivate: function(evt) {
-            var view = this.getView(evt.target);
-            if (view)
-                this._viewActivate(view, evt.tag, evt.data);
-        },
-        _beforeViewTransitionAway: function(view) {
+        _beforeViewTransitionAway: function(view, moveTo, dir, transition, context, method) {
+            console.log('beforeTransitionOut');
             this.onBeforeViewTransitionAway(view);
 
             view.beforeTransitionAway();
         },
-        _beforeViewTransitionTo: function(view) {
+        _beforeViewTransitionTo: function(view, moveTo, dir, transition, context, method) {
+            console.log('beforeTransitionIn');
             this.onBeforeViewTransitionTo(view);
 
             for (var n in this.bars)
@@ -643,12 +612,15 @@ define('Sage/Platform/Mobile/Application', [
 
             view.beforeTransitionTo();
         },
-        _viewTransitionAway: function(view) {
+        _viewTransitionAway: function(view, moveTo, dir, transition, context, method) {
+            console.log('afterTransitionOut');
             this.onViewTransitionAway(view);
 
             view.transitionAway();
         },
-        _viewTransitionTo: function(view) {
+        _viewTransitionTo: function(view, moveTo, dir, transition, context, method) {
+            console.log('afterTransitionIn');
+            this.primaryActiveView = view;
             this.onViewTransitionTo(view);
 
             var tools = (view.options && view.options.tools) || view.getTools() || {};
@@ -659,10 +631,11 @@ define('Sage/Platform/Mobile/Application', [
 
             view.transitionTo();
         },
-        _viewActivate: function(view, tag, data) {
+        _viewActivate: function(view) {
             this.onViewActivate(view);
 
-            view.activate(tag, data);
+            // TODO: Fix
+            view.activate(null, {});// tag and data are now undefined
         },
         /**
          * Searches ReUI.context.history by passing a predicate function that should return true
