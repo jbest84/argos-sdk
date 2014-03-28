@@ -1194,9 +1194,8 @@ img {
   height: 24px;
 }
 .related-view-widget .tab .title {
-  font-size: 0.8em;
+  font-size: 1.00em;
   font-weight: bold;
-  color: #727272;
   padding: 0 0 0 14px;
   float: left;
 }
@@ -1233,6 +1232,7 @@ img {
 }
 .related-view-widget .action-item {
   padding: 0 2px;
+  margin: 10px;
 }
 .related-view-widget .action-item > img {
   width: 24px;
@@ -1243,6 +1243,58 @@ img {
   color: #408da7;
   float: left;
   padding: 0 10px;
+}
+.related-view-widget .item-actions {
+  font-weight: bold;
+  color: #408da7;
+  font-size: 1.2em;
+  text-align: right;
+  padding: 0 2px;
+  margin: 2px;
+}
+.related-view-widget .item-actions .action-item {
+  padding: 0 2px;
+  margin: 10px;
+}
+.related-view-widget .item-actions .action-item-with-button {
+  font-weight: bold;
+  color: white;
+  font-size: 0.5em;
+  text-align: center;
+  padding: 0 2px;
+  margin: 1px 2px 1px 2px;
+  line-height: 18px;
+  cursor: pointer;
+  border: 1px outset #727272;
+  border-image-source: initial;
+  border-image-slice: initial;
+  border-image-width: initial;
+  border-image-outset: initial;
+  border-image-repeat: initial;
+  background-color: #727272;
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  border-radius: 2px;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  outline-color: #fe5000;
+}
+.related-view-widget .selected {
+  background-color: #00678a !important;
+}
+.related-view-widget .un-selected {
+  background-color: #a1a1a1 !important;
+}
+.related-view-widget .item-actions .action-item-with-icon > img {
+  width: 24px;
+  height: 24px;
+}
+.related-view-widget .item-actions .action-item-with-icon .selected {
+  outline-color: #fe5000;
+}
+.related-view-widget .disabled {
+  opacity: 0.3;
 }
 .related-view-widget .header {
   padding: 1px;
@@ -1293,13 +1345,14 @@ img {
   color: #212721;
   left: 40px;
   position: relative;
-  padding: 0 40px 0 0;
+  padding: 0 40px 5px 0px;
 }
 .related-view-widget .item .item-detail {
   color: #727272;
   left: 40px;
   position: relative;
   padding: 0 40px 0 0;
+  line-height: 1.25em;
 }
 .related-view-widget .item .item-footer {
   font-size: 0.65em;

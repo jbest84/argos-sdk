@@ -305,8 +305,8 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         },
         createItemActions: function(actions, itemNode, itemEntry ) {
             var i, action, actionNode, actionTemplate, options, modeOption, selected, enabled, modeClss, applySelection, itemActionNode;
-            itemsActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
-            domConstruct.place(itemsActionNode, itemNode, 'last');
+            itemActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
+            domConstruct.place(itemActionNode, itemNode, 'last');
                 for (i = 0; i < actions.length; i++) {
                     applySelection = false;
                     enabled = false;
@@ -369,7 +369,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
 
                     actionNode = domConstruct.toDom(actionTemplate.apply(action, modeOption, this));
                     on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
-                    domConstruct.place(actionNode, itemsActionNode, 'last');
+                    domConstruct.place(actionNode, itemActionNode, 'last');
                 }
 
         },
@@ -464,7 +464,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             }
         },
         getItemEntry: function(entryid){
-            var len, entry;
+            var i, len, entry;
             entry = null;
             if (this._itemEntries) {
                 len = this._itemEntries.length;
