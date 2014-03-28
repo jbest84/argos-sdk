@@ -61,10 +61,13 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         loadingText: 'loading ... ',
         refreshViewText: 'refresh',
         itemOfCountText: ' ${0} of ${1}',
-        totalCountText: ' (${0})',
+        totalCountText: ' ${0}',
+        deleteText: 'Delete',
+        editText:'Edit',
         parentProperty: '$key',
         parentEntry: null,
         relatedProperty: '$key',
+        relatedItemKeyProperty:'$key', 
         relatedEntry: null,
         itemsNode: null,
         loadingNode: null,
@@ -96,10 +99,19 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         _isInitLoad: true,
         showTab: true,
         showTotalInTab: true,
+        showItemIcon: true,
+        showItemHeader: true,
+        showItemFooter: true,
+        showItemDetail: true,
         showSelectMore: false, 
         hideWhenNoData: false,
+        enableItemActions: false,
         enableActions: true,
+        showItemActionAsButton: false,
+        showActionAsButton: false,
         _subscribes: null,
+        _itemEntrys: null,
+
         /**
          * @property {Simplate}
          * Simple that defines the HTML Markup
@@ -141,7 +153,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             '</div>',
             '<div data-dojo-attach-point="titleNode" data-dojo-attach-event="onclick:toggleView"  class="title" >{%: ($.title ) %} </div>',
             '</span>',
-            '<div class="line-bar"></div>'
+           // '<div class="line-bar"></div>'
         ]),
         relatedViewHeaderTemplate: new Simplate([
             ''
@@ -159,7 +171,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             '</div>'
         ]),
         relatedItemIconTemplate: new Simplate([
-             '<img src="{%: $$.itemIcon %}" />'
+            '<img src="{%: $$.itemIcon %}" />'
         ]),
         relatedItemHeaderTemplate: new Simplate([
               '<div>{%: $.$descriptor %}</div>'
@@ -168,35 +180,59 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
               '<div></div>'
         ]),
         relatedItemFooterTemplate: new Simplate([
-            '<div></div>'
+             '<div></div>'
         ]),
-        relatedItemTemplate: new Simplate([
+       relatedItemTemplate: new Simplate([
+                '{% if ($$.showItemIcon) { %}',
                '<div class="item-icon">',
                    '{%! $$.relatedItemIconTemplate %}',
                '</div>',
+               '{% } %}',
+               '{% if ($$.showItemHeader) { %}',
                '<div class="item-header">',
                    '{%! $$.relatedItemHeaderTemplate %}',
                '</div>',
+               '{% } %}',
+               '{% if ($$.showItemDetail) { %}',
                '<div class="item-detail">',
                   '{%! $$.relatedItemDetailTemplate %}',
                '</div>',
+                '{% } %}',
+                '{% if ($$.showItemFooter) { %}',
                '<div class="item-footer">',
                    '{%! $$.relatedItemFooterTemplate %}',
-               '</div>'
+               '</div>',
+               '{% } %}',
         ]),
         loadingTemplate: new Simplate([
            '<div class="loading-indicator"><div>{%= $.loadingText %}</div></div>'
         ]),
-
         relatedActionTemplate: new Simplate([
-           '<span class="action-item" data-id="{%= $.actionIndex %}">',
-                  '<img src="{%= $.icon %}" alt="{%= $.label %}" />',
+           '<span class="action-item" action-id="{%= $.actionIndex %}">',
+                 '<img src="{%= $.icon %}" alt="{%= $.label %}" />',
            '</span>'
+        ]),
+        relatedItemActionsTemplate: new Simplate([
+            '<div class="item-actions"></div>'
+        ]),
+        relatedItemActionTemplate: new Simplate([
+           '{% if ($.showButton) { %}',
+                '<button  data-action="{%= $.name %}" data-action-index="{%= $.actionIndex %}" data-item-key="{%: $$.itemKey %}" data-selected="{%: $$.selected %}" data-enabled="{%: $$.enabled %}" class="action-item-with-button {%: $$.clss %}"',
+                     '<span> {%= $.label %}</span>',
+                '</button>',
+           '{% } else { %}',
+                 '<span data-action="{%= $.name %}" data-action-index="{%= $.actionIndex %}" data-item-key="{%: $$.$itemKey %}" data-selected="{%: $$.selected %}" data-enabled="{%: $$.enabled %}" class="action-item-with-icon {%: $$.clss %}">',
+                    '<img src="{%= $.icon %}" alt="{%= $.label %}" />',
+                '</span>',
+               
+           '{% } %}'
         ]),
         constructor: function(options) {
             lang.mixin(this, options);
             this._subscribes = [];
             this._subscribes.push(connect.subscribe('/app/refresh', this, this._onAppRefresh));
+            this.setDefaultActions();
+            this.setDefaultItemActions();
         },
         postCreate:function(){
             if (!this.showTab) {
@@ -205,23 +241,50 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             if (this.enableActions) {
                 this.createActions(this._createCustomizedLayout(this.createActionLayout(), 'relatedview-actions'));
             }
+            if (this.enableItemActions) {
+              this.itemActions = this._createCustomizedLayout(this.createItemActionLayout(), 'relatedview-item-actions');
+            }
         },
-        createActionLayout: function() {
-            return this.actions || (this.actions = [{
+        setDefaultActions: function() {
+            this.actions = [{
                 id: 'refresh',
                 icon: 'content/images/icons/Recurring_24x24.png',
                 label: this.refreshViewText,
                 action: 'onRefreshView',
-                isEnabled:true
+                isEnabled: true
             }, {
                 id: 'navtoListView',
                 icon: 'content/images/icons/drilldown_24.png',
                 label: this.viewContactsActionText,
                 action: 'onNavigateToList',
-                isEnabled:true,
+                isEnabled: true,
                 fn: this.onNavigateToList.bindDelegate(this)
-            }]
-            );
+            }];
+
+        },
+        setDefaultItemActions: function() {
+            this.itemActions = [{
+                id: 'edit',
+                icon: 'content/images/icons/edit_24x24.png',
+                label: this.editText,
+                action: 'onItemEdit',
+                isEnabled: true,
+                fn: this.onItemEdit.bindDelegate(this)
+            }, {
+                id: 'delete',
+                icon: 'content/images/icons/delete_24.png',
+                label: this.deleteText,
+                action: 'onItemDelete',
+                isEnabled: true,
+                fn: this.onItemDelete.bindDelegate(this)
+            }];
+
+        },
+        createActionLayout: function() {
+            return this.actions || (this.actions = []);
+        },
+        createItemActionLayout: function() {
+            return this.itemActions || (this.itemActions = []);
         },
         createActions: function(actions) {
             var i,action, actionNode, actionTemplate, options;
@@ -240,9 +303,79 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
 
             this.actions = actions;
         },
+        createItemActions: function(actions, itemNode, itemEntry ) {
+            var i, action, actionNode, actionTemplate, options, modeOption, selected, enabled, modeClss, applySelection, itemActionNode;
+            itemsActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
+            domConstruct.place(itemsActionNode, itemNode, 'last');
+                for (i = 0; i < actions.length; i++) {
+                    applySelection = false;
+                    enabled = false;
+                    selected = false;
+                    action = actions[i];
+                    options = {
+                        actionIndex: i,
+                        itemKey: itemEntry[this.relatedItemKeyProperty],
+                        showButton: this.showItemActionAsButton
+                    };
+                    actionTemplate = action.template || this.relatedItemActionTemplate;
+                    lang.mixin(action, options);
+                    if (action.selected) {
+                        if (typeof action.selected === 'function') {
+                            try{
+                                selected = action.selected.call(this, itemEntry);
+                            } catch(error){
+                            
+                            }
+                            applySelection = true;
+                        } else {
+                            selected = true;
+                        }
+                    } else {
+                        selected = true;
+                    }
+
+                    if (action.enabled) {
+                        if (typeof action.enabled === 'function') {
+                            try{
+                                enabled = action.enabled.call(this,itemEntry);
+                            } catch (error) {
+
+                            }
+                        } else {
+                            enabled = true;
+                        }
+                    } else {
+                        enabled = true;
+                    }
+                    modeClss = '';
+                    if(!enabled){
+                        modeClss = " disabled";
+                    }
+                    if (applySelection) {
+                        if (selected) {
+                            modeClss = modeClss + " selected";
+                        } else {
+
+                            modeClss = modeClss + "un-selected";
+                        }
+                    }
+                    modeOption = {
+                        itemKey: itemEntry[this.relatedItemKeyProperty],
+                        itemEntry: itemEntry,
+                        selected: selected,
+                        enabled: enabled,
+                        clss: modeClss
+                    };
+
+                    actionNode = domConstruct.toDom(actionTemplate.apply(action, modeOption, this));
+                    on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
+                    domConstruct.place(actionNode, itemsActionNode, 'last');
+                }
+
+        },
         onInvokeActionItem: function(evt) {
             var action , parameters, index;
-            index = evt.currentTarget.attributes['data-id'].value;
+            index = evt.currentTarget.attributes['action-id'].value;
                action = this.actions[index];
                 if (action) {
                     if (action.isEnabled) {
@@ -258,6 +391,29 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     }
                 }
                 event.stop(evt);
+        },
+        onInvokeItemActionItem: function(evt) {
+            var action, parameters, itemEntry, itemEntryKey, index, el;
+            el = evt.currentTarget;
+            index = evt.currentTarget.attributes['data-action-index'].value;
+            itemEntryKey = evt.currentTarget.attributes['data-item-key'].value;
+            itemEntry = this.getItemEntry(itemEntryKey);
+            action = this.itemActions[index];
+            //parameters = this._getParametersForAction(action.name, evt, el);
+            if (action) {
+                if (action.isEnabled) {
+                    if (action['fn']) {
+                        action['fn'].call(action['scope'] || this, action, itemEntryKey, itemEntry);
+                    }
+                    else {
+
+                        if (typeof this[action['action']] === 'function') {
+                            this[action['action']](action, itemEntryKey, itemEntry);
+                        }
+                    }
+                }
+            }
+            event.stop(evt);
         },
         getStore: function() {
             var store = new SDataStore({
@@ -307,6 +463,20 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 this.onLoad();
             }
         },
+        getItemEntry: function(entryid){
+            var len, entry;
+            entry = null;
+            if (this._itemEntries) {
+                len = this._itemEntries.length;
+                for (i = 0; i < len; i++) {
+                    if (this._itemEntries[i][this.relatedItemKeyProperty] === entryid) {
+                        entry = this._itemEntries[i];
+                        return entry;
+                    }
+                }
+            }
+            return entry;
+        },
         onLoad: function() {
             var data;
             if (this.relatedData) {
@@ -355,7 +525,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             var i, relatedHTML, itemEntry, itemNode, headerNode, footerNode, itemsNode, itemHTML, moreData, restCount, moreCount ;
             try {
 
-               
+                this._itemEntries = relatedFeed;
                 if (!this.itemsNode) {
                     this.itemsNode = domConstruct.toDom("<div id='itemsNode' class='items'><div>");
                     domConstruct.place(this.itemsNode, this.relatedViewNode, 'last', this);
@@ -387,6 +557,9 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         itemNode = domConstruct.toDom(itemHTML);
                         on(itemNode, 'click', lang.hitch(this, this.onSelectViewRow));
                         domConstruct.place(itemNode, this.itemsNode, 'last', this);
+                        if (this.itemActions) {
+                            this.createItemActions(this.itemActions, itemNode, itemEntry);
+                        }
                     }
                     
                 } else {
@@ -478,6 +651,12 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         onRefreshView: function(evt) {
             this._onRefreshView();
             evt.stopPropagation();
+        },
+        onItemDelete: function() {
+
+        },
+        onItemEdit: function() {
+
         },
         _onRefreshView: function() {
             var view, nodes;

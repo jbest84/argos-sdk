@@ -37,6 +37,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
     'Sage/Platform/Mobile/Format',
     'Sage/Platform/Mobile/Utility',
     'Sage/Platform/Mobile/ErrorManager',
+    'Sage/Platform/Mobile/RelatedViewManager',
     'Sage/Platform/Mobile/View'
 ], function(
     dojo,
@@ -50,6 +51,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
     format,
     utility,
     ErrorManager,
+    RelatedViewManager,
     View
 ) {
 
@@ -178,6 +180,27 @@ define('Sage/Platform/Mobile/_DetailBase', [
             '</a>',
             '</li>'
         ]),
+
+        /**
+        * @property {Simplate}
+        * HTML that is used for detail layout items that point to imbeaded related views, displayed related view widget
+        *
+        * * `$` => detail layout row
+        * * `$$` => view instance
+        */
+        relatedViewTemplate: new Simplate([
+            '<li class="{%= $.cls %}">',
+        //    '<a data-action="activateRelatedList" data-view="{%= $.view %}" data-context="{%: $.context %}">',
+        //    '{% if ($.icon) { %}',
+        //    '<img src="{%= $.icon %}" alt="icon" class="icon" />',
+        //    '{% } %}',
+        //  '<span>{%: $.label %}</span>',
+        //    '</a>',
+            '<div id="list-item-content-related"></div>',
+            '</li>',
+        ]),
+
+
         /**
          * @property {Simplate}
          * HTML that is used for detail layout items that fire an action, displayed with label and property value
@@ -305,6 +328,11 @@ define('Sage/Platform/Mobile/_DetailBase', [
 
         keyProperty: '',
         descriptorProperty: '',
+
+        /**
+         * The related view managers for each related view definition.
+         */
+        relatedViewManagers: null,
 
         /**
          * Extends the dijit widget postCreate to subscribe to the global `/app/refresh` event and clear the view.
@@ -605,7 +633,19 @@ define('Sage/Platform/Mobile/_DetailBase', [
                                     : this.actionPropertyTemplate
                                 : this.propertyTemplate;
 
-                var rowNode = domConstruct.place(template.apply(data, this), sectionNode);
+                var rowNode;
+                var docfrag;
+                if (current['relatedView']) {
+                    rowNode = domConstruct.toDom(this.relatedViewTemplate.apply(data, this));
+                    docfrag = document.createDocumentFragment();
+                    docfrag.appendChild(rowNode);
+                    this.onProcessRelatedViews(current['relatedView'], rowNode, entry);
+                    if (docfrag.childNodes.length > 0) {
+                        domConstruct.place(docfrag, sectionNode, 'last');
+                    }
+                } else {
+                    rowNode = domConstruct.place(template.apply(data, this), sectionNode);
+                }
 
                 if (current['onCreate']) {
                     callbacks.push({ row: current, node: rowNode, value: value, entry: entry });
@@ -823,6 +863,61 @@ define('Sage/Platform/Mobile/_DetailBase', [
             this.set('detailContent', this.emptyTemplate.apply(this));
 
             this._navigationOptions = [];
+        },
+        /**
+         * Gets the related view manager for a related view definition. 
+         * If a manager is not found a new Related View Manager is created and returned.
+         * @return {Object} RelatedViewManager
+         */
+        getRelatedViewManager: function(relatedView) {
+            var relatedViewManager, options;
+            if (!this.relatedViewManagers) {
+                this.relatedViewManagers = {};
+            }
+            if (this.relatedViewManagers[relatedView.id]) {
+                relatedViewManager = this.relatedViewManagers[relatedView.id];
+            } else {
+                options = {
+                    id: relatedView.id,
+                    relatedViewConfig: relatedView
+                };
+                relatedViewManager = new RelatedViewManager(options);
+                this.relatedViewManagers[relatedView.id] = relatedViewManager;
+            }
+            return relatedViewManager;
+        },
+        /**
+         *
+         * Add the each item and row to the RelateView manager which in turn creates the new related view and renders its content with in the current row.`
+         *
+         * @param {Object} the related view config.
+         * @param {Object} entry the current item from the data.
+         * @param {Object} rownode the current dom node to add the widget to.
+         */
+        onProcessRelatedViews: function(relatedView, rowNode, entry) {
+            var relatedViewManager, i;
+            try {
+                if (relatedView.enabled) {
+                    relatedViewManager = this.getRelatedViewManager(relatedView);
+                    if (relatedViewManager) {
+                        relatedViewManager.addView(entry, rowNode);
+                    }
+                }
+            }
+            catch (error) {
+                console.log('Error processing related view:' + error);
+            }
+        },
+        
+        /**
+         *  Destroys all of the related view widgets, that was added.
+         */
+        destroyRelatedViewWidgets: function() {
+            if (this.relatedViewManagers) {
+                for (var relatedViewId in this.relatedViewManagers) {
+                    this.relatedViewManagers[relatedViewId].destroyViews();
+                }
+            }
         }
     });
 });
