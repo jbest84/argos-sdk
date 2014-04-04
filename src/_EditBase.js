@@ -124,7 +124,7 @@ define('Sage/Platform/Mobile/_EditBase', [
          *
          */
         widgetTemplate: new Simplate([
-            '<div id="{%= $.id %}" title="{%: $.titleText %}" class="overthrow edit panel {%= $.cls %}" {% if ($.resourceKind) { %}data-resource-kind="{%= $.resourceKind %}"{% } %}>',            
+            '<div id="{%= $.id %}" title="{%: $.titleText %}" class="overthrow edit panel {%= $.cls %}" {% if ($.resourceKind) { %}data-resource-kind="{%= $.resourceKind %}"{% } %}>',
             '{%! $.loadingTemplate %}',
             '{%! $.validationSummaryTemplate %}',
             '<div class="panel-content" data-dojo-attach-point="contentNode"></div>',
@@ -139,7 +139,7 @@ define('Sage/Platform/Mobile/_EditBase', [
         loadingTemplate: new Simplate([
             '<fieldset class="panel-loading-indicator">',
             '<div class="row"><div>{%: $.loadingText %}</div></div>',
-            '</fieldset>'        
+            '</fieldset>'
         ]),
         /**
          * @property {Simplate}
@@ -176,8 +176,8 @@ define('Sage/Platform/Mobile/_EditBase', [
          * `$` => the view instance
          */
         sectionBeginTemplate: new Simplate([
-            '<h2 data-action="toggleSection" class="{% if ($.collapsed || $.options.collapsed) { %}collapsed{% } %}">',
-            '{%: ($.title || $.options.title) %}<button class="collapsed-indicator" aria-label="{%: $$.toggleCollapseText %}"></button>',
+            '<h2>',
+            '{%: ($.title || $.options.title) %}',
             '</h2>',
             '<fieldset class="{%= ($.cls || $.options.cls) %}">'
         ]),
@@ -256,11 +256,6 @@ define('Sage/Platform/Mobile/_EditBase', [
          */
         titleText: 'Edit',
         /**
-         * @property {String}
-         * ARIA label text for a collapsible section header
-         */
-        toggleCollapseText: 'toggle collapse',
-        /**
          * @cfg {String}
          * The text placed in the header when there are validation errors
          */
@@ -322,10 +317,11 @@ define('Sage/Platform/Mobile/_EditBase', [
                 }
             }, this);
         },
-        // Override the Views registerDefaultRoute to include the entity id in the route
-        registerDefaultRoute: function() {
-            var router = App.router;
-            router.register(['_', this.id, ';:key'].join(''), lang.hitch(this, this.onDefaultRoute));
+        onSetupRoutes: function() {
+            var app = window.App;
+            if (app) {
+                app.registerRoute(this, [this.id, '/:key'].join(''), lang.hitch(this, this.onDefaultRoute));
+            }
         },
         onDefaultRoute: function(evt) {
             var primary = App.getPrimaryActiveView();
@@ -334,7 +330,7 @@ define('Sage/Platform/Mobile/_EditBase', [
             }
 
             if (evt.params.key) {
-                this.show({
+                this.showViaRoute({
                     descriptor: '',
                     key: evt.params.key
                 });
@@ -460,16 +456,6 @@ define('Sage/Platform/Mobile/_EditBase', [
 
             return this.inherited(arguments);
         },
-        /**
-         * Toggles the collapsed state of the section.
-         * @param {Object} params Collection of `data-` attributes from the source node.
-         */
-        toggleSection: function(params) {
-            var node = dom.byId(params.$source);
-            if (node) {
-                domClass.toggle(node, 'collapsed');
-            }
-        },
         createStore: function() {
             return null;
         },
@@ -498,7 +484,7 @@ define('Sage/Platform/Mobile/_EditBase', [
             this.entry = this.processEntry(this.convertEntry(entry || {})) || {};
 
             if (!this.options.descriptor) {
-                App.setPrimaryTitle(this.entry[this.descriptorProperty]);
+                App.setPrimaryTitle(this.entry[this.labelProperty]);
             }
 
             this.setValues(entry, true);
@@ -578,7 +564,7 @@ define('Sage/Platform/Mobile/_EditBase', [
          * @return {String} View key
          */
         getTag: function() {
-            var tag = this.options && this.options.entry && this.options.entry[this.keyProperty];
+            var tag = this.options && this.options.entry && this.options.entry[this.idProperty];
             if (!tag) {
                 tag = this.options && this.options.key;
             }
@@ -898,7 +884,7 @@ define('Sage/Platform/Mobile/_EditBase', [
                 var returnTo = this.options.returnTo,
                     view = App.getView(returnTo);
                 if (view) {
-                    view.show();
+                    App.goRoute(view.id);
                 } else {
                     window.location.hash = returnTo;
                 }
@@ -1016,7 +1002,7 @@ define('Sage/Platform/Mobile/_EditBase', [
                 var returnTo = this.options.returnTo,
                     view = App.getView(returnTo);
                 if (view) {
-                    view.show();
+                    App.goRoute(view.id);
                 } else {
                     window.location.hash = returnTo;
                 }
@@ -1078,7 +1064,7 @@ define('Sage/Platform/Mobile/_EditBase', [
             return lang.mixin(this.inherited(arguments), {
                 resourceKind: this.resourceKind,
                 insert: this.options.insert,
-                key: this.options.insert ? false : this.options.key ? this.options.key : this.options.entry && this.options.entry[this.keyProperty]
+                key: this.options.insert ? false : this.options.key ? this.options.key : this.options.entry && this.options.entry[this.idProperty]
             });
         },
         /**
@@ -1098,7 +1084,7 @@ define('Sage/Platform/Mobile/_EditBase', [
          */
         beforeTransitionTo: function() {
             if (this.refreshRequired) {
-                if (this.options.insert === true || this.options.key) {
+                if (this.options.insert === true || (this.options.key && !this.options.entry)) {
                     domClass.add(this.domNode, 'panel-loading');
                 } else {
                     domClass.remove(this.domNode, 'panel-loading');
@@ -1126,10 +1112,9 @@ define('Sage/Platform/Mobile/_EditBase', [
                         return false;
                     }
                 }
-                return true;
-            } else {
-                return this.inherited(arguments);
             }
+
+            return this.inherited(arguments);
         },
         /**
          * Refresh first clears out any variables set to previous data.
