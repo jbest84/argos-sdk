@@ -1426,11 +1426,15 @@ img
   height: 25px;
   width: 25px;
 }
+.list-item-content-related-view
+{
+     padding: 4px 1px 10px 24px;
+     position: relative;
+}
+
 .related-view-widget
 {
-    padding: 4px 1px 10px 24px;
-	position: relative;
-	
+    padding: 0px;
 }
 
 .related-view-widget .panel
@@ -1439,7 +1443,7 @@ img
     position: relative;
     top: 0px;
 }
-.related-view-widget > h4
+.related-view-widget > xh4
 {
    font-size: 0.65em;
 }
@@ -1447,17 +1451,18 @@ img
 {
     margin: 0;
     padding: 1px;
+    background-color: @gray1-lighter;
 }
 
 .related-view-widget .tab-items
 {
     margin: 0;
-    padding: 1px;
+    padding: 2px;
     text-align: left;
 }
 .related-view-widget  .tab-item
 {
-    padding: 0 2px;
+    margin: 0px 12px 0px 0px;
 }
 
 .related-view-widget .tab-item > img
@@ -1489,7 +1494,7 @@ img
     text-align: center;
     width:24px;
     height:24px;
-    padding: 0 0 0 6px;
+    padding:0px;
 	float:left;
 }
 
@@ -1513,6 +1518,7 @@ img
     font-size: 0.6em;
     font-weight: bold;
     text-align: right;
+    margin: 5px 5px 0px 0px;
 }
 
 .related-view-widget .action-item
@@ -1542,8 +1548,9 @@ img
     color: @blue3-dark;
     font-size: 1.2em;
     text-align: right;
-    padding: 0 2px;
+    padding: 4px;
     margin: 2px;
+   // background-color: @gray1-dark;
 }
 
 .related-view-widget .item-actions .action-item
@@ -1551,6 +1558,12 @@ img
     padding: 0 2px;
     margin: 10px;
 }
+
+.related-view-widget .item-actions .hidden
+{
+    display:none;
+}
+
 
 .related-view-widget .item-actions .action-item-with-button 
 {
@@ -1560,15 +1573,15 @@ img
     text-align: center;
     padding: 0 2px;
     margin: 1px 2px 1px 2px;
-    line-height: 18px;
+    line-height: 20px;
     cursor: pointer;
-    border: 1px outset @gray1-dark;
+    border: 1px outset @gray1-lighter;
     border-image-source: initial;
     border-image-slice: initial;
     border-image-width: initial;
     border-image-outset: initial;
     border-image-repeat: initial;
-    background-color: @gray1-dark;
+    background-color: @gray1-lighter;
     box-sizing: border-box;
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -1578,9 +1591,23 @@ img
     outline-color: #fe5000;
 }
 
+.related-view-widget .item-actions .action-item-with-button > img
+{
+   width:16px;
+   height:16px;
+   vertical-align: middle;
+   margin: 1px 1px 3px 1px;
+}
+
  .related-view-widget .selected
  {
      background-color: @blue3-darker !important;
+ }
+ .related-view-widget .clear
+ {
+     background-color: white !important;
+     color: @gray1-dark !important;
+      border: 0px outset @gray1-dark !important;
  }
  .related-view-widget .un-selected
  {
@@ -1596,8 +1623,6 @@ img
 {
      outline-color: #fe5000;
 }
-
-
 
 .related-view-widget .disabled
 {
@@ -1635,8 +1660,13 @@ img
     text-overflow: ellipsis;
     overflow: hidden;
     position: relative;
-}
 
+   
+}
+.related-view-widget .item  td
+{
+    vertical-align:top;
+}
 .related-view-widget .item 
 {
     font-size: 0.85em;
@@ -1647,6 +1677,7 @@ img
     position: relative;
     text-overflow: ellipsis;
     margin:1px;
+
 }
 
 .related-view-widget .item .item-icon 
@@ -1656,7 +1687,7 @@ img
     height: 22px;
     left: 0;
     padding: 0;
-    position: absolute;
+    position: relative;
     top: 0;
     width: 28px;
 
@@ -1664,7 +1695,7 @@ img
 .related-view-widget .item .item-header
 {
     color:@black-darker;
-    left: 40px;
+    left: 4px;
     position: relative;
 	padding: 0 40px 5px 0px;
 
@@ -1672,7 +1703,7 @@ img
 .related-view-widget .item .item-detail 
 {
     color:@gray1-dark;
-    left: 40px;
+    left: 4px;
     position: relative;
 	padding: 0 40px 0 0;
     line-height: 1.25em;
@@ -1724,4 +1755,3 @@ img
 {
     display: inline-block;
 }
-

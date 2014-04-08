@@ -22,6 +22,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
     'dojo/string',
     'dojo/dom-class',
     'dojo/when',
+    'dojo/_base/Deferred',
     'dojo/dom-construct',
     'dojo/query',
     'dojo/dom-attr',
@@ -40,6 +41,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
     string,
     domClass,
     when,
+    Deferred,
     domConstruct,
     query,
     domAttr,
@@ -72,10 +74,12 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         itemsNode: null,
         loadingNode: null,
         id: 'related-view',
+        iconDrillToDetail: 'content/images/icons/drilldown_24.png',
         icon: 'content/images/icons/ContactProfile_48x48.png',
         itemIcon: 'content/images/icons/ContactProfile_48x48.png',
         title: 'Related View',
         detailViewId: null,
+        editViewId: null,
         listViewId: null,
         listViewWhere: null,
         enabled: false,
@@ -107,8 +111,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         hideWhenNoData: false,
         enableItemActions: false,
         enableActions: true,
-        showItemActionAsButton: false,
-        showActionAsButton: false,
         _subscribes: null,
         _itemEntrys: null,
 
@@ -126,7 +128,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                        'tab collapsed ',
                     '{% } %}',
                     '" >',
-                    '<div class="tab-items">',
+                    '<div data-dojo-attach-event="onclick:toggleView" class="tab-items">',
                        '{%! $$.relatedViewTabItemsTemplate %}',
                     '</div>',
                     '</div>',
@@ -147,12 +149,20 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
              '<div class="nodata"> {%: $$.nodataText %}</div>'
         ]),
         relatedViewTabItemsTemplate: new Simplate([
+            '<div class="tab-item tab-icon">',
+               '<img src="{%= $.icon %}" alt="{%= $.title %}" />',
+            '</div>',
+             '<div class="tab-item">',
+                '<div data-dojo-attach-point="titleNode" >{%= $.title %}</div>',
+            '</div>'
+        ]),
+        o_relatedViewTabItemsTemplate: new Simplate([
             '<span class="tab-item">',
             '<div class="tab-icon" data-dojo-attach-event="onclick:onNavigateToList">',
                '<img src="{%= $.icon %}" alt="{%= $.title %}" />',
             '</div>',
             '<div data-dojo-attach-point="titleNode" data-dojo-attach-event="onclick:toggleView"  class="title" >{%: ($.title ) %} </div>',
-            '</span>',
+            '</span>'
            // '<div class="line-bar"></div>'
         ]),
         relatedViewHeaderTemplate: new Simplate([
@@ -182,12 +192,21 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         relatedItemFooterTemplate: new Simplate([
              '<div></div>'
         ]),
-       relatedItemTemplate: new Simplate([
-                '{% if ($$.showItemIcon) { %}',
+        relatedItemRightTemplate: new Simplate([
+               '<div></div>',
+        ]),
+        relatedItemLeftTemplate: new Simplate([
+               '{% if ($$.showItemIcon) { %}',
                '<div class="item-icon">',
                    '{%! $$.relatedItemIconTemplate %}',
                '</div>',
-               '{% } %}',
+               '{% } %}'
+        ]),
+       relatedItemTemplate: new Simplate([
+               '<table>',
+               '<tr>',
+               '<td> {%! $$.relatedItemLeftTemplate %}</td>',
+               '<td>',
                '{% if ($$.showItemHeader) { %}',
                '<div class="item-header">',
                    '{%! $$.relatedItemHeaderTemplate %}',
@@ -203,6 +222,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                    '{%! $$.relatedItemFooterTemplate %}',
                '</div>',
                '{% } %}',
+                '</td>',
+                '<td>{%! $$.relatedItemRightTemplate %}</td>',
+                '</tr>',
+               '</table>',
         ]),
         loadingTemplate: new Simplate([
            '<div class="loading-indicator"><div>{%= $.loadingText %}</div></div>'
@@ -213,19 +236,15 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
            '</span>'
         ]),
         relatedItemActionsTemplate: new Simplate([
-            '<div class="item-actions"></div>'
+            '<div class="item-actions hidden"></div>'
         ]),
         relatedItemActionTemplate: new Simplate([
-           '{% if ($.showButton) { %}',
-                '<button  data-action="{%= $.name %}" data-action-index="{%= $.actionIndex %}" data-item-key="{%: $$.itemKey %}" data-selected="{%: $$.selected %}" data-enabled="{%: $$.enabled %}" class="action-item-with-button {%: $$.clss %}"',
+                '<button  data-action="{%= $.name %}" data-action-index="{%= $.actionIndex %}" data-item-key="{%: $.itemKey %}" data-enabled="{%: $.enabled %}" class="action-item-with-button {%: $.cls %}">',
+                     '{% if ($.icon) { %}',
+                          '<img src="{%= $.icon %}" alt="{%= $.label %}" />',
+                      '{% } %}',
                      '<span> {%= $.label %}</span>',
                 '</button>',
-           '{% } else { %}',
-                 '<span data-action="{%= $.name %}" data-action-index="{%= $.actionIndex %}" data-item-key="{%: $$.$itemKey %}" data-selected="{%: $$.selected %}" data-enabled="{%: $$.enabled %}" class="action-item-with-icon {%: $$.clss %}">',
-                    '<img src="{%= $.icon %}" alt="{%= $.label %}" />',
-                '</span>',
-               
-           '{% } %}'
         ]),
         constructor: function(options) {
             lang.mixin(this, options);
@@ -259,22 +278,31 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 action: 'onNavigateToList',
                 isEnabled: true,
                 fn: this.onNavigateToList.bindDelegate(this)
+            }, {
+                id: 'view-item-actions',
+                icon: 'content/images/icons/headerMenu_24.png',
+                label: 'View Actions',
+                action: 'onViewItemActions',
+                isEnabled: true,
+                fn: this.onViewItemActions.bindDelegate(this)
             }];
 
         },
         setDefaultItemActions: function() {
             this.itemActions = [{
                 id: 'edit',
-                icon: 'content/images/icons/edit_24x24.png',
-                label: this.editText,
+                label: '',
+                icon: 'content/images/icons/edit_24.png',
                 action: 'onItemEdit',
+               // cls:'clear',
                 isEnabled: true,
                 fn: this.onItemEdit.bindDelegate(this)
             }, {
                 id: 'delete',
-                icon: 'content/images/icons/delete_24.png',
-                label: this.deleteText,
+                label: '',
+                icon: 'content/images/icons/del_24.png',
                 action: 'onItemDelete',
+                //cls:'clear',
                 isEnabled: true,
                 fn: this.onItemDelete.bindDelegate(this)
             }];
@@ -304,40 +332,40 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this.actions = actions;
         },
         createItemActions: function(actions, itemNode, itemEntry ) {
-            var i, action, actionNode, actionTemplate, options, modeOption, selected, enabled, modeClss, applySelection, itemActionNode;
+            var i, action, actionNode, actionTemplate, options, actionOptions, actionClss, enabled, modeClss, applyClss, itemActionNode;
             itemActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
             domConstruct.place(itemActionNode, itemNode, 'last');
                 for (i = 0; i < actions.length; i++) {
-                    applySelection = false;
+                    applyClss = false;
                     enabled = false;
-                    selected = false;
+                    actionClss = '';
+                    actionIcon = '';
+                    actionOptions = {};
                     action = actions[i];
                     options = {
                         actionIndex: i,
                         itemKey: itemEntry[this.relatedItemKeyProperty],
-                        showButton: this.showItemActionAsButton
+                        itemEntry: itemEntry,
                     };
-                    actionTemplate = action.template || this.relatedItemActionTemplate;
-                    lang.mixin(action, options);
-                    if (action.selected) {
-                        if (typeof action.selected === 'function') {
-                            try{
-                                selected = action.selected.call(this, itemEntry);
-                            } catch(error){
-                            
-                            }
-                            applySelection = true;
-                        } else {
-                            selected = true;
-                        }
-                    } else {
-                        selected = true;
-                    }
 
-                    if (action.enabled) {
-                        if (typeof action.enabled === 'function') {
+                    if (action.options) {
+                        if (typeof action.options === 'function') {
+                            try {
+                                actionOptions = action.options.call(this, itemEntry);
+                            } catch (error) {
+
+                            }
+                        } else {
+                            actionOptions = action.options;
+                        }
+                    }
+                    lang.mixin(options, action);
+                    lang.mixin(options, actionOptions);
+                    actionTemplate = options.template || this.relatedItemActionTemplate;
+                    if (options.enabled) {
+                        if (typeof options.enabled === 'function') {
                             try{
-                                enabled = action.enabled.call(this,itemEntry);
+                                enabled = options.enabled.call(this, itemEntry);
                             } catch (error) {
 
                             }
@@ -351,23 +379,11 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     if(!enabled){
                         modeClss = " disabled";
                     }
-                    if (applySelection) {
-                        if (selected) {
-                            modeClss = modeClss + " selected";
-                        } else {
+                   
+                    options.enabled = enabled;
+                    options.cls =  options.cls + " "+ modeClss;
 
-                            modeClss = modeClss + "un-selected";
-                        }
-                    }
-                    modeOption = {
-                        itemKey: itemEntry[this.relatedItemKeyProperty],
-                        itemEntry: itemEntry,
-                        selected: selected,
-                        enabled: enabled,
-                        clss: modeClss
-                    };
-
-                    actionNode = domConstruct.toDom(actionTemplate.apply(action, modeOption, this));
+                    actionNode = domConstruct.toDom(actionTemplate.apply(options, this));
                     on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
                     domConstruct.place(actionNode, itemActionNode, 'last');
                 }
@@ -477,6 +493,38 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             }
             return entry;
         },
+        getItemDescriptor: function(entry) {
+            return (entry)? entry.$descriptor: '';
+        },
+        UpdateItem: function(entry, options) {
+            var store, putOptions;
+            store = this.get('store');
+            if (store) {
+                putOptions = {
+                    overwrite: true,
+                    id: store.getIdentity(entry)
+                };
+                //entry = this.createItemForUpdate(values);
+
+                //this._applyStateToPutOptions(putOptions);
+
+                Deferred.when(store.put(entry, putOptions),
+                    lang.hitch(this, this.onUpdateSuccess, entry, options),
+                    lang.hitch(this, this.onUpdateFailed, options)
+                );
+            }
+        },
+        onUpdateSuccess: function(entry, options, result) {
+            if (options && options.onSuccess) {
+                options.onSuccess.call(options.scope || this, entry);
+            }
+
+        },
+        onUpdateFailed: function(options, result){
+            if (options && options.onFailed) {
+                options.onFailed.call(options.scope || this, result);
+            }
+        },
         onLoad: function() {
             var data;
             if (this.relatedData) {
@@ -525,7 +573,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             var i, relatedHTML, itemEntry, itemNode, headerNode, footerNode, itemsNode, itemHTML, moreData, restCount, moreCount ;
             try {
 
-                this._itemEntries = relatedFeed;
+                if (!this._itemEntries) {
+                    this._itemEntries = [];
+                }
+                this._itemEntries = this._itemEntries.concat(relatedFeed);
                 if (!this.itemsNode) {
                     this.itemsNode = domConstruct.toDom("<div id='itemsNode' class='items'><div>");
                     domConstruct.place(this.itemsNode, this.relatedViewNode, 'last', this);
@@ -557,7 +608,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         itemNode = domConstruct.toDom(itemHTML);
                         on(itemNode, 'click', lang.hitch(this, this.onSelectViewRow));
                         domConstruct.place(itemNode, this.itemsNode, 'last', this);
-                        if (this.itemActions) {
+                        if ((this.enableItemActions )&&(this.itemActions)) {
                             this.createItemActions(this.itemActions, itemNode, itemEntry);
                         }
                     }
@@ -596,7 +647,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             evt.stopPropagation();
         },
         onSelectViewRow: function(evt) {
-            var relatedKey, descriptor, options, view, route;
+            var relatedKey, descriptor, options, view;
 
             relatedKey = evt.currentTarget.attributes['data-relatedkey'].value;
             descriptor = evt.currentTarget.attributes['data-descriptor'].value; 
@@ -608,10 +659,24 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             };
 
             view = App.getView(this.detailViewId);
+
             if (view) {
-                route = relatedKey ? view.id + '/' + relatedKey : view.id;
-                App.goRoute(route, view.id, options);
+                view.show(options);
+            } else {
+                this.onDrillToDetail(evt);
             }
+            evt.stopPropagation();
+        },
+        onDrillToDetail: function(evt) {
+            var el = evt.currentTarget;
+            //var itemEntryKey = evt.currentTarget.attributes['data-item-key'].value;
+            //var itemEntry = this.getItemEntry(itemEntryKey);
+            array.forEach(
+                 query('.item-actions', el),
+                function(node) {
+                    domClass.toggle(node, 'hidden');
+                });
+
             evt.stopPropagation();
         },
         onNavigateToList: function(evt) {
@@ -641,9 +706,17 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
 
             view = App.getView(this.listViewId);
             if (view) {
-                App.goRoute(view.id, options);
+                view.show(options);
             }
             evt.stopPropagation();
+        },
+        onViewItemActions: function(evt) {
+            array.forEach(
+                 query('.item-actions', this.domNode),
+                function(node) {
+                    domClass.toggle(node, 'hidden');
+                });
+           // evt.stopPropagation();
         },
         onSelectMoreData: function(evt) {
             this.onLoad();
@@ -656,8 +729,15 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         onItemDelete: function() {
 
         },
-        onItemEdit: function() {
+        onItemEdit: function(action, entryKey, entry) {
+            var view = App.getView(this.editViewId);
 
+            if (view) {
+                //view.show({title:this.getItemDescriptor(entry), key: entryKey });
+                //view.show({ title: this.getItemDescriptor(entry), descriptor: this.getItemDescriptor(entry), entry: entry });
+               // view.show({ entry: entry });
+                view.show({key: entryKey });
+            }
         },
         _onRefreshView: function() {
             var view, nodes;
