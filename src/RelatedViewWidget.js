@@ -122,10 +122,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             '<div class="related-view-widget {%: $$.cls %}">',
                 '<div data-dojo-attach-point="containerNode">',
                     '<div  id="tab" data-dojo-attach-point="tabNode" class="',
-                    '{% if ($.autoLoad) { %}',
+                    '{% if ($$.autoLoad) { %}',
                      'tab ',
                     '{% } else { %}',
-                       'tab collapsed ',
+                       'tab collapsed',
                     '{% } %}',
                     '" >',
                     '<div data-dojo-attach-event="onclick:toggleView" class="tab-items">',
@@ -150,20 +150,11 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         ]),
         relatedViewTabItemsTemplate: new Simplate([
             '<div class="tab-item tab-icon">',
-               '<img src="{%= $.icon %}" alt="{%= $.title %}" />',
+               '<img src="{%= $.icon %}" alt="{%= $.title %}"  />',
             '</div>',
-             '<div class="tab-item">',
-                '<div data-dojo-attach-point="titleNode" >{%= $.title %}</div>',
+            '<div data-dojo-attach-point="titleNode" class="tab-item title" >{%= $.title %}</div>',
+            '<div data-dojo-attach-point="toggleIndicator" class="collapsed-indicator">',
             '</div>'
-        ]),
-        o_relatedViewTabItemsTemplate: new Simplate([
-            '<span class="tab-item">',
-            '<div class="tab-icon" data-dojo-attach-event="onclick:onNavigateToList">',
-               '<img src="{%= $.icon %}" alt="{%= $.title %}" />',
-            '</div>',
-            '<div data-dojo-attach-point="titleNode" data-dojo-attach-event="onclick:toggleView"  class="title" >{%: ($.title ) %} </div>',
-            '</span>'
-           // '<div class="line-bar"></div>'
         ]),
         relatedViewHeaderTemplate: new Simplate([
             ''
@@ -278,15 +269,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 action: 'onNavigateToList',
                 isEnabled: true,
                 fn: this.onNavigateToList.bindDelegate(this)
-            }, {
-                id: 'view-item-actions',
-                icon: 'content/images/icons/headerMenu_24.png',
-                label: 'View Actions',
-                action: 'onViewItemActions',
-                isEnabled: true,
-                fn: this.onViewItemActions.bindDelegate(this)
             }];
-
         },
         setDefaultItemActions: function() {
             this.itemActions = [{
@@ -332,7 +315,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this.actions = actions;
         },
         createItemActions: function(actions, itemNode, itemEntry ) {
-            var i, action, actionNode, actionTemplate, options, actionOptions, actionClss, enabled, modeClss, applyClss, itemActionNode;
+            var i, action, actionNode, actionTemplate, options, actionIcon, actionOptions, actionClss, enabled, modeClss, applyClss, itemActionNode;
             itemActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
             domConstruct.place(itemActionNode, itemNode, 'last');
                 for (i = 0; i < actions.length; i++) {

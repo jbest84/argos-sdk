@@ -1458,25 +1458,53 @@ img
 {
     margin: 0;
     padding: 2px;
-    text-align: left;
+    display: inline-block;
+    width: 100%;
 }
-.related-view-widget  .tab-item
+
+.related-view-widget .tab-item
 {
     margin: 0px 12px 0px 0px;
+}
+
+.related-view-widget .title
+{
+   font-size: 1.00em;
+   font-weight: bold;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   position: absolute;
+   left: 40px;
+   right: 20px;
+   overflow: hidden;
+   display: block;
+}
+
+
+.related-view-widget .tab > .tab-items > .collapsed-indicator
+{
+    height: 25px;
+    width: 25px;
+    float: right;
+    margin: 0px 1px 0px 0px; 
+    background-color: transparent;
+    background-image: url('../../../images/Down_Arrow.png');
+    background-repeat: no-repeat;
+    background-position: left center;
+    border: none;
+    background-size: 85%;
+    background-position-y: 3px;
+}
+
+.related-view-widget .collapsed > .tab-items > .collapsed-indicator
+{
+    background-image: url('../../../images/Down_Arrow_Collapsed.png'); 
 }
 
 .related-view-widget .tab-item > img
 {
    width:24px;
    height:24px;
-}
-
-.related-view-widget .tab .title
-{
-    font-size: 1.00em;
-    font-weight: bold;
-	padding: 0 0 0 14px;
-	float:left;
 }
 
 .related-view-widget .line-bar
@@ -1660,8 +1688,6 @@ img
     text-overflow: ellipsis;
     overflow: hidden;
     position: relative;
-
-   
 }
 .related-view-widget .item  td
 {
