@@ -1178,7 +1178,7 @@ img {
   background-color: #d0d0d0;
 }
 .related-view-widget .tab-items {
-  margin: 0;
+  margin: 5px 2px 2px 2px;
   padding: 2px;
   display: inline-block;
   width: 100%;
