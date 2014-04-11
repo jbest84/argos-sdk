@@ -166,7 +166,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         ]),
         relatedViewRowTemplate: new Simplate([
             '<div class="row {%: $$.cls %}"  data-relatedkey="{%: $.$key %}" data-descriptor="{%: $.$descriptor %}">',
-                 '<div class="item">',
+                 '<div class="item  {%: $$.getRowItemCls($) %}">',
                       '{%! $$.relatedItemTemplate %}', 
                  '</div>',
             '</div>'
@@ -193,31 +193,35 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                '</div>',
                '{% } %}'
         ]),
-       relatedItemTemplate: new Simplate([
-               '<table>',
-               '<tr>',
-               '<td> {%! $$.relatedItemLeftTemplate %}</td>',
-               '<td>',
-               '{% if ($$.showItemHeader) { %}',
-               '<div class="item-header">',
-                   '{%! $$.relatedItemHeaderTemplate %}',
-               '</div>',
-               '{% } %}',
-               '{% if ($$.showItemDetail) { %}',
-               '<div class="item-detail">',
-                  '{%! $$.relatedItemDetailTemplate %}',
-               '</div>',
-                '{% } %}',
-                '{% if ($$.showItemFooter) { %}',
-               '<div class="item-footer">',
-                   '{%! $$.relatedItemFooterTemplate %}',
-               '</div>',
-               '{% } %}',
-                '</td>',
-                '<td>{%! $$.relatedItemRightTemplate %}</td>',
-                '</tr>',
-               '</table>',
-        ]),
+        relatedItemTemplate: new Simplate([
+           //  '<table>',
+           //  '<tr>',
+           //  '<td>',
+            '{%! $$.relatedItemLeftTemplate %}</td>',
+            // '<td>',
+             '{% if ($$.showItemHeader) { %}',
+             '<div class="item-header">',
+                 '{%! $$.relatedItemHeaderTemplate %}',
+             '</div>',
+             '{% } %}',
+             '<div class="item-detail ',
+             '{% if (!$$.showItemDetail) { %}',
+                   'hidden',
+             '{% } %}',
+             '">',
+                '{%! $$.relatedItemDetailTemplate %}',
+             '</div>',
+              '{% if ($$.showItemFooter) { %}',
+             '<div class="item-footer">',
+                 '{%! $$.relatedItemFooterTemplate %}',
+             '</div>',
+             '{% } %}',
+             // '</td>',
+             // '<td>',
+             //'{%! $$.relatedItemRightTemplate %}</td>',
+             // '</tr>',
+             //'</table>',
+       ]),
         loadingTemplate: new Simplate([
            '<div class="loading-indicator"><div>{%= $.loadingText %}</div></div>'
         ]),
@@ -479,6 +483,9 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         getItemDescriptor: function(entry) {
             return (entry)? entry.$descriptor: '';
         },
+        getRowItemCls: function(entry) {
+
+        },
         UpdateItem: function(entry, options) {
             var store, putOptions;
             store = this.get('store');
@@ -659,8 +666,18 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 function(node) {
                     domClass.toggle(node, 'hidden');
                 });
-
-            evt.stopPropagation();
+            this.onShowItemDetail(evt);
+        },
+        onShowItemDetail: function(evt) {
+            if (!this.showItemDetail) {
+                var el = evt.currentTarget;
+                array.forEach(
+                     query('.item-detail', el),
+                    function(node) {
+                        domClass.toggle(node, 'hidden');
+                    });
+            }
+            
         },
         onNavigateToList: function(evt) {
             var options, view, whereExpression;

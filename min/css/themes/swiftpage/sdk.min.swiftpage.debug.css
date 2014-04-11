@@ -1370,7 +1370,6 @@ img {
 .related-view-widget .item .item-icon {
   float: left;
   border-width: 0;
-  height: 22px;
   left: 0;
   padding: 0;
   position: relative;
@@ -1381,13 +1380,13 @@ img {
   color: #212721;
   left: 4px;
   position: relative;
-  padding: 0 40px 5px 0px;
+  margin: 1px;
 }
 .related-view-widget .item .item-detail {
   color: #727272;
   left: 4px;
   position: relative;
-  padding: 0 40px 0 0;
+  margin: 1px;
   line-height: 1.25em;
 }
 .related-view-widget .item .item-footer {
