@@ -107,6 +107,11 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         showItemHeader: true,
         showItemFooter: true,
         showItemDetail: true,
+        showNavigateToList: true,
+        showRefresh: true,
+        showAdd: true,
+        showEdit: true,
+        showDelete: true,
         showSelectMore: false, 
         hideWhenNoData: false,
         enableItemActions: false,
@@ -194,11 +199,8 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                '{% } %}'
         ]),
         relatedItemTemplate: new Simplate([
-           //  '<table>',
-           //  '<tr>',
-           //  '<td>',
+
             '{%! $$.relatedItemLeftTemplate %}</td>',
-            // '<td>',
              '{% if ($$.showItemHeader) { %}',
              '<div class="item-header">',
                  '{%! $$.relatedItemHeaderTemplate %}',
@@ -215,12 +217,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
              '<div class="item-footer">',
                  '{%! $$.relatedItemFooterTemplate %}',
              '</div>',
-             '{% } %}',
-             // '</td>',
-             // '<td>',
-             //'{%! $$.relatedItemRightTemplate %}</td>',
-             // '</tr>',
-             //'</table>',
+             '{% } %}'
        ]),
         loadingTemplate: new Simplate([
            '<div class="loading-indicator"><div>{%= $.loadingText %}</div></div>'
@@ -260,40 +257,67 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             }
         },
         setDefaultActions: function() {
-            this.actions = [{
-                id: 'refresh',
-                icon: 'content/images/icons/Recurring_24x24.png',
-                label: this.refreshViewText,
-                action: 'onRefreshView',
-                isEnabled: true
-            }, {
-                id: 'navtoListView',
-                icon: 'content/images/icons/drilldown_24.png',
-                label: this.viewContactsActionText,
-                action: 'onNavigateToList',
-                isEnabled: true,
-                fn: this.onNavigateToList.bindDelegate(this)
-            }];
+            if(!this.actions){
+                this.actions = [];
+                if (this.showRefresh) {
+                    this.actions.push({
+                        id: 'refresh',
+                        icon: 'content/images/icons/Recurring_24x24.png',
+                        label: this.refreshViewText,
+                        action: 'onRefreshView',
+                        isEnabled: true
+                    });
+                }
+                if (this.showNavigateToList) {
+                    this.actions.push({
+                        id: 'navtoListView',
+                        icon: 'content/images/icons/drilldown_24.png',
+                        label: this.viewContactsActionText,
+                        action: 'onNavigateToList',
+                        isEnabled: true,
+                        fn: this.onNavigateToList.bindDelegate(this)
+                    });
+                }
+                if (this.showAdd) {
+                    this.actions.push({
+                        id: 'add',
+                        icon: 'content/images/icons/Add_24.png',
+                        label: this.addViewText,
+                        action: 'onAddItem',
+                        isEnabled: true
+                    });
+                }
+            }
         },
         setDefaultItemActions: function() {
-            this.itemActions = [{
-                id: 'edit',
-                label: '',
-                icon: 'content/images/icons/edit_24.png',
-                action: 'onItemEdit',
-               // cls:'clear',
-                isEnabled: true,
-                fn: this.onItemEdit.bindDelegate(this)
-            }, {
-                id: 'delete',
-                label: '',
-                icon: 'content/images/icons/del_24.png',
-                action: 'onItemDelete',
-                //cls:'clear',
-                isEnabled: true,
-                fn: this.onItemDelete.bindDelegate(this)
-            }];
-
+            
+            if(!this.itemActions)
+            {
+                this.itemActions = [];
+                if (this.showEdit) {
+                    this.itemActions.push({
+                        id: 'edit',
+                        label: '',
+                        icon: 'content/images/icons/edit_24.png',
+                        action: 'onEditItem',
+                        // cls:'clear',
+                        isEnabled: true,
+                        fn: this.onEditItem.bindDelegate(this)
+                    });
+                }
+                if (this.showDelete) {
+                    this.itemActions.push({
+                        id: 'delete',
+                        label: '',
+                        icon: 'content/images/icons/del_24.png',
+                        action: 'onDeleteItem',
+                        //cls:'clear',
+                        isEnabled: true,
+                        fn: this.onDeleteItem.bindDelegate(this)
+                    });
+                }
+            }
+            
         },
         createActionLayout: function() {
             return this.actions || (this.actions = []);
@@ -726,10 +750,35 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this._onRefreshView();
             evt.stopPropagation();
         },
-        onItemDelete: function() {
+        onAddItem: function() {
+            var key, view = App.getView(this.insertViewId);
+
+            if (view) {
+                //view.show({title:this.getItemDescriptor(entry), key: entryKey });
+                //view.show({ title: this.getItemDescriptor(entry), descriptor: this.getItemDescriptor(entry), entry: entry });
+                // view.show({ entry: entry });
+                if (this.parentEntry) {
+                    key = this.parentEntry.$key;
+                }
+                view.show({ key: key });
+
+
+
+            }
+
+          //  var view = App.getView(this.insertView || this.editView);
+          //  if (view) {
+          //      App.goRoute(view.id, {
+          //          returnTo: this.id,
+          //          insert: true
+          //      });
+          //  }
 
         },
-        onItemEdit: function(action, entryKey, entry) {
+        onDeleteItem: function() {
+
+        },
+        onEditItem: function(action, entryKey, entry) {
             var view = App.getView(this.editViewId);
 
             if (view) {
