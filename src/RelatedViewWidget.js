@@ -29,6 +29,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
     'dojo/_base/connect',
     'dojo/_base/array',
     'Sage/Platform/Mobile/Store/SData',
+    'Sage/Platform/Mobile/Utility',
     'dijit/_Widget',
     'Sage/Platform/Mobile/_CustomizationMixin',
     'Sage/Platform/Mobile/_ActionMixin',
@@ -48,6 +49,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
     connect,
     array,
     SDataStore,
+    Utility,
     _Widget,
     _CustomizationMixin,
     _ActionMixin,
@@ -86,7 +88,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         parentCollection: false,
         parentCollectionProperty: null,
         resourceKind: null,
-        contractName: null,
+        contractName: 'dynamic',
         select: null,
         where: null,
         sort: null,
@@ -109,13 +111,17 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         showItemDetail: true,
         showNavigateToList: true,
         showRefresh: true,
-        showAdd: true,
-        showEdit: true,
-        showDelete: true,
-        showSelectMore: false, 
+        showAdd: false,
+        showEdit: false,
+        showDelete: false,
+        showDrillToDetail: true,
+        showSelectMore: true,
+        onlyDrillToListView: false,
         hideWhenNoData: false,
+        enabled:true,
         enableItemActions: false,
         enableActions: true,
+        autoScroll:false,
         _subscribes: null,
         _itemEntrys: null,
 
@@ -162,7 +168,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             '</div>'
         ]),
         relatedViewHeaderTemplate: new Simplate([
-            ''
+            '<div class="line-bar"></div>'
         ]),
         relatedViewFooterTemplate: new Simplate([
                  '<div  data-dojo-attach-point="selectMoreNode" class="action" data-dojo-attach-event="onclick:onSelectMoreData"></div>',
@@ -180,7 +186,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             '<img src="{%: $$.itemIcon %}" />'
         ]),
         relatedItemHeaderTemplate: new Simplate([
-              '<div>{%: $.$descriptor %}</div>'
+              '<div><h3><strong>{%: $.$descriptor %}<strong></h3></div>'
         ]),
         relatedItemDetailTemplate: new Simplate([
               '<div></div>'
@@ -218,7 +224,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                  '{%! $$.relatedItemFooterTemplate %}',
              '</div>',
              '{% } %}'
-       ]),
+        ]),
         loadingTemplate: new Simplate([
            '<div class="loading-indicator"><div>{%= $.loadingText %}</div></div>'
         ]),
@@ -253,7 +259,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 this.createActions(this._createCustomizedLayout(this.createActionLayout(), 'relatedview-actions'));
             }
             if (this.enableItemActions) {
-              this.itemActions = this._createCustomizedLayout(this.createItemActionLayout(), 'relatedview-item-actions');
+                this.itemActions = this._createCustomizedLayout(this.createItemActionLayout(), 'relatedview-item-actions');
             }
         },
         setDefaultActions: function() {
@@ -290,17 +296,28 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             }
         },
         setDefaultItemActions: function() {
-            
-            if(!this.itemActions)
+
+            if (!this.itemActions)
             {
                 this.itemActions = [];
+                if (this.showDrillToDetail) {
+                    this.itemActions.push({
+                        id: 'drillToDetialView',
+                        label: '',
+                        icon: 'content/images/icons/drilldown_24.png',
+                        action: 'onDrillToDetailView',
+                        cls:'clear',
+                        isEnabled: true,
+                        fn: this.onDrillToDetailView.bindDelegate(this)
+                    });
+                }
                 if (this.showEdit) {
                     this.itemActions.push({
                         id: 'edit',
                         label: '',
                         icon: 'content/images/icons/edit_24.png',
                         action: 'onEditItem',
-                        // cls:'clear',
+                        cls:'clear',
                         isEnabled: true,
                         fn: this.onEditItem.bindDelegate(this)
                     });
@@ -311,7 +328,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         label: '',
                         icon: 'content/images/icons/del_24.png',
                         action: 'onDeleteItem',
-                        //cls:'clear',
+                        cls:'clear',
                         isEnabled: true,
                         fn: this.onDeleteItem.bindDelegate(this)
                     });
@@ -328,11 +345,11 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         createActions: function(actions) {
             var i,action, actionNode, actionTemplate, options;
             for (i = 0; i < actions.length; i++) {
-                  action = actions[i];
-                    options = {
-                        actionIndex: i
-                    };
-                    actionTemplate = action.template || this.relatedActionTemplate;
+                action = actions[i];
+                options = {
+                    actionIndex: i
+                };
+                actionTemplate = action.template || this.relatedActionTemplate;
 
                 lang.mixin(action, options);
                 actionNode = domConstruct.toDom(actionTemplate.apply(action, action.id));
@@ -346,78 +363,78 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             var i, action, actionNode, actionTemplate, options, actionIcon, actionOptions, actionClss, enabled, modeClss, applyClss, itemActionNode;
             itemActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
             domConstruct.place(itemActionNode, itemNode, 'last');
-                for (i = 0; i < actions.length; i++) {
-                    applyClss = false;
-                    enabled = false;
-                    actionClss = '';
-                    actionIcon = '';
-                    actionOptions = {};
-                    action = actions[i];
-                    options = {
-                        actionIndex: i,
-                        itemKey: itemEntry[this.relatedItemKeyProperty],
-                        itemEntry: itemEntry,
-                    };
+            for (i = 0; i < actions.length; i++) {
+                applyClss = false;
+                enabled = false;
+                actionClss = '';
+                actionIcon = '';
+                actionOptions = {};
+                action = actions[i];
+                options = {
+                    actionIndex: i,
+                    itemKey: itemEntry[this.relatedItemKeyProperty],
+                    itemEntry: itemEntry,
+                };
 
-                    if (action.options) {
-                        if (typeof action.options === 'function') {
-                            try {
-                                actionOptions = action.options.call(this, itemEntry);
-                            } catch (error) {
+                if (action.options) {
+                    if (typeof action.options === 'function') {
+                        try {
+                            actionOptions = action.options.call(this, itemEntry);
+                        } catch (error) {
 
-                            }
-                        } else {
-                            actionOptions = action.options;
                         }
+                    } else {
+                        actionOptions = action.options;
                     }
-                    lang.mixin(options, action);
-                    lang.mixin(options, actionOptions);
-                    actionTemplate = options.template || this.relatedItemActionTemplate;
-                    if (options.enabled) {
-                        if (typeof options.enabled === 'function') {
-                            try{
-                                enabled = options.enabled.call(this, itemEntry);
-                            } catch (error) {
+                }
+                lang.mixin(options, action);
+                lang.mixin(options, actionOptions);
+                actionTemplate = options.template || this.relatedItemActionTemplate;
+                if (options.enabled) {
+                    if (typeof options.enabled === 'function') {
+                        try{
+                            enabled = options.enabled.call(this, itemEntry);
+                        } catch (error) {
 
-                            }
-                        } else {
-                            enabled = true;
                         }
                     } else {
                         enabled = true;
                     }
-                    modeClss = '';
-                    if(!enabled){
-                        modeClss = " disabled";
-                    }
-                   
-                    options.enabled = enabled;
-                    options.cls =  options.cls + " "+ modeClss;
-
-                    actionNode = domConstruct.toDom(actionTemplate.apply(options, this));
-                    on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
-                    domConstruct.place(actionNode, itemActionNode, 'last');
+                } else {
+                    enabled = true;
                 }
+                modeClss = '';
+                if(!enabled){
+                    modeClss = " disabled";
+                }
+                   
+                options.enabled = enabled;
+                options.cls =  options.cls + " "+ modeClss;
+
+                actionNode = domConstruct.toDom(actionTemplate.apply(options, this));
+                on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
+                domConstruct.place(actionNode, itemActionNode, 'last');
+            }
 
         },
         onInvokeActionItem: function(evt) {
             var action , parameters, index;
             index = evt.currentTarget.attributes['action-id'].value;
-               action = this.actions[index];
-                if (action) {
-                    if (action.isEnabled) {
-                        if (action['fn']) {
-                            action['fn'].call(action['scope'] || this, action);
-                        }
-                        else {
+            action = this.actions[index];
+            if (action) {
+                if (action.isEnabled) {
+                    if (action['fn']) {
+                        action['fn'].call(action['scope'] || this, action);
+                    }
+                    else {
 
-                            if(typeof this[action['action']] === 'function'){
-                                this[action['action']](evt); 
-                            }
+                        if(typeof this[action['action']] === 'function'){
+                            this[action['action']](evt); 
                         }
                     }
                 }
-                event.stop(evt);
+            }
+            event.stop(evt);
         },
         onInvokeItemActionItem: function(evt) {
             var action, parameters, itemEntry, itemEntryKey, index, el;
@@ -426,7 +443,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             itemEntryKey = evt.currentTarget.attributes['data-item-key'].value;
             itemEntry = this.getItemEntry(itemEntryKey);
             action = this.itemActions[index];
-            //parameters = this._getParametersForAction(action.name, evt, el);
             if (action) {
                 if (action.isEnabled) {
                     if (action['fn']) {
@@ -518,10 +534,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     overwrite: true,
                     id: store.getIdentity(entry)
                 };
-                //entry = this.createItemForUpdate(values);
-
-                //this._applyStateToPutOptions(putOptions);
-
                 Deferred.when(store.put(entry, putOptions),
                     lang.hitch(this, this.onUpdateSuccess, entry, options),
                     lang.hitch(this, this.onUpdateFailed, options)
@@ -645,6 +657,9 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     }
                 }
                 domClass.toggle(this.loadingNode, 'loading');
+                if (this.autoScroll) {
+                    this.footerNode.scrollIntoView();
+                }
             }
             catch (error) {
                 console.log('Error applying data for related view widget:' + error);
@@ -653,11 +668,17 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         },
         toggleView: function(evt) {
 
+            if (this.onlyDrillToListView) {
+
+                this.onNavigateToList();
+            }
+
             domClass.toggle(this.tabNode, 'collapsed');
 
             if (!this.isLoaded) {
                 this.onLoad();
             }
+            this.footerNode.scrollIntoView();
             evt.stopPropagation();
         },
         onSelectViewRow: function(evt) {
@@ -672,13 +693,12 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 title: descriptor
             };
 
-            view = App.getView(this.detailViewId);
-
-            if (view) {
-                view.show(options);
-            } else {
+            if (this.enableItemActions) {
                 this.onDrillToDetail(evt);
+            } else {
+                this.navigateToDetailView(relatedKey, descriptor, descriptor);
             }
+            
             evt.stopPropagation();
         },
         onDrillToDetail: function(evt) {
@@ -702,6 +722,68 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     });
             }
             
+        },
+       onViewItemActions: function(evt) {
+            array.forEach(
+                 query('.item-actions', this.domNode),
+                function(node) {
+                    domClass.toggle(node, 'hidden');
+                });
+            // evt.stopPropagation();
+        },
+        onSelectMoreData: function(evt) {
+            this.onLoad();
+            evt.stopPropagation();
+        },
+        onRefreshView: function(evt) {
+            this._onRefreshView();
+            evt.stopPropagation();
+        },
+        onAddItem: function() {
+
+           this.navigateToInsertView();
+
+        }, 
+        onDeleteItem: function() {
+
+        },
+        onEditItem: function(action, entryKey, entry) {
+            var view = App.getView(this.editViewId);
+
+            if (view) {
+                view.show({ title: this.getItemDescriptor(entry), key: entryKey });
+            }
+        },
+        onDrillToDetailView: function(action, entryKey, entry) {
+          
+            this.navigateToDetailView(entryKey, entry.$descriptor, entry.$descriptor);
+
+        },
+        navigateToDetailView: function(entrykey, descriptor, title) {
+            var view, options;
+
+             view = App.getView(this.detailViewId);
+             options = {
+                key: entrykey,
+                descriptor: descriptor,
+                title: title
+            };
+
+            if (view) {
+                view.show(options);
+            } 
+        },
+        navigateToInsertView: function() {
+            var view, options;
+
+            view = App.getView(this.insertViewId);
+            options = {
+                insert:true
+            };
+
+            if (view) {
+                view.show(options);
+            }
         },
         onNavigateToList: function(evt) {
             var options, view, whereExpression;
@@ -734,61 +816,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             }
             evt.stopPropagation();
         },
-        onViewItemActions: function(evt) {
-            array.forEach(
-                 query('.item-actions', this.domNode),
-                function(node) {
-                    domClass.toggle(node, 'hidden');
-                });
-           // evt.stopPropagation();
-        },
-        onSelectMoreData: function(evt) {
-            this.onLoad();
-            evt.stopPropagation();
-        },
-        onRefreshView: function(evt) {
-            this._onRefreshView();
-            evt.stopPropagation();
-        },
-        onAddItem: function() {
-            var key, view = App.getView(this.insertViewId);
-
-            if (view) {
-                //view.show({title:this.getItemDescriptor(entry), key: entryKey });
-                //view.show({ title: this.getItemDescriptor(entry), descriptor: this.getItemDescriptor(entry), entry: entry });
-                // view.show({ entry: entry });
-                if (this.parentEntry) {
-                    key = this.parentEntry.$key;
-                }
-                view.show({ key: key });
-
-
-
-            }
-
-          //  var view = App.getView(this.insertView || this.editView);
-          //  if (view) {
-          //      App.goRoute(view.id, {
-          //          returnTo: this.id,
-          //          insert: true
-          //      });
-          //  }
-
-        },
-        onDeleteItem: function() {
-
-        },
-        onEditItem: function(action, entryKey, entry) {
-            var view = App.getView(this.editViewId);
-
-            if (view) {
-                //view.show({title:this.getItemDescriptor(entry), key: entryKey });
-                //view.show({ title: this.getItemDescriptor(entry), descriptor: this.getItemDescriptor(entry), entry: entry });
-               // view.show({ entry: entry });
-                view.show({key: entryKey });
-            }
-        },
-        _onRefreshView: function() {
+       _onRefreshView: function() {
             var view, nodes;
 
             if (this.itemsNode) {
@@ -803,8 +831,15 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         _onAppRefresh: function(data) {
             if (data && data.data) {
                 if(data.resourceKind === this.resourceKind){
-                    if (this.parentEntry && (this.parentEntry[this.parentProperty] === data.data[this.relatedProperty])){
+                    if (this.parentEntry && (this.parentEntry[this.parentProperty] === Utility.getValue(data.data, this.relatedProperty, ''))) {
                         this._onRefreshView();
+                    } else {
+                        if(this.editViewId === data.id){
+                            this._onRefreshView();
+                        }
+                        if (this.editViewId === data.id) {
+                            this._onRefreshView();
+                        }
                     }
                 }
             }

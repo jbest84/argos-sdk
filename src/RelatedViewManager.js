@@ -24,7 +24,8 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
     'dojo/dom-construct',
     'dojo/query',
     'dojo/_base/array',
-    'Sage/Platform/Mobile/Store/SData'
+    'Sage/Platform/Mobile/Store/SData',
+    'Sage/Platform/Mobile/RelatedViewWidget'
 ], function(
     declare,
     lang,
@@ -35,7 +36,8 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
     domConstruct,
     query,
     array,
-    SDataStore
+    SDataStore,
+    RelatedViewWidget
 ) {
     return declare('Sage.Platform.Mobile.RelatedViewManager', null, {
 
@@ -64,6 +66,9 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
                 if (relatedContentNode[0]) {
                     if (this.enabled) {
                         options = {};
+                        if (!this.relatedViewConfig.widgetType) {
+                            this.relatedViewConfig.widgetType = RelatedViewWidget;
+                        }
                         lang.mixin(options, this.relatedViewConfig);
                         options.id = this.id + '_' + entry.$key;
                         relatedViewWidget = new this.relatedViewConfig.widgetType(options);

@@ -853,16 +853,23 @@ define('Sage/Platform/Mobile/_DetailBase', [
          * @return {Object} RelatedViewManager
          */
         getRelatedViewManager: function(relatedView) {
-            var relatedViewManager, options;
+            var relatedViewManager, options, relatedViewOptions;
             if (!this.relatedViewManagers) {
                 this.relatedViewManagers = {};
             }
             if (this.relatedViewManagers[relatedView.id]) {
                 relatedViewManager = this.relatedViewManagers[relatedView.id];
             } else {
+                relatedViewOptions = {
+                    autoLoad: false,
+                    autoScroll: true
+                };
+
+                lang.mixin(relatedViewOptions, relatedView);
+
                 options = {
                     id: relatedView.id,
-                    relatedViewConfig: relatedView
+                    relatedViewConfig: relatedViewOptions
                 };
                 relatedViewManager = new RelatedViewManager(options);
                 this.relatedViewManagers[relatedView.id] = relatedViewManager;
