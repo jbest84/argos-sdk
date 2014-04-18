@@ -711,7 +711,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             var relatedKey, descriptor, options, view;
 
             relatedKey = evt.currentTarget.attributes['data-relatedkey'].value;
-            descriptor = evt.currentTarget.attributes['data-descriptor'].value; 
+            descriptor = evt.currentTarget.attributes['data-descriptor'].value;
 
             options = {
                 descriptor: descriptor,
@@ -724,7 +724,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             } else {
                 this.navigateToDetailView(relatedKey, descriptor, descriptor);
             }
-            
+
             evt.stopPropagation();
         },
         onDrillToDetail: function(evt) {

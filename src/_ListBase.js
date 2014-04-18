@@ -561,11 +561,11 @@ define('Sage/Platform/Mobile/_ListBase', [
             return this.store || (this.store = this.createStore());
         },
         /**
-        * Shows overrides the view class to set options for the list view and then calls the inherited showViaRoute method on the view.
+        * Shows overrides the view class to set options for the list view and then calls the inherited show method on the view.
         * @param {Object} options The navigation options passed from the previous view.
         * @param transitionOptions {Object} Optional transition object that is forwarded to ReUI.
         */
-        showViaRoute: function(options, transitionOptions) {
+        show: function(options, transitionOptions) {
            if (options){
                if (options.resetSearch) {
                    this.defaultSearchTermSet = false;
@@ -618,6 +618,39 @@ define('Sage/Platform/Mobile/_ListBase', [
 
             this.actions = actions;
         },
+        selectEntrySilent: function(key) {
+            var enableActions = this.enableActions,// preserve the original value
+                selectionModel = this.get('selectionModel'),
+                selectedItems,
+                selection,
+                prop;
+
+            if (key) {
+                this.enableActions = false; // Set to false so the quick actions menu doesn't pop up
+                selectionModel.clear();
+                selectionModel.toggle(key, this.entries[key]);
+                selectedItems = selectionModel.getSelections();
+                this.enableActions = enableActions;
+
+                // We know we are single select, so just grab the first selection
+                for (prop in selectedItems) {
+                    selection = selectedItems[prop];
+                    break;
+                }
+            }
+
+            return selection;
+        },
+        invokeActionItemBy: function(actionPredicate, key) {
+            var actions, selection;
+
+            actions = array.filter(this.actions, actionPredicate);
+            selection = this.selectEntrySilent(key);
+            this.checkActionState();
+            array.forEach(actions, function(action) {
+                this._invokeAction(action, selection);
+            }, this);
+        },
         /**
          * This is the data-action handler for list-actions, it will locate the action instance viw the data-id attribute
          * and invoke either the `fn` with `scope` or the named `action` on the current view.
@@ -635,13 +668,17 @@ define('Sage/Platform/Mobile/_ListBase', [
                 selectedItems = this.get('selectionModel').getSelections(),
                 selection = null;
 
-            if (!action.isEnabled) {
-                return;
-            }
 
             for (var key in selectedItems) {
                 selection = selectedItems[key];
                 break;
+            }
+
+            this._invokeAction(action, selection);
+        },
+        _invokeAction: function(action, selection) {
+            if (!action.isEnabled) {
+                return;
             }
 
             if (action['fn']) {
@@ -996,7 +1033,7 @@ define('Sage/Platform/Mobile/_ListBase', [
             });
 
             if (view && options) {
-                App.goRoute(view.id, options);
+                view.show(options);
             }
         },
         /**
@@ -1007,7 +1044,7 @@ define('Sage/Platform/Mobile/_ListBase', [
         navigateToDetailView: function(key, descriptor) {
             var view = App.getView(this.detailView);
             if (view) {
-                App.goRoute(view.id + '/' + key, {
+                view.show({
                     title: descriptor,
                     key: key
                 });
@@ -1023,7 +1060,7 @@ define('Sage/Platform/Mobile/_ListBase', [
             var view = App.getView(this.editView || this.insertView),
                 key = selection.data[this.idProperty];
             if (view) {
-                App.goRoute(view.id + '/' + key, {
+                view.show({
                     key: key
                 });
             }
@@ -1036,7 +1073,7 @@ define('Sage/Platform/Mobile/_ListBase', [
         navigateToInsertView: function(el) {
             var view = App.getView(this.insertView || this.editView);
             if (view) {
-                App.goRoute(view.id, {
+                view.show({
                     returnTo: this.id,
                     insert: true
                 });
@@ -1088,7 +1125,7 @@ define('Sage/Platform/Mobile/_ListBase', [
 
                 /* todo: move to a more appropriate location */
                 if (this.options && this.options.allowEmptySelection) {
-                    domClass.add(this.domNode, 'list-has-empty');
+                    domClass.add(this.domNode, 'list-has-empty-opt');
                 }
 
                 this.processData(entries);

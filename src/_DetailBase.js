@@ -369,19 +369,6 @@ define('Sage/Platform/Mobile/_DetailBase', [
             }
             return this.inherited(arguments);
         },
-        onSetupRoutes: function() {
-            this.inherited(arguments);
-            var app = window.App;
-            if (app) {
-                app.registerRoute(this, [this.id, '/:key'].join(''), lang.hitch(this, this.onDefaultRoute));
-            }
-        },
-        onDefaultRoute: function(evt) {
-            this.showViaRoute({
-                title: '',
-                key: evt.params.key
-            });
-        },
         /**
          * Handler for the global `/app/refresh` event. Sets `refreshRequired` to true if the key matches.
          * @param {Object} options The object published by the event.
@@ -426,7 +413,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
             view = App.getView(this.editView);
             if (view) {
                 entry = this.entry;
-                App.goRoute(view.id + '/' + entry[this.idProperty], {entry: entry});
+                view.show({entry: entry});
             }
         },
         /**
@@ -444,7 +431,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
             }
 
             if (view && options) {
-                App.goRoute(view.id, options);
+                view.show(options);
             }
         },
         /**
@@ -692,11 +679,6 @@ define('Sage/Platform/Mobile/_DetailBase', [
             this.entry = this.preProcessEntry(entry);
 
             if (this.entry) {
-
-                if (!this.options.descriptor && this.entry[this.labelProperty]) {
-                    App.setPrimaryTitle(this.entry[this.labelProperty]);
-                }
-
                 this.processLayout(this._createCustomizedLayout(this.createLayout()), this.entry);
             } else {
                 this.set('detailContent', '');
@@ -792,6 +774,13 @@ define('Sage/Platform/Mobile/_DetailBase', [
          */
         activate: function(tag, data) {
             var options = data && data.options;
+            if (options && options.descriptor) {
+                options.title = options.title || options.descriptor;
+            }
+
+            this.inherited(arguments);
+        },
+        show: function(options) {
             if (options && options.descriptor) {
                 options.title = options.title || options.descriptor;
             }

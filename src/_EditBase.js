@@ -317,25 +317,6 @@ define('Sage/Platform/Mobile/_EditBase', [
                 }
             }, this);
         },
-        onSetupRoutes: function() {
-            var app = window.App;
-            if (app) {
-                app.registerRoute(this, [this.id, '/:key'].join(''), lang.hitch(this, this.onDefaultRoute));
-            }
-        },
-        onDefaultRoute: function(evt) {
-            var primary = App.getPrimaryActiveView();
-            if (primary && primary.id === this.id) {
-                return;
-            }
-
-            if (evt.params.key) {
-                this.showViaRoute({
-                    descriptor: '',
-                    key: evt.params.key
-                });
-            }
-        },
         /**
          * Extends init to also init the fields in `this.fields`.
          */
@@ -482,10 +463,6 @@ define('Sage/Platform/Mobile/_EditBase', [
         },
         processData: function(entry) {
             this.entry = this.processEntry(this.convertEntry(entry || {})) || {};
-
-            if (!this.options.descriptor) {
-                App.setPrimaryTitle(this.entry[this.labelProperty]);
-            }
 
             this.setValues(entry, true);
 
@@ -884,7 +861,7 @@ define('Sage/Platform/Mobile/_EditBase', [
                 var returnTo = this.options.returnTo,
                     view = App.getView(returnTo);
                 if (view) {
-                    App.goRoute(view.id);
+                    view.show();
                 } else {
                     window.location.hash = returnTo;
                 }
@@ -1002,7 +979,7 @@ define('Sage/Platform/Mobile/_EditBase', [
                 var returnTo = this.options.returnTo,
                     view = App.getView(returnTo);
                 if (view) {
-                    App.goRoute(view.id);
+                    view.show();
                 } else {
                     window.location.hash = returnTo;
                 }
