@@ -55,7 +55,7 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
             }
             this.relatedViews = {};
         },
-        addView: function(entry, rowNode) {
+        addView: function(entry, rowNode, owner) {
             var relatedContentNode,
             relatedViewNode,
             relatedViewWidget,
@@ -73,6 +73,7 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
                         options.id = this.id + '_' + entry.$key;
                         relatedViewWidget = new this.relatedViewConfig.widgetType(options);
                         relatedViewWidget.parentEntry = entry;
+                        relatedViewWidget.owner = owner;
                         relatedViewWidget.parentNode = relatedContentNode[0];
                         this.relatedViews[relatedViewWidget.id] = relatedViewWidget;
                         relatedViewWidget.onInit();

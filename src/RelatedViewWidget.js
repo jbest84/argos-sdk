@@ -67,7 +67,9 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         itemOfCountText: ' ${0} of ${1}',
         totalCountText: ' ${0}',
         deleteText: 'Delete',
-        editText:'Edit',
+        editText: 'Edit',
+
+        owner: null,
         parentProperty: '$key',
         parentEntry: null,
         relatedProperty: '$key',
@@ -526,6 +528,30 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         getRowItemCls: function(entry) {
 
         },
+        insertItem: function(entry, options) {
+            var store, addOptions, request;
+            store = this.get('store');
+            if (store) {
+                addOptions = {
+                    overwrite: false
+                };
+                Deferred.when(store.add(entry, addOptions),
+                    lang.hitch(this, this.onInsertSuccess, entry, options),
+                    lang.hitch(this, this.onInsertFailed, options)
+                );
+            }
+        },
+        onInsertSuccess: function(entry, options, result) {
+            if (options && options.onSuccess) {
+                options.onSuccess.call(options.scope || this, entry);
+            }
+
+        },
+        onInsertFailed: function(options, result) {
+            if (options && options.onFailed) {
+                options.onFailed.call(options.scope || this, result);
+            }
+        },
         UpdateItem: function(entry, options) {
             var store, putOptions;
             store = this.get('store');
@@ -703,8 +729,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         },
         onDrillToDetail: function(evt) {
             var el = evt.currentTarget;
-            //var itemEntryKey = evt.currentTarget.attributes['data-item-key'].value;
-            //var itemEntry = this.getItemEntry(itemEntryKey);
             array.forEach(
                  query('.item-actions', el),
                 function(node) {

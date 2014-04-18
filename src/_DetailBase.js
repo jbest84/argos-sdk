@@ -890,7 +890,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
                 if (relatedView.enabled) {
                     relatedViewManager = this.getRelatedViewManager(relatedView);
                     if (relatedViewManager) {
-                        relatedViewManager.addView(entry, rowNode);
+                        relatedViewManager.addView(entry, rowNode, this);
                     }
                 }
             }
