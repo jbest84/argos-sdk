@@ -86,7 +86,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         editViewId: null,
         listViewId: null,
         listViewWhere: null,
-        enabled: false,
         parentCollection: false,
         parentCollectionProperty: null,
         resourceKind: null,
