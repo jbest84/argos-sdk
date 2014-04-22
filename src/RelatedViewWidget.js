@@ -683,7 +683,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 }
                 domClass.toggle(this.loadingNode, 'loading');
                 if (this.autoScroll) {
-                    this.footerNode.scrollIntoView();
+                    //this.tabNode.scrollIntoView();
                 }
             }
             catch (error) {
@@ -703,7 +703,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             if (!this.isLoaded) {
                 this.onLoad();
             }
-            this.footerNode.scrollIntoView();
+            //this.tabNode.scrollIntoView();
             evt.stopPropagation();
         },
         onSelectViewRow: function(evt) {

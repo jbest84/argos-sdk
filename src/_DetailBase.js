@@ -678,6 +678,8 @@ define('Sage/Platform/Mobile/_DetailBase', [
         processEntry: function(entry) {
             this.entry = this.preProcessEntry(entry);
 
+            this.destroyRelatedViewWidgets();
+
             if (this.entry) {
                 this.processLayout(this._createCustomizedLayout(this.createLayout()), this.entry);
             } else {
@@ -897,6 +899,13 @@ define('Sage/Platform/Mobile/_DetailBase', [
                     this.relatedViewManagers[relatedViewId].destroyViews();
                 }
             }
-        }
+        },
+        /**
+         * Extends dijit Widget to destroy the search widget before destroying the view.
+         */
+        destroy: function() {
+            this.destroyRelatedViewWidgets();
+            this.inherited(arguments);
+        },
     });
 });
