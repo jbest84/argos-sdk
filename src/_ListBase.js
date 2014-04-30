@@ -95,11 +95,13 @@ define('Sage/Platform/Mobile/_ListBase', [
          */
         widgetTemplate: new Simplate([
             '<div id="{%= $.id %}" title="{%= $.titleText %}" class="overthrow list {%= $.cls %}" {% if ($.resourceKind) { %}data-resource-kind="{%= $.resourceKind %}"{% } %}>',
-            '<div data-dojo-attach-point="searchNode"></div>',
-            '{%! $.emptySelectionTemplate %}',
-            '<ul class="list-content" data-dojo-attach-point="contentNode"></ul>',
-            '{%! $.moreTemplate %}',
-            '{%! $.listActionTemplate %}',
+                '<div data-dojo-attach-point="searchNode"></div>',
+                '<div class="overthrow scroller" data-dojo-attach-point="scrollerNode">',
+                    '{%! $.emptySelectionTemplate %}',
+                    '<ul class="list-content" data-dojo-attach-point="contentNode"></ul>',
+                    '{%! $.moreTemplate %}',
+                    '{%! $.listActionTemplate %}',
+                '</div>',
             '</div>'
         ]),
         /**
@@ -133,11 +135,9 @@ define('Sage/Platform/Mobile/_ListBase', [
         moreTemplate: new Simplate([
             '<div class="list-more" data-dojo-attach-point="moreNode">',
             '<div class="list-remaining"><span data-dojo-attach-point="remainingContentNode"></span></div>',
-            '{% if (!$.continuousScrolling) { %}',
-                '<button class="button" data-action="more">',
-                '<span>{%= $.moreText %}</span>',
-                '</button>',
-            '{% } %}',
+            '<button class="button" data-action="more">',
+            '<span>{%= $.moreText %}</span>',
+            '</button>',
             '</div>'
         ]),
         /**
@@ -860,17 +860,20 @@ define('Sage/Platform/Mobile/_ListBase', [
         _onRefresh: function(options) {
         },
         onScroll: function(evt) {
-            var pos, height, scrollTop, scrollHeight, remaining, selected;
-            pos = domGeom.position(this.domNode, true);
+            var pos, height, scrollTop, scrollHeight, remaining, selected, diff;
+            pos = domGeom.position(this.scrollerNode, true);
 
             height = pos.h; // viewport height (what user sees)
-            scrollHeight = this.domNode.scrollHeight; // Entire container height
-            scrollTop = this.domNode.scrollTop; // How far we are scrolled down
+            scrollHeight = this.scrollerNode.scrollHeight; // Entire container height
+            scrollTop = this.scrollerNode.scrollTop; // How far we are scrolled down
             remaining = scrollHeight - scrollTop; // Height we have remaining to scroll
 
             selected = domAttr.get(this.domNode, 'selected');
 
-            if (remaining === height) {
+            diff = Math.abs(remaining - height);
+
+            // Start auto fetching more data if the user is on the last half of the remaining screen
+            if (diff <= height / 2) {
                 if (selected === 'true' && this.hasMoreData() && !this.listLoading) {
                     this.more();
                 }
@@ -1128,22 +1131,31 @@ define('Sage/Platform/Mobile/_ListBase', [
                     domClass.add(this.domNode, 'list-has-empty-opt');
                 }
 
+                /* remove the loading indicator so that it does not get re-shown while requesting more data */
+                if (start === 0) {
+                    // Check entries.length so we don't clear out the "noData" template
+                    if (entries.length > 0) {
+                        this.set('listContent', '');
+                    }
+
+                    domConstruct.destroy(this.loadingIndicatorNode);
+                }
+
                 this.processData(entries);
 
                 domClass.remove(this.domNode, 'list-loading');
                 this.listLoading = false;
 
                 if (!this._onScrollHandle && this.continuousScrolling) {
-                    this._onScrollHandle = this.connect(this.domNode, 'onscroll', this.onScroll);
-                }
-
-                /* remove the loading indicator so that it does not get re-shown while requesting more data */
-                if (start === 0) {
-                    domConstruct.destroy(this.loadingIndicatorNode);
+                    this._onScrollHandle = this.connect(this.scrollerNode, 'onscroll', this.onScroll);
                 }
 
                 this.onContentChange();
                 connect.publish('/app/toolbar/update', []);
+
+                if (this._selectionModel) {
+                    this._loadPreviousSelections();
+                }
             } catch (e) {
                 console.error(e);
             }
@@ -1157,22 +1169,29 @@ define('Sage/Platform/Mobile/_ListBase', [
             return entry;
         },
         _onQueryTotal: function(size) {
+            var remaining;
+
             this.total = size;
             if (size === 0) {
-                domConstruct.place(this.noDataTemplate.apply(this), this.contentNode, 'only');
+                this.set('listContent', this.noDataTemplate.apply(this));
             } else {
-                var remaining = size > -1
-                    ? size - (this.position + this.pageSize)
-                    : -1;
-
+                remaining = this.getRemainingCount();
                 if (remaining !== -1) {
                     this.set('remainingContent', string.substitute(this.remainingText, [remaining]));
+                    this.remaining = remaining;
                 }
 
                 domClass.toggle(this.domNode, 'list-has-more', (remaining === -1 || remaining > 0));
 
                 this.position = this.position + this.pageSize;
             }
+        },
+        getRemainingCount: function() {
+            var remaining = this.total > -1
+                ? this.total - (this.position + this.pageSize)
+                : -1;
+
+            return remaining;
         },
         onApplyRowTemplate: function(entry, rowNode) {
         },
@@ -1483,8 +1502,7 @@ define('Sage/Platform/Mobile/_ListBase', [
                     this.relatedViewManagers[relatedViewId].destroyViews();
                 }
             }
-        },
-
+        }
     });
 });
  
