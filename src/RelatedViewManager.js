@@ -55,7 +55,7 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
             }
             this.relatedViews = {};
         },
-        addView: function(entry, rowNode, owner) {
+        addView2: function(entry, rowNode, owner) {
             var relatedContentNode,
             relatedViewNode,
             relatedViewWidget,
@@ -78,6 +78,36 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
                         this.relatedViews[relatedViewWidget.id] = relatedViewWidget;
                         relatedViewWidget.onInit();
                         relatedViewWidget.placeAt(relatedContentNode[0], 'last');
+                    }
+                }
+            }
+            catch (error) {
+                console.log('Error adding related view widgets:' + error);
+
+            }
+        },
+        addView: function(entry, contentNode, owner) {
+            var relatedContentNode,
+            relatedViewNode,
+            relatedViewWidget,
+            relatedResults,
+            options;
+            try {
+                if (contentNode) {
+                    if (this.enabled) {
+                        options = {};
+                        if (!this.relatedViewConfig.widgetType) {
+                            this.relatedViewConfig.widgetType = RelatedViewWidget;
+                        }
+                        lang.mixin(options, this.relatedViewConfig);
+                        options.id = this.id + '_' + entry.$key;
+                        relatedViewWidget = new this.relatedViewConfig.widgetType(options);
+                        relatedViewWidget.parentEntry = entry;
+                        relatedViewWidget.owner = owner;
+                        relatedViewWidget.parentNode = contentNode;
+                        this.relatedViews[relatedViewWidget.id] = relatedViewWidget;
+                        relatedViewWidget.onInit();
+                        relatedViewWidget.placeAt(contentNode, 'last');
                     }
                 }
             }

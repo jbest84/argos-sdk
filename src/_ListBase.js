@@ -208,6 +208,7 @@ define('Sage/Platform/Mobile/_ListBase', [
         listActionTemplate: new Simplate([
             '<li data-dojo-attach-point="actionsNode" class="actions-row"></li>'
         ]),
+        
         /**
          * @property {Simplate}
          * The template used to render a list action item.
@@ -227,7 +228,9 @@ define('Sage/Platform/Mobile/_ListBase', [
                 '<label>{%: $.label %}</label>',
             '</button>'
         ]),
-
+        listRelatedDetailTemplate: new Simplate([
+            '<li id="list-item-content-related"  class="related-detail-row"></li>'
+        ]),
         /**
          * @property {HTMLElement}
          * Attach point for the main view content
@@ -540,6 +543,8 @@ define('Sage/Platform/Mobile/_ListBase', [
 
             this.createActions(this._createCustomizedLayout(this.createActionLayout(), 'actions'));
             this.relatedViews = this._createCustomizedLayout(this.createRelatedViewLayout(), 'relatedViews');
+            this.relatedDetailViews = this._createCustomizedLayout(this.createRelatedDetailViewLayout(), 'relatedDetailViews');
+
         },
         /**
          * Extends dijit Widget to destroy the search widget before destroying the view.
@@ -796,6 +801,8 @@ define('Sage/Platform/Mobile/_ListBase', [
             if (!node) {
                 return;
             }
+            
+            this.showRelatedDetail(key, node);
 
             if (this.enableActions) {
                 this.showActionPanel(node);
@@ -803,6 +810,7 @@ define('Sage/Platform/Mobile/_ListBase', [
             }
 
             domClass.add(node, 'list-item-selected');
+
         },
         /**
          * Handler for when the selection model removes an item. Removes the selected state to the row or hides the list
@@ -817,6 +825,8 @@ define('Sage/Platform/Mobile/_ListBase', [
             if (!node) {
                 return;
             }
+
+            this.hideRelatedDetail(key, node);
 
             if (this.enableActions) {
                 this.hideActionPanel(node);
@@ -1239,7 +1249,7 @@ define('Sage/Platform/Mobile/_ListBase', [
          * @param {Object} entries the data.
          */
         onProcessRelatedViews: function(entry, rowNode, entries) {
-            var relatedViewManager,i;
+            var relatedViewManager, i, relatedContentNode;
             if (this.options && this.options.simpleMode && (this.options.simpleMode === true)) {
                 return;
             }
@@ -1249,7 +1259,8 @@ define('Sage/Platform/Mobile/_ListBase', [
                         if (this.relatedViews[i].enabled) {
                             relatedViewManager = this.getRelatedViewManager(this.relatedViews[i]);
                             if (relatedViewManager) {
-                                relatedViewManager.addView(entry, rowNode);
+                                relatedContentNode = query('> #list-item-content-related', rowNode);
+                                relatedViewManager.addView(entry, relatedContentNode[0]);
                             }
                         }
                     }
@@ -1474,6 +1485,9 @@ define('Sage/Platform/Mobile/_ListBase', [
         createRelatedViewLayout: function() {
             return this.relatedViews || (this.relatedViews = {});
         },
+        createRelatedDetailViewLayout: function() {
+            return this.relatedDetailViews || (this.relatedDetailViews = {});
+        },
         /**
          *  Destroies all of the realted view widgets, that was added.
          */
@@ -1484,7 +1498,37 @@ define('Sage/Platform/Mobile/_ListBase', [
                 }
             }
         },
+        relatedDetailNode: null,
+        showRelatedDetail:function(key, rowNode){
+            var relatedViewManager, entry, docfrag, relatedDetailNode;
+            entry = this.entries[key];
+            if ((this.relatedDetailViews)&&(entry)) {
+                try {
+                   relatedViewManager = this.getRelatedViewManager(this.relatedDetailViews[0]);
+                   if (relatedViewManager) {
+                       relatedViewManager.destroyViews();
+                       if (!this.relatedDetailNode) {
+                           this.relatedDetailNode = domConstruct.toDom(this.listRelatedDetailTemplate.apply(entry, this));
+                       }
+                       domConstruct.place(this.relatedDetailNode, rowNode, 'after');
+                       relatedViewManager.addView(entry,this.relatedDetailNode);
+                   }
+                }
+                catch (error) {
+                    console.log('Error processing related detail view :' + error);
 
+                }
+            }
+        },
+        hideRelatedDetail: function(key, node) {
+            this.removeRelatedDetail();
+
+        },
+        removeRelatedDetail: function() {
+            if (this.relatedDetailNode) {
+                domConstruct.destroy(this.relatedDetailNode);
+            }
+        }
     });
 });
  

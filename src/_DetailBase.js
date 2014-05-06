@@ -34,6 +34,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
     'dojo/dom',
     'dojo/dom-class',
     'dojo/dom-construct',
+    'dojo/query',
     'Sage/Platform/Mobile/Format',
     'Sage/Platform/Mobile/Utility',
     'Sage/Platform/Mobile/ErrorManager',
@@ -48,6 +49,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
     dom,
     domClass,
     domConstruct,
+    query,
     format,
     utility,
     ErrorManager,
@@ -876,12 +878,13 @@ define('Sage/Platform/Mobile/_DetailBase', [
          * @param {Object} rownode the current dom node to add the widget to.
          */
         onProcessRelatedViews: function(relatedView, rowNode, entry) {
-            var relatedViewManager, i;
+            var relatedViewManager, i, relatedContentNode;
             try {
                 if (relatedView.enabled) {
                     relatedViewManager = this.getRelatedViewManager(relatedView);
                     if (relatedViewManager) {
-                        relatedViewManager.addView(entry, rowNode, this);
+                        relatedContentNode = query('> #list-item-content-related', rowNode);
+                        relatedViewManager.addView(entry, relatedContentNode[0], this);
                     }
                 }
             }

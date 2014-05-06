@@ -1166,13 +1166,14 @@ img {
 .related-view-widget .tab {
   margin: 2px;
   padding: 1px;
+  margin-bottom: 1px !important;
   background-color: #d0d0d0;
 }
 .related-view-widget .tab-items {
   margin: 5px 2px 2px 2px;
   padding: 2px;
   display: inline-block;
-  width: 100%;
+  width: 95%;
 }
 .related-view-widget .tab-item {
   margin: 0px 12px 0px 0px;
@@ -1192,7 +1193,7 @@ img {
   height: 25px;
   width: 25px;
   float: right;
-  margin: 0px 1px 0px 0px;
+  margin: 0px -10px 0px 0px;
   background-color: transparent;
   background-image: url('../../../images/Down_Arrow.png');
   background-repeat: no-repeat;
