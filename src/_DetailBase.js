@@ -853,6 +853,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
             if (this.relatedViewManagers[relatedView.id]) {
                 relatedViewManager = this.relatedViewManagers[relatedView.id];
             } else {
+                relatedView.id = this.id + '_' + relatedView.id;
                 relatedViewOptions = {
                     autoLoad: false,
                     autoScroll: true

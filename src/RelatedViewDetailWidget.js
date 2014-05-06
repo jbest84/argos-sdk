@@ -76,7 +76,7 @@ define('Sage/Platform/Mobile/RelatedViewDetailWidget', [
         _isInitLoad: true,
         showTab: true,
         showRefresh: true,
-        showEdit: false,
+        showEdit: true,
         enabled:true,
         enableActions: true,
         _subscribes: null,
@@ -149,10 +149,10 @@ define('Sage/Platform/Mobile/RelatedViewDetailWidget', [
                         id: 'edit',
                         label: '',
                         icon: 'content/images/icons/edit_24.png',
-                        action: 'onEditItem',
+                        action: 'navigateToEditView',
                         cls: 'clear',
                         isEnabled: true,
-                        fn: this.onEditItem.bindDelegate(this)
+                        fn: this.navigateToEditView.bindDelegate(this)
                     });
                 }
                
@@ -230,26 +230,22 @@ define('Sage/Platform/Mobile/RelatedViewDetailWidget', [
             this.isLoaded = true;
             domClass.toggle(this.loadingNode, 'loading');
         },
-        onEditItem: function(action, entryKey, entry) {
-            var view = App.getView(this.editViewId);
-
-            if (view) {
-                view.show({ title: this.getItemDescriptor(entry), key: entryKey });
+        navigateToEditView: function(el) {
+            if (this.relatedViewInstance.navigateToEditView) {
+                this.relatedViewInstance.navigateToEditView();
             }
+
         },
         onRefreshView: function(evt) {
             this._onRefreshView();
             evt.stopPropagation();
         },
        _onRefreshView: function() {
-            var view, nodes;
-
-            if (this.itemsNode) {
-                domConstruct.destroy(this.itemsNode);
-                this.itemsNode = null;
+           if (this.relatedViewInstance) {
+               this.relatedViewInstance.destroy();
+               this.relatedViewInstance = null;
             }
-            this.startIndex = 1;
-            this.itemCount = 0;
+
             this.isLoaded = false;
             this.onLoad();
         },
