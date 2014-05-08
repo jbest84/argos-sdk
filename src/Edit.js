@@ -48,6 +48,7 @@ define('Sage/Platform/Mobile/Edit', [
     'dojo/_base/lang',
     'dojo/_base/connect',
     'dojo/_base/array',
+    'dojo/_base/json',
     'dojo/string',
     'dojo/dom',
     'dojo/dom-attr',
@@ -78,6 +79,7 @@ define('Sage/Platform/Mobile/Edit', [
     lang,
     connect,
     array,
+    json,
     string,
     dom,
     domAttr,
@@ -441,6 +443,36 @@ define('Sage/Platform/Mobile/Edit', [
             if (node)
                 domClass.toggle(node, 'collapsed');
         },
+        _requestStartTime: null,
+        _requestEndTime: null,
+        _startRequestTimer: function() {
+            this._requestStartTime = Date.now();
+            this._requestEndTime = null;
+        },
+        _endRequestTimer: function(message) {
+            this._requestEndTime = Date.now();
+            var diff = this._requestEndTime - this._requestStartTime;
+            this._perfLog({
+                view: this.id,
+                userId: App.context.user.$key,
+                userName: App.context.user.$descriptor,
+                message: message,
+                time: diff + 'ms'
+            });
+
+            this._requestEndTime = null;
+            this._requestStartTime = null;
+        },
+        _logKey: 'perflogs',
+        _perfLog: function(entry) {
+            console.log('Logging performance entry.');
+            var data;
+            if (window.localStorage) {
+                data = json.fromJson(window.localStorage.getItem(this._logKey)) || [];
+                data.push(entry);
+                window.localStorage.setItem(this._logKey, json.toJson(data));
+            }
+        },
         /**
          * Creates Sage.SData.Client.SDataSingleResourceRequest instance and sets a number of known properties.
          *
@@ -453,7 +485,7 @@ define('Sage/Platform/Mobile/Edit', [
         createRequest: function() {
             var request = new Sage.SData.Client.SDataSingleResourceRequest(this.getService());
 
-            var key = (this.entry && this.entry['$key']) || this.options.key
+            var key = (this.entry && this.entry['$key']) || this.options.key;
             if (key)
                 request.setResourceSelector(string.substitute("'${0}'", [key]));
 
@@ -472,6 +504,7 @@ define('Sage/Platform/Mobile/Edit', [
             if (this.queryOrderBy)
                 request.setQueryArg(Sage.SData.Client.SDataUri.QueryArgNames.OrderBy, this.queryOrderBy);
 
+            this._startRequestTimer();
             return request;
         },
         /**
@@ -589,6 +622,7 @@ define('Sage/Platform/Mobile/Edit', [
          * @param {Object} o The options that were passed when creating the Ajax request.
          */
         onRequestDataFailure: function(response, o) {
+            this._endRequestTimer('onRequestDataFailure');
             alert(string.substitute(this.requestErrorText, [response, o]));
             ErrorManager.addError(response, o, this.options, 'failure');
         },
@@ -597,6 +631,8 @@ define('Sage/Platform/Mobile/Edit', [
          * @param {Object} entry The SData response
          */
         onRequestDataSuccess: function(entry) {
+            this._endRequestTimer('onRequestDataSuccess');
+
             this.processEntry(entry);
 
             if (this.options.changes)
@@ -986,6 +1022,7 @@ define('Sage/Platform/Mobile/Edit', [
          * @param entry
          */
         onInsertSuccess: function(entry) {
+            this._endRequestTimer('onInsertSuccess');
             this.enable();
 
             connect.publish('/app/refresh', [{
@@ -1001,6 +1038,7 @@ define('Sage/Platform/Mobile/Edit', [
          * @param o
          */
         onInsertFailure: function(response, o) {
+            this._endRequestTimer('onInsertFailure');
             this.enable();
             this.onRequestFailure(response, o);
         },
@@ -1067,6 +1105,7 @@ define('Sage/Platform/Mobile/Edit', [
          * @param entry
          */
         onUpdateSuccess: function(entry) {
+            this._endRequestTimer('onUpdateSuccess');
             this.enable();
 
             connect.publish('/app/refresh', [{
@@ -1083,6 +1122,7 @@ define('Sage/Platform/Mobile/Edit', [
          * @param {Object} o The options that were passed when creating the Ajax request.
          */
         onUpdateFailure: function(response, o) {
+            this._endRequestTimer('onUpdateFailure');
             this.enable();
             this.onRequestFailure(response, o);
         },
