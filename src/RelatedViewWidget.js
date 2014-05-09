@@ -272,7 +272,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/Recurring_24x24.png',
                         label: this.refreshViewText,
                         action: 'onRefreshView',
-                        isEnabled: true
+                        enabled: true
                     });
                 }
                 if (this.showNavigateToList) {
@@ -281,7 +281,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/drilldown_24.png',
                         label: this.viewContactsActionText,
                         action: 'onNavigateToList',
-                        isEnabled: true,
+                        enabled: true,
                         fn: this.onNavigateToList.bindDelegate(this)
                     });
                 }
@@ -291,7 +291,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/Add_24.png',
                         label: this.addViewText,
                         action: 'onAddItem',
-                        isEnabled: true
+                        enabled: true
                     });
                 }
             }
@@ -308,7 +308,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/drilldown_24.png',
                         action: 'onDrillToDetailView',
                         cls:'clear',
-                        isEnabled: true,
+                       // enabled: true,
                         fn: this.onDrillToDetailView.bindDelegate(this)
                     });
                 }
@@ -319,7 +319,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/edit_24.png',
                         action: 'onEditItem',
                         cls:'clear',
-                        isEnabled: true,
+                        //enabled: true,
                         fn: this.onEditItem.bindDelegate(this)
                     });
                 }
@@ -330,7 +330,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/del_24.png',
                         action: 'onDeleteItem',
                         cls:'clear',
-                        isEnabled: true,
+                       // enabled: true,
                         fn: this.onDeleteItem.bindDelegate(this)
                     });
                 }
@@ -347,6 +347,15 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             var i,action, actionNode, actionTemplate, options;
             for (i = 0; i < actions.length; i++) {
                 action = actions[i];
+
+                if (action.enabled === 'undefinded') {
+                    action.enabled = true;
+                }
+                if (action.cls === 'undefinded') {
+                    action.cls = '';
+                }
+
+
                 options = {
                     actionIndex: i
                 };
@@ -361,12 +370,14 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this.actions = actions;
         },
         createItemActions: function(actions, itemNode, itemEntry ) {
-            var i, action, actionNode, actionTemplate, options, actionIcon, actionOptions, actionClss, enabled, modeClss, applyClss, itemActionNode;
+            var i, action, actionNode, actionTemplate, options, actionIcon, actionOptions, actionClss, enabled, include, exclude, modeClss, applyClss, itemActionNode;
             itemActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
             domConstruct.place(itemActionNode, itemNode, 'last');
             for (i = 0; i < actions.length; i++) {
                 applyClss = false;
                 enabled = false;
+                include = true;
+                exclude = false;
                 actionClss = '';
                 actionIcon = '';
                 actionOptions = {};
@@ -376,6 +387,36 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     itemKey: itemEntry[this.relatedItemKeyProperty],
                     itemEntry: itemEntry,
                 };
+                if (action.enabled === 'undefinded') {
+                    enabled = true;
+                }
+                if (action.cls === 'undefinded') {
+                    action.cls  = '';
+                }
+                
+                if (typeof action.enable === 'function') {
+                    try {
+                        enabled = action.enabled.call(this, itemEntry);
+                    } catch (error) {
+                        enabled = false;
+                    }
+                }
+
+                if (typeof action.include === 'function') {
+                    try {
+                        include = action.include.call(this, itemEntry);
+                    } catch (error) {
+                        include = false;
+                    }
+                }
+
+                if (typeof action.exclude === 'function') {
+                    try {
+                        exclude = action.exclude.call(this, itemEntry);
+                    } catch (error) {
+                        exclude = false;
+                    }
+                }
 
                 if (action.options) {
                     if (typeof action.options === 'function') {
@@ -410,11 +451,17 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 }
                    
                 options.enabled = enabled;
+                options.include = include;
+                options.exclude = exclude;
                 options.cls =  options.cls + " "+ modeClss;
+                if ((options.include) && (!options.exclude)) {
+                    actionNode = domConstruct.toDom(actionTemplate.apply(options, this));
+                    if (options.enabled) {
+                        on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
+                    }
 
-                actionNode = domConstruct.toDom(actionTemplate.apply(options, this));
-                on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
-                domConstruct.place(actionNode, itemActionNode, 'last');
+                    domConstruct.place(actionNode, itemActionNode, 'last');
+                }
             }
 
         },
@@ -423,17 +470,16 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             index = evt.currentTarget.attributes['action-id'].value;
             action = this.actions[index];
             if (action) {
-                if (action.isEnabled) {
+               // if ((action.enabled) || (action.enabled === 'undefined')) {
                     if (action['fn']) {
                         action['fn'].call(action['scope'] || this, action);
                     }
                     else {
-
                         if(typeof this[action['action']] === 'function'){
                             this[action['action']](evt); 
                         }
                     }
-                }
+                //}
             }
             event.stop(evt);
         },
@@ -445,7 +491,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             itemEntry = this.getItemEntry(itemEntryKey);
             action = this.itemActions[index];
             if (action) {
-                if (action.isEnabled) {
+              //  if ((action.enabled)||(action.enabled === 'undefined')) {
                     if (action['fn']) {
                         action['fn'].call(action['scope'] || this, action, itemEntryKey, itemEntry);
                     }
@@ -455,7 +501,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                             this[action['action']](action, itemEntryKey, itemEntry);
                         }
                     }
-                }
+               // }
             }
             event.stop(evt);
         },
