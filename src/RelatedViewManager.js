@@ -103,6 +103,7 @@ define('Sage/Platform/Mobile/RelatedViewManager',  [
                         options.id = this.id + '_' + entry.$key;
                         relatedViewWidget = new this.relatedViewConfig.widgetType(options);
                         relatedViewWidget.parentEntry = entry;
+                        relatedViewWidget.parentResourceKind = owner.resourceKind;
                         relatedViewWidget.owner = owner;
                         relatedViewWidget.parentNode = contentNode;
                         this.relatedViews[relatedViewWidget.id] = relatedViewWidget;

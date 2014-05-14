@@ -88,6 +88,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         listViewWhere: null,
         parentCollection: false,
         parentCollectionProperty: null,
+        parentResourceKind: null,
         resourceKind: null,
         contractName: 'dynamic',
         select: null,
@@ -120,11 +121,12 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         onlyDrillToListView: false,
         hideWhenNoData: false,
         enabled:true,
-        enableItemActions: false,
+        enableItemActions: true,
         enableActions: true,
         autoScroll:false,
         _subscribes: null,
         _itemEntrys: null,
+        _currentPages: 1,
 
         /**
          * @property {Simplate}
@@ -308,7 +310,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/drilldown_24.png',
                         action: 'onDrillToDetailView',
                         cls:'clear',
-                       // enabled: true,
+                        // enabled: true,
                         fn: this.onDrillToDetailView.bindDelegate(this)
                     });
                 }
@@ -330,7 +332,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         icon: 'content/images/icons/del_24.png',
                         action: 'onDeleteItem',
                         cls:'clear',
-                       // enabled: true,
+                        // enabled: true,
                         fn: this.onDeleteItem.bindDelegate(this)
                     });
                 }
@@ -387,10 +389,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     itemKey: itemEntry[this.relatedItemKeyProperty],
                     itemEntry: itemEntry,
                 };
-                if (action.enabled === 'undefinded') {
+                if (typeof action.enabled === 'undefind') {
                     enabled = true;
                 }
-                if (action.cls === 'undefinded') {
+                if (typeof action.cls === 'undefind') {
                     action.cls  = '';
                 }
                 
@@ -470,15 +472,15 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             index = evt.currentTarget.attributes['action-id'].value;
             action = this.actions[index];
             if (action) {
-               // if ((action.enabled) || (action.enabled === 'undefined')) {
-                    if (action['fn']) {
-                        action['fn'].call(action['scope'] || this, action);
+                // if ((action.enabled) || (action.enabled === 'undefined')) {
+                if (action['fn']) {
+                    action['fn'].call(action['scope'] || this, action);
+                }
+                else {
+                    if(typeof this[action['action']] === 'function'){
+                        this[action['action']](evt); 
                     }
-                    else {
-                        if(typeof this[action['action']] === 'function'){
-                            this[action['action']](evt); 
-                        }
-                    }
+                }
                 //}
             }
             event.stop(evt);
@@ -490,20 +492,78 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             itemEntryKey = evt.currentTarget.attributes['data-item-key'].value;
             itemEntry = this.getItemEntry(itemEntryKey);
             action = this.itemActions[index];
-            if (action) {
-              //  if ((action.enabled)||(action.enabled === 'undefined')) {
-                    if (action['fn']) {
-                        action['fn'].call(action['scope'] || this, action, itemEntryKey, itemEntry);
-                    }
-                    else {
-
-                        if (typeof this[action['action']] === 'function') {
-                            this[action['action']](action, itemEntryKey, itemEntry);
-                        }
-                    }
-               // }
+            this._invokeItemActionItem(action, itemEntryKey, itemEntry);
+            event.stop(evt);
+        },
+        invokeItemActionItemById: function(actionId, itemEntryKey, params) {
+            var action, entry;
+            action =  this._getItemActionById(actionId);
+            entry = this.getItemEntry(itemEntryKey);
+            this._invokeItemActionItem(action, itemEntryKey, entry);
+           
+        },
+        _initiateActionFromEvent: function(evt) {
+            var el = query(evt.target).closest('[data-action]')[0],
+                actionId = el && domAttr.get(el, 'data-action');
+            var parameters = this._getParametersForAction(actionId, evt, el);
+                 
+            if (parameters.actionType === 'method') {
+                this.invokeActionMethod(actionId, parameters, evt, el);
+            } else {
+                this.invokeItemActionItemById(actionId, parameters.key, parameters);
             }
             event.stop(evt);
+
+        },
+        _getParametersForAction: function(actionId, evt, el) {
+            var parameters = {
+                $event: evt,
+                $source: el
+            };
+            if (el) {
+                for (var i = 0, attrLen = el.attributes.length; i < attrLen; i++) {
+                    var attributeName = el.attributes[i].name;
+                    if (/^((?=data-action)|(?!data))/.test(attributeName)) continue;
+                    var parameterName = attributeName.substr('data-'.length).replace(/-(\w)(\w+)/g, function($0, $1, $2) { return $1.toUpperCase() + $2; });
+
+                    parameters[parameterName] = domAttr.get(el, attributeName);
+                }
+            }
+            return parameters;
+        },
+        invokeActionMethod: function(name, parameters, evt, el) {
+            return this[name].apply(this, [parameters, evt, el]);
+        },
+
+        _invokeItemActionItem: function(action, itemEntryKey, itemEntry) {
+            if (action) {
+                if (action['fn']) {
+                    action['fn'].call(action['scope'] || this, action, itemEntryKey, itemEntry);
+                }
+                else {
+
+                    if (typeof this[action['action']] === 'function') {
+                        this[action['action']](action, itemEntryKey, itemEntry);
+                    }
+                }
+            }
+        },
+        _getItemActionById:function(actionId){
+            var action = null;
+            array.forEach(this.itemActions, function(item) {
+                if (item.id === actionId) {
+                    action = item;
+                }
+            });
+            return action;
+
+        },
+        setSource: function(source) {
+            lang.mixin(source, {
+                resourceKind: this.store.resourceKind
+            });
+
+            // this.options.source = source;
         },
         getStore: function() {
             var store = new SDataStore({
@@ -534,14 +594,32 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             
             return queryOptions;
         },
-        fetchData: function() {
-            var queryResults, startIndex;
+        fetchData: function(refreshing) {
+            var queryResults, startIndex, pageSize;
             if (this.startIndex < 1) {
                 this.startIndex = 1;
             }
-            this.queryOptions.start = this.startIndex-1;
+            
+            if (this._currentPages < 1) {
+                this._currentPages = 1;
+            }
+
+            if (refreshing) {
+                pageSize = this._currentPages * this.pageSize;
+
+                this.queryOptions.start = this.startIndex - 1;
+                this.queryOptions.count = pageSize;
+                this.startIndex = this.startIndex > 0 && pageSize > 0 ? this.startIndex + pageSize : 1;
+                //this._currentPages = 0;
+            } else {
+                this.queryOptions.count = this.pageSize;
+                this.queryOptions.start = this.startIndex - 1;
+                this.startIndex = this.startIndex > 0 && this.pageSize > 0 ? this.startIndex + this.pageSize : 1;
+                if (this._currentPages > 1) {
+                    this._currentPages++;
+                }
+            }
             queryResults = this.store.query(null, this.queryOptions);
-            this.startIndex = this.startIndex > 0 && this.pageSize > 0 ? this.startIndex + this.pageSize : 1;
             return queryResults;
         },
         onInit: function() {
@@ -622,7 +700,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 options.onFailed.call(options.scope || this, result);
             }
         },
-        onLoad: function() {
+        onLoad: function(refreshing) {
             var data;
             if (this.relatedData) {
 
@@ -651,7 +729,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 if (this.wait) {
                     return;
                 }
-                this.relatedResults = this.fetchData();
+                this.relatedResults = this.fetchData(refreshing);
                 (function(context, relatedResults) {
 
                     try {
@@ -704,6 +782,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         itemHTML = this.relatedViewRowTemplate.apply(itemEntry, this);
                         itemNode = domConstruct.toDom(itemHTML);
                         on(itemNode, 'click', lang.hitch(this, this.onSelectViewRow));
+                        array.forEach(['click'], function(event) {
+                            this.connect(itemNode, event, this._initiateActionFromEvent);
+                        }, this);
+
                         domConstruct.place(itemNode, this.itemsNode, 'last', this);
                         if ((this.enableItemActions )&&(this.itemActions)) {
                             this.createItemActions(this.itemActions, itemNode, itemEntry);
@@ -792,7 +874,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             }
             
         },
-       onViewItemActions: function(evt) {
+        onViewItemActions: function(evt) {
             array.forEach(
                  query('.item-actions', this.domNode),
                 function(node) {
@@ -810,7 +892,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         },
         onAddItem: function() {
 
-           this.navigateToInsertView();
+            this.navigateToInsertView();
 
         }, 
         onDeleteItem: function() {
@@ -831,8 +913,8 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         navigateToDetailView: function(entrykey, descriptor, title) {
             var view, options;
 
-             view = App.getView(this.detailViewId);
-             options = {
+            view = App.getView(this.detailViewId);
+            options = {
                 key: entrykey,
                 descriptor: descriptor,
                 title: title
@@ -849,6 +931,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             options = {
                 insert:true
             };
+            this.applyRelatedContext(options, this.parentEntry, this.parentResourceKind);
 
             if (view) {
                 view.show(options);
@@ -885,6 +968,17 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             }
             evt.stopPropagation();
         },
+        applyRelatedContext: function(options, relatedEntry, resourceKind) {
+            var context = {};
+            context.relatedContext = {
+                key: relatedEntry.$key,
+                resourceKind: resourceKind || this.resourceKind,
+                descriptor: relatedEntry.$descriptor,
+                entry: relatedEntry
+            }
+            lang.mixin(options, context);
+        },
+        
        _onRefreshView: function() {
             var view, nodes;
 
@@ -895,7 +989,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this.startIndex = 1;
             this.itemCount = 0;
             this.isLoaded = false;
-            this.onLoad();
+            this.onLoad(true);
         },
         _onAppRefresh: function(data) {
             if (data && data.data) {

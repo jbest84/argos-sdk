@@ -881,6 +881,11 @@ define('Sage/Platform/Mobile/_DetailBase', [
         onProcessRelatedViews: function(relatedView, rowNode, entry) {
             var relatedViewManager, i, relatedContentNode;
             try {
+
+                if (typeof relatedView.enabled === 'undefined') {
+                    relatedView.enabled = true;
+                }
+
                 if (relatedView.enabled) {
                     relatedViewManager = this.getRelatedViewManager(relatedView);
                     if (relatedViewManager) {

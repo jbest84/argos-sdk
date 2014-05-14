@@ -1256,11 +1256,16 @@ define('Sage/Platform/Mobile/_ListBase', [
             if (this.relatedViews.length > 0) {
                 try {
                     for (i = 0; i < this.relatedViews.length; i++) {
+
+                        if (typeof this.relatedViews[i].enabled === 'undefined') {
+                            this.relatedViews[i].enabled = true;
+                        }
+
                         if (this.relatedViews[i].enabled) {
                             relatedViewManager = this.getRelatedViewManager(this.relatedViews[i]);
                             if (relatedViewManager) {
                                 relatedContentNode = query('> #list-item-content-related', rowNode);
-                                relatedViewManager.addView(entry, relatedContentNode[0]);
+                                relatedViewManager.addView(entry, relatedContentNode[0], this);
                             }
                         }
                     }
@@ -1511,7 +1516,7 @@ define('Sage/Platform/Mobile/_ListBase', [
                            this.relatedDetailNode = domConstruct.toDom(this.listRelatedDetailTemplate.apply(entry, this));
                        }
                        domConstruct.place(this.relatedDetailNode, rowNode, 'after');
-                       relatedViewManager.addView(entry,this.relatedDetailNode);
+                       relatedViewManager.addView(entry,this.relatedDetailNode, this);
                    }
                 }
                 catch (error) {

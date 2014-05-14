@@ -1567,7 +1567,7 @@ img
     text-align: right;
     padding: 4px;
     margin: 2px;
-   // background-color: @gray1-dark;
+    background-color: @gray1-dark;
 }
 
 .related-view-widget .item-actions .action-item
@@ -1582,7 +1582,7 @@ img
 }
 
 
-.related-view-widget .item-actions .action-item-with-button 
+.xrelated-view-widget .item-actions .action-item-with-button 
 {
     font-weight: bold;
     color: white;
@@ -1602,11 +1602,33 @@ img
     -moz-border-radius: 2px;
     outline-color: #fe5000;
 }
+ .related-view-widget .item-actions .action-item-with-button 
+    {
+        background: #FFFFFF;
+        border: 0 solid #000000;
+        float: right;
+        height: 48px;
+        margin: 5px !important;
+        padding: 0 !important;
+        position: relative;
+        text-align: center;
+        width: 64px;
+    }
 
+
+.related-view-widget .item-actions .action-item-with-button > span
+{
+        padding: 0 3px 3px 3px;
+        font-size: 10px;
+        white-space: nowrap;
+        display: block;
+        text-overflow: ellipsis;
+        overflow-x: hidden;
+}
 .related-view-widget .item-actions .action-item-with-button > img
 {
-   width:16px;
-   height:16px;
+   width:24px;
+   height:24px;
    vertical-align: middle;
    margin: 1px 1px 3px 1px;
 }
