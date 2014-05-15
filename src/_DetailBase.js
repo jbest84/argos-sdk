@@ -855,10 +855,11 @@ define('Sage/Platform/Mobile/_DetailBase', [
             } else {
                 relatedView.id = this.id + '_' + relatedView.id;
                 relatedViewOptions = {
-                    autoLoad: false,
-                    autoScroll: true
                 };
-
+               // relatedViewOptions = {
+               //     autoLoad: false,
+               //     autoScroll: true
+               // };
                 lang.mixin(relatedViewOptions, relatedView);
 
                 options = {

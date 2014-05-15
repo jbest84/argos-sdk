@@ -1440,7 +1440,7 @@ img
     margin: 2px;
     padding: 1px;
     margin-bottom: 1px !important;
-    background-color: @gray1-lighter;
+    background-color: @glist-header-bg-color;
 }
 
 .related-view-widget .tab-items
@@ -1458,8 +1458,9 @@ img
 
 .related-view-widget .title
 {
-   font-size: 1.00em;
-   font-weight: bold;
+   color: @glist-header-color;
+    font-size: 1.00em;
+   font-weight: normal;
    text-overflow: ellipsis;
    white-space: nowrap;
    position: absolute;
@@ -1561,14 +1562,22 @@ img
 
 .related-view-widget .item-actions
 {
+    padding: 4px;
+    margin: 2px;
+}
+
+.related-view-widget .item-actions > div
+{
     font-weight: bold;
-    color: @blue3-dark;
     font-size: 1.2em;
     text-align: right;
     padding: 4px;
     margin: 2px;
-    background-color: @gray1-dark;
+    background-color: @gray2-dark;
+    display:inline-block;
+    width: 100%;
 }
+
 
 .related-view-widget .item-actions .action-item
 {
@@ -1701,11 +1710,11 @@ img
 }
 .related-view-widget .item
 {
-    font-size: 0.85em;
-	line-height: 0.95em;
-    min-height: 0.5em;
+    font-size: 0.80em;
+    min-height: 4.0em;
+    line-height: 0.95em;
     overflow: hidden;
-    padding: 4px;
+    padding: 0px;
     position: relative;
     text-overflow: ellipsis;
     margin:1px;
@@ -1718,7 +1727,7 @@ img
     border-width: 0;
     left: 0;
     padding: 0;
-    position: relative;
+    position: absolute;
     top: 0;
     width: 28px;
 
@@ -1726,7 +1735,7 @@ img
 .related-view-widget .item .item-header
 {
     color:@black-darker;
-    left: 4px;
+    left: 35px;
     position: relative;
     margin: 1px;
 
@@ -1734,11 +1743,13 @@ img
 .related-view-widget .item .item-detail
 {
     color:@gray1-dark;
-    left: 4px;
+    left: 35px;
     position: relative;
     margin: 1px;
     line-height: 1.25em;
+
 }
+
 .related-view-widget .item .item-footer
 {
     font-size: 0.65em;

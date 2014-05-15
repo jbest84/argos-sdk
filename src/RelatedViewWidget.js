@@ -63,11 +63,14 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         selectMoreDataText2: 'see ${0} more ... ',
         navToListText:'see list',
         loadingText: 'loading ... ',
-        refreshViewText: 'refresh',
         itemOfCountText: ' ${0} of ${1}',
         totalCountText: ' ${0}',
         deleteText: 'Delete',
         editText: 'Edit',
+        addText: 'text',
+        viewDetailText: 'view detail',
+        vliewListText:'view list',
+        refreshText: 'refresh',
 
         owner: null,
         parentProperty: '$key',
@@ -98,7 +101,8 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         relatedData: null,
         queryOptions: null,
         isLoaded: false,
-        autoLoad: false,
+        autoLoad: true,
+        expandOnLoad: false,
         wait: false,
         startIndex: 1,
         pageSize: 3,
@@ -166,7 +170,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             '<div class="tab-item tab-icon">',
                '<img src="{%= $.icon %}" alt="{%= $.title %}"  />',
             '</div>',
-            '<div data-dojo-attach-point="titleNode" class="tab-item title" >{%= $.title %}</div>',
+            '<h3 data-dojo-attach-point="titleNode" class="tab-item title" >{%= $.title %}</h3>',
             '<div data-dojo-attach-point="toggleIndicator" class="collapsed-indicator">',
             '</div>'
         ]),
@@ -182,7 +186,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             '<div class="row {%: $$.cls %}"  data-relatedkey="{%: $.$key %}" data-descriptor="{%: $.$descriptor %}">',
                  '<div class="item  {%: $$.getRowItemCls($) %}">',
                       '{%! $$.relatedItemTemplate %}', 
-                 '</div>',
+                 '</div',
             '</div>'
         ]),
         relatedItemIconTemplate: new Simplate([
@@ -272,18 +276,16 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     this.actions.push({
                         id: 'refresh',
                         icon: 'content/images/icons/Recurring_24x24.png',
-                        label: this.refreshViewText,
-                        action: 'onRefreshView',
-                        enabled: true
+                        label: this.refreshText,
+                        action: 'onRefreshView'
                     });
                 }
                 if (this.showNavigateToList) {
                     this.actions.push({
                         id: 'navtoListView',
                         icon: 'content/images/icons/drilldown_24.png',
-                        label: this.viewContactsActionText,
+                        label: this.viewListText,
                         action: 'onNavigateToList',
-                        enabled: true,
                         fn: this.onNavigateToList.bindDelegate(this)
                     });
                 }
@@ -291,9 +293,8 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     this.actions.push({
                         id: 'add',
                         icon: 'content/images/icons/Add_24.png',
-                        label: this.addViewText,
-                        action: 'onAddItem',
-                        enabled: true
+                        label: this.addText,
+                        action: 'onAddItem'
                     });
                 }
             }
@@ -306,22 +307,18 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 if (this.showDrillToDetail) {
                     this.itemActions.push({
                         id: 'drillToDetialView',
-                        label: '',
+                        label: this.viewDetailText,
                         icon: 'content/images/icons/drilldown_24.png',
                         action: 'onDrillToDetailView',
-                        cls:'clear',
-                        // enabled: true,
                         fn: this.onDrillToDetailView.bindDelegate(this)
                     });
                 }
                 if (this.showEdit) {
                     this.itemActions.push({
                         id: 'edit',
-                        label: '',
+                        label: this.editText,
                         icon: 'content/images/icons/edit_24.png',
                         action: 'onEditItem',
-                        cls:'clear',
-                        //enabled: true,
                         fn: this.onEditItem.bindDelegate(this)
                     });
                 }
@@ -331,8 +328,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         label: '',
                         icon: 'content/images/icons/del_24.png',
                         action: 'onDeleteItem',
-                        cls:'clear',
-                        // enabled: true,
                         fn: this.onDeleteItem.bindDelegate(this)
                     });
                 }
@@ -350,10 +345,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             for (i = 0; i < actions.length; i++) {
                 action = actions[i];
 
-                if (action.enabled === 'undefinded') {
+                if (typeof action.enabled === 'undefined') {
                     action.enabled = true;
                 }
-                if (action.cls === 'undefinded') {
+                if (typeof action.cls === 'undefined') {
                     action.cls = '';
                 }
 
@@ -372,9 +367,12 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this.actions = actions;
         },
         createItemActions: function(actions, itemNode, itemEntry ) {
-            var i, action, actionNode, actionTemplate, options, actionIcon, actionOptions, actionClss, enabled, include, exclude, modeClss, applyClss, itemActionNode;
+            var i, action, actionNode, actionTemplate, options, actionIcon, actionOptions, actionClss, enabled, include, exclude, modeClss, applyClss, itemActionNode,divNode ;
             itemActionNode = domConstruct.toDom(this.relatedItemActionsTemplate.apply(itemEntry));
+            divNode = domConstruct.toDom('<div></div>');
             domConstruct.place(itemActionNode, itemNode, 'last');
+            domConstruct.place(divNode, itemActionNode, 'last');
+
             for (i = 0; i < actions.length; i++) {
                 applyClss = false;
                 enabled = false;
@@ -389,10 +387,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     itemKey: itemEntry[this.relatedItemKeyProperty],
                     itemEntry: itemEntry,
                 };
-                if (typeof action.enabled === 'undefind') {
+                if (typeof action.enabled === 'undefined') {
                     enabled = true;
                 }
-                if (typeof action.cls === 'undefind') {
+                if (typeof action.cls === 'undefined') {
                     action.cls  = '';
                 }
                 
@@ -462,7 +460,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         on(actionNode, 'click', lang.hitch(this, this.onInvokeItemActionItem));
                     }
 
-                    domConstruct.place(actionNode, itemActionNode, 'last');
+                    domConstruct.place(actionNode, divNode, 'last');
                 }
             }
 
@@ -472,7 +470,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             index = evt.currentTarget.attributes['action-id'].value;
             action = this.actions[index];
             if (action) {
-                // if ((action.enabled) || (action.enabled === 'undefined')) {
                 if (action['fn']) {
                     action['fn'].call(action['scope'] || this, action);
                 }
@@ -481,7 +478,6 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                         this[action['action']](evt); 
                     }
                 }
-                //}
             }
             event.stop(evt);
         },
@@ -626,7 +622,11 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this._isInitLoad = true;
             this.store = this.store || this.getStore();
             this.queryOptions = this.queryOptions || this.getQueryOptions();
-
+            if (this.expandOnLoad) {
+                domClass.remove(this.tabNode, 'collapsed');
+            }else{
+                domClass.add(this.tabNode, 'collapsed');
+            }
             if (this.autoLoad) {
                 this.onLoad();
             }
@@ -758,7 +758,9 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 }
                 if (relatedFeed.length > 0) {
                     domClass.remove(this.containerNode, 'hidden');
-                    domClass.remove(this.tabNode, 'collapsed');
+                    if (this.expandOnLoad) {
+                        domClass.remove(this.tabNode, 'collapsed');
+                    }
                     this.itemCount = this.itemCount + relatedFeed.length;
                     restCount = this.relatedResults.total - this.itemCount;
                     if (restCount > 0) {
@@ -806,7 +808,10 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                     domAttr.set(this.selectMoreNode, { innerHTML: "" });
                     if (this._isInitLoad) {
                         this._isInitLoad = false;
-                        domClass.toggle(this.tabNode, 'collapsed');
+                        if (this.expandOnLoad) {
+                            domClass.remove(this.tabNode, 'collapsed');
+                        }
+                       // domClass.toggle(this.tabNode, 'collapsed');
                     }
                 }
                 domClass.toggle(this.loadingNode, 'loading');
@@ -975,7 +980,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 resourceKind: resourceKind || this.resourceKind,
                 descriptor: relatedEntry.$descriptor,
                 entry: relatedEntry
-            }
+            };
             lang.mixin(options, context);
         },
         

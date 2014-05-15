@@ -1167,7 +1167,7 @@ img {
   margin: 2px;
   padding: 1px;
   margin-bottom: 1px !important;
-  background-color: #d0d0d0;
+  background-color: #666666;
 }
 .related-view-widget .tab-items {
   margin: 5px 2px 2px 2px;
@@ -1179,8 +1179,9 @@ img {
   margin: 0px 12px 0px 0px;
 }
 .related-view-widget .title {
+  color: #ffffff;
   font-size: 1.00em;
-  font-weight: bold;
+  font-weight: normal;
   text-overflow: ellipsis;
   white-space: nowrap;
   position: absolute;
@@ -1257,12 +1258,18 @@ img {
   padding: 0 10px;
 }
 .related-view-widget .item-actions {
+  padding: 4px;
+  margin: 2px;
+}
+.related-view-widget .item-actions > div {
   font-weight: bold;
-  color: #408da7;
   font-size: 1.2em;
   text-align: right;
   padding: 4px;
   margin: 2px;
+  background-color: #8c8c8c;
+  display: inline-block;
+  width: 100%;
 }
 .related-view-widget .item-actions .action-item {
   padding: 0 2px;
@@ -1271,7 +1278,7 @@ img {
 .related-view-widget .item-actions .hidden {
   display: none;
 }
-.related-view-widget .item-actions .action-item-with-button {
+.xrelated-view-widget .item-actions .action-item-with-button {
   font-weight: bold;
   color: white;
   font-size: 0.5em;
@@ -1290,9 +1297,28 @@ img {
   -moz-border-radius: 2px;
   outline-color: #fe5000;
 }
+.related-view-widget .item-actions .action-item-with-button {
+  background: #FFFFFF;
+  border: 0 solid #000000;
+  float: right;
+  height: 48px;
+  margin: 5px !important;
+  padding: 0 !important;
+  position: relative;
+  text-align: center;
+  width: 64px;
+}
+.related-view-widget .item-actions .action-item-with-button > span {
+  padding: 0 3px 3px 3px;
+  font-size: 10px;
+  white-space: nowrap;
+  display: block;
+  text-overflow: ellipsis;
+  overflow-x: hidden;
+}
 .related-view-widget .item-actions .action-item-with-button > img {
-  width: 16px;
-  height: 16px;
+  width: 24px;
+  height: 24px;
   vertical-align: middle;
   margin: 1px 1px 3px 1px;
 }
@@ -1346,11 +1372,11 @@ img {
   vertical-align: top;
 }
 .related-view-widget .item {
-  font-size: 0.85em;
+  font-size: 0.80em;
+  min-height: 4.0em;
   line-height: 0.95em;
-  min-height: 0.5em;
   overflow: hidden;
-  padding: 4px;
+  padding: 0px;
   position: relative;
   text-overflow: ellipsis;
   margin: 1px;
@@ -1360,19 +1386,19 @@ img {
   border-width: 0;
   left: 0;
   padding: 0;
-  position: relative;
+  position: absolute;
   top: 0;
   width: 28px;
 }
 .related-view-widget .item .item-header {
   color: #212721;
-  left: 4px;
+  left: 35px;
   position: relative;
   margin: 1px;
 }
 .related-view-widget .item .item-detail {
   color: #727272;
-  left: 4px;
+  left: 35px;
   position: relative;
   margin: 1px;
   line-height: 1.25em;
