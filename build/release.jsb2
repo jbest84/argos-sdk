@@ -112,6 +112,18 @@
           "path": "../src"
         },
         {
+          "text": "RelatedViewDetailWidget.js",
+          "path": "../src"
+        },
+        {
+          "text": "RelatedViewWidget.js",
+          "path": "../src"
+        },
+        {
+          "text": "RelatedViewManager.js",
+          "path": "../src"
+        },
+        {
           "text": "_DetailBase.js",
           "path": "../src"
         },
@@ -214,18 +226,6 @@
         {
           "text": "GroupByValueSection.js",
           "path": "../src/Groups"
-        },
-        {
-          "text": "RelatedViewDetailWidget.js",
-          "path": "../src"
-        },
-        {
-          "text": "RelatedViewWidget.js",
-          "path": "../src"
-        },
-        {
-          "text": "RelatedViewManager.js",
-          "path": "../src"
         },
         {
           "text": "SearchWidget.js",
