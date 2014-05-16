@@ -773,7 +773,7 @@ define('Sage/Platform/Mobile/Application', [
             }
 
             list = ReUI.context.history || [];
-
+           // this.applyAdhocContext(list);
             depth = depth || 0;
 
             for (i = list.length - 2, j = 0; i >= 0 && (depth <= 0 || j < depth); i--, j++)
@@ -782,6 +782,7 @@ define('Sage/Platform/Mobile/Application', [
 
             return false;
         },
+       
         /**
          * Shortcut method to {@link #queryNavigationContext queryNavigationContext} that matches the specified resourceKind provided
          * @param {String/String[]} kind The resourceKind(s) the history item must match

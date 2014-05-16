@@ -1153,10 +1153,10 @@ img {
   position: relative;
 }
 .related-view-widget {
-  padding: 0px;
+  margin: 1px 1px 2px 1px;
 }
 .related-view-widget .panel {
-  padding: 1px;
+  padding: 0px 0px 40px 0px;
   position: relative;
   top: 0px;
 }
@@ -1185,7 +1185,7 @@ img {
   text-overflow: ellipsis;
   white-space: nowrap;
   position: absolute;
-  left: 40px;
+  left: 60px;
   right: 20px;
   overflow: hidden;
   display: block;

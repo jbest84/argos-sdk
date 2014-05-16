@@ -84,7 +84,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         iconDrillToDetail: 'content/images/icons/drilldown_24.png',
         icon: 'content/images/icons/ContactProfile_48x48.png',
         itemIcon: 'content/images/icons/ContactProfile_48x48.png',
-        title: 'Related View',
+        titleText: 'Related View',
         detailViewId: null,
         editViewId: null,
         listViewId: null,
@@ -109,6 +109,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         relatedResults: null,
         itemCount: 0,
         _isInitLoad: true,
+        enableNavBar: false,
         showTab: true,
         showTotalInTab: true,
         showItemIcon: true,
@@ -117,8 +118,8 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
         showItemDetail: true,
         showNavigateToList: true,
         showRefresh: true,
-        showAdd: false,
-        showEdit: false,
+        showAdd: true,
+        showEdit: true,
         showDelete: false,
         showDrillToDetail: true,
         showSelectMore: true,
@@ -249,10 +250,23 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                           '<img src="{%= $.icon %}" alt="{%= $.label %}" />',
                       '{% } %}',
                      '<span> {%= $.label %}</span>',
-                '</button>',
+                '</button>'
+        ]),
+        relatedNavBarTemplate: new Simplate([
+              '<div id="related-nav-bar" class="nav-bar-items"></div>'
+        ]),
+        relatedNavItemTemplate: new Simplate([
+             '<button  data-view-id="{%= $.id %}" class="nav-item-button">',
+                    '{% if ($.icon) { %}',
+                         '<img src="{%= $.icon %}" alt="{%= $.label %}" />',
+                     '{% } %}',
+                    '<span> {%= $.title %}</span>',
+                    '<span id="{%= $.id %}_count" ></span>',
+               '</button>'
         ]),
         constructor: function(options) {
             lang.mixin(this, options);
+            this.title = this.title || this.titleText;
             this._subscribes = [];
             this._subscribes.push(connect.subscribe('/app/refresh', this, this._onAppRefresh));
             this.setDefaultActions();
@@ -622,6 +636,9 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             this._isInitLoad = true;
             this.store = this.store || this.getStore();
             this.queryOptions = this.queryOptions || this.getQueryOptions();
+            if (this.enableNavBar) {
+                this.createNavItem();
+            }
             if (this.expandOnLoad) {
                 domClass.remove(this.tabNode, 'collapsed');
             }else{
@@ -630,6 +647,17 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
             if (this.autoLoad) {
                 this.onLoad();
             }
+        },
+        createNavItem: function() {
+            var navBarNode, navItemNode;
+
+            navBarNode = query('#related-nav-bar',this.parentNode)[0];
+            if (!navBarNode) {
+                navBarNode = domConstruct.toDom(this.relatedNavBarTemplate.apply(this));
+                domConstruct.place(navBarNode, this.parentNode, 'first');
+            }
+            navItemNode = domConstruct.toDom(this.relatedNavItemTemplate.apply(this));
+            domConstruct.place(navItemNode, navBarNode, 'first');
         },
         getItemEntry: function(entryid){
             var i, len, entry;
@@ -966,7 +994,7 @@ define('Sage/Platform/Mobile/RelatedViewWidget', [
                 where: whereExpression,
                 title: this.title
             };
-
+            this.applyRelatedContext(options, this.parentEntry, this.parentResourceKind);
             view = App.getView(this.listViewId);
             if (view) {
                 view.show(options);

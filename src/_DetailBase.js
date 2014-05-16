@@ -190,18 +190,24 @@ define('Sage/Platform/Mobile/_DetailBase', [
         * * `$` => detail layout row
         * * `$$` => view instance
         */
-        relatedViewTemplate: new Simplate([
+        relatedContentViewsTemplate: new Simplate([
             '<li class="{%= $.cls %}">',
-        //    '<a data-action="activateRelatedList" data-view="{%= $.view %}" data-context="{%: $.context %}">',
-        //    '{% if ($.icon) { %}',
-        //    '<img src="{%= $.icon %}" alt="icon" class="icon" />',
-        //    '{% } %}',
-        //  '<span>{%: $.label %}</span>',
-        //    '</a>',
-            '<div id="list-item-content-related"></div>',
+             '<div id="related-content-views"></div>',
             '</li>',
         ]),
 
+        /**
+       * @property {Simplate}
+       * HTML that is used for detail layout items that point to imbeaded related views, displayed related view widget
+       *
+       * * `$` => detail layout row
+       * * `$$` => view instance
+       */
+        relatedViewItemTemplate: new Simplate([
+            '<li class="{%= $.cls %}">',
+             '<div id="list-item-content-related"></div>',
+            '</li>',
+        ]),
 
         /**
          * @property {Simplate}
@@ -619,7 +625,17 @@ define('Sage/Platform/Mobile/_DetailBase', [
                 var rowNode;
                 var docfrag;
                 if (current['relatedView']) {
-                    rowNode = domConstruct.toDom(this.relatedViewTemplate.apply(data, this));
+
+                    rowNode = query('#related-content-views', sectionNode)[0];
+                    if (!rowNode) {
+
+                        rowNode = domConstruct.toDom(this.relatedContentViewsTemplate.apply(data, this));
+                        domConstruct.place(rowNode, sectionNode, 'last');
+                    }
+
+                    //rowNode = domConstruct.toDom(this.relatedViewTemplate.apply(data, this));
+                    //domConstruct.place(rowNode, relatedViewsNode, 'last');
+
                     docfrag = document.createDocumentFragment();
                     docfrag.appendChild(rowNode);
                     this.onProcessRelatedViews(current['relatedView'], rowNode, entry);
@@ -890,8 +906,8 @@ define('Sage/Platform/Mobile/_DetailBase', [
                 if (relatedView.enabled) {
                     relatedViewManager = this.getRelatedViewManager(relatedView);
                     if (relatedViewManager) {
-                        relatedContentNode = query('> #list-item-content-related', rowNode);
-                        relatedViewManager.addView(entry, relatedContentNode[0], this);
+                        //relatedContentNode = query('> #list-item-content-related', rowNode);
+                        relatedViewManager.addView(entry, rowNode, this);
                     }
                 }
             }
