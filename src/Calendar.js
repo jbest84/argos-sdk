@@ -328,8 +328,8 @@ define('Sage/Platform/Mobile/Calendar', [
             result.setHours(hours);
             result.setMinutes(minutes);
 
-            if ((this.options && this.options.timeless) || this.timeless)
-                result = result.clone().clearTime().add({minutes: -1*result.getTimezoneOffset(), seconds:5});
+            //if ((this.options && this.options.timeless) || this.timeless)
+            //    result = result.clone().clearTime().add({minutes: -1*result.getTimezoneOffset(), seconds:5});
 
             return result;
         }
