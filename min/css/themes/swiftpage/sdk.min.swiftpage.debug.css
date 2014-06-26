@@ -1579,7 +1579,7 @@ body > .viewContainer {
   top: -1px;
   left: -1px;
   width: 40px;
-  height: 14px;
+  height: 28px;
   border: 1px solid #999b9f;
   background-color: #b4b9be;
   border-radius: 6px;
@@ -1588,6 +1588,7 @@ body > .viewContainer {
 }
 .toggle-vertical > .thumb {
   width: 64px;
+  height: 14px;
 }
 .toggleStateOn > .thumb {
   left: auto;
