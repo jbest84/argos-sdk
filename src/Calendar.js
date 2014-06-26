@@ -122,6 +122,8 @@ define('Sage/Platform/Mobile/Calendar', [
         minuteNode: null,
         datePickControl: null,
         timePickControl: null,
+        yearsFuture: 30,
+        yearsPast: 30,
 
         daysInMonth: function() {
             var date = moment();
@@ -208,6 +210,9 @@ define('Sage/Platform/Mobile/Calendar', [
             this.inherited(arguments);
             options = options || this.options;
 
+            this.yearsPast = options.yearsPast;
+            this.yearsFuture = options.yearsFuture;
+
             this.titleText = options.label ? options.label : this.titleText;
 
             this.showTimePicker = this.options && this.options.showTimePicker;
@@ -223,8 +228,8 @@ define('Sage/Platform/Mobile/Calendar', [
             var today = moment();
 
             this.populateSelector(this.yearNode, this.year,
-                    (this.year < today.year() - 10) ? this.year : today.year() - 10, // min 10 years in past - arbitrary min
-                    (10 + today.year()) // max 10 years into future - arbitrary limit
+                    (this.year < today.year() - this.yearsPast) ? this.year : today.year() - this.yearsPast, // min 10 years in past - arbitrary min
+                    (this.yearsFuture + today.year()) // max 10 years into future - arbitrary limit
             );
 
             this.populateSelector(this.monthNode, this.month, 0, 11);

@@ -102,6 +102,18 @@ define('Sage/Platform/Mobile/Fields/DateField', [
         timeless: false,
 
         /**
+         * @cfg {Number}
+         * Used to control how many years show up in the future for the year picker.
+         */
+        yearsFuture: 30,
+
+        /**
+         * @cfg {Number}
+         * Used to control how many years show up in the past for the year picker.
+         */
+        yearsPast: 30,
+
+        /**
          * Takes a date object and calls {@link format#date format.date} passing the current
          * `dateFormatText` and `timeless` values, formatting the date into a string representation.
          * @param {Date} value Date to be converted
@@ -142,6 +154,8 @@ define('Sage/Platform/Mobile/Fields/DateField', [
             options.date = this.currentValue;
             options.showTimePicker = this.showTimePicker;
             options.timeless = this.timeless;
+            options.yearsPast = this.yearsPast;
+            options.yearsFuture = this.yearsFuture;
 
             return options;
         },
