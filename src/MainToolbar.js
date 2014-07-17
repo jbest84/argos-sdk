@@ -53,7 +53,7 @@ define('Sage/Platform/Mobile/MainToolbar', [
          * `$` - the toolbar instance
          */
         widgetTemplate: new Simplate([
-            '<div class="toolbar {%= $.cls %}">',            
+            '<div class="toolbar {%= $.cls %}">',
             '<h1 id="pageTitle" class="toolbar-title" data-dojo-attach-event="onclick: onTitleClick" data-dojo-attach-point="titleNode">{%= $.titleText %}</h1>',
             '</div>'
         ]),
@@ -102,19 +102,18 @@ define('Sage/Platform/Mobile/MainToolbar', [
          */
         showTools: function(tools) {
             this.inherited(arguments);
-
             domClass.remove(this.domNode, 'toolbar-size-' + this.size);
-            
-            if (tools)
-            {
-                var count = {left: 0, right: 0};
 
-                for (var i = 0; i < tools.length; i++)
-                {
-                    count[tools[i].side || 'right'] += 1;
-                    var toolTemplate = tools[i].template || this.toolTemplate;
+            if (tools) {
+                var count = {left: 0, right: 0}, side, toolTemplate, tool;
 
-                    domConstruct.place(toolTemplate.apply(tools[i], this.tools[tools[i].id]), this.domNode, 'last');
+                for (var i = 0; i < tools.length; i++) {
+                    tool = tools[i];
+                    side = tool.side || 'right';
+                    count[side] += 1;
+                    toolTemplate = tool.template || this.toolTemplate;
+
+                    domConstruct.place(toolTemplate.apply(tool, this.tools[tool.id]), this.domNode, 'last');
                 }
 
                 this.size = Math.max(count.left, count.right);

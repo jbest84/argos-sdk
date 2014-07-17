@@ -836,8 +836,20 @@ body > .viewContainer > [selected="true"] {
   bottom: 0px;
   width: 100%;
 }
-.viewContainer > .toolbar,
 .toolbar {
+  display: -webkit-flex;
+  display: -moz-flex;
+  display: -ms-flexbox;
+  display: -ms-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  -moz-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-align-items: center;
+  -moz-align-items: center;
+  -ms-align-items: center;
+  align-items: center;
   position: absolute;
   top: 0;
   left: 0;
@@ -847,25 +859,24 @@ body > .viewContainer > [selected="true"] {
   height: 40px;
   width: 100%;
   padding: 4px 4px;
-  display: block;
   z-index: 10;
 }
-.viewContainer > .toolbar > h1,
 .toolbar > h1 {
+  -webkit-flex-grow: 1;
+  -moz-flex-grow: 1;
+  -ms-flex-grow: 1;
+  flex-grow: 1;
+  -webkit-order: 1;
+  -moz-order: 1;
+  -ms-order: 1;
+  order: 1;
   overflow: hidden;
-  display: block;
-  margin: 0;
-  padding: 0;
   font-size: 1em;
-  line-height: 34px;
   font-weight: normal;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
   color: #FFFFFF;
-  position: absolute;
-  left: 0px;
-  right: 0px;
   z-index: 0;
 }
 .viewContainer > .toolbar-size-1 > h1,
@@ -896,13 +907,17 @@ body > .viewContainer > [selected="true"] {
   width: 24px;
   height: 24px;
 }
-.toolButton-left {
-  float: left;
-  margin-right: 10px;
-}
 .toolButton-right {
-  float: right;
-  margin-left: 10px;
+  -webkit-order: 1;
+  -moz-order: 1;
+  -ms-order: 1;
+  order: 1;
+}
+.toolButton-left {
+  -webkit-order: 0;
+  -moz-order: 0;
+  -ms-order: 0;
+  order: 0;
 }
 body > .viewContainer > .dialog {
   top: 0px;
