@@ -39,6 +39,7 @@ define('Sage/Platform/Mobile/_DetailBase', [
     'Sage/Platform/Mobile/Utility',
     'Sage/Platform/Mobile/ErrorManager',
     'Sage/Platform/Mobile/View'
+
 ], function(
     dojo,
     declare,
@@ -352,6 +353,10 @@ define('Sage/Platform/Mobile/_DetailBase', [
                     id: 'refresh',
                     cls: 'fa fa-refresh fa-fw fa-lg',
                     action: '_refreshClicked'
+                }, {
+                    id: 'offline',
+                    cls: 'fa fa-refresh fa-fw fa-lg',
+                    action: '_saveOfflineClicked'
                 }]
             });
         },
@@ -361,6 +366,9 @@ define('Sage/Platform/Mobile/_DetailBase', [
             this.refresh();
 
             this.onRefreshClicked();
+        },
+        _saveOfflineClicked: function() {
+            App.OfflineManager.saveOffline(this);
         },
         /**
          * Called when the user clicks the refresh toolbar button.

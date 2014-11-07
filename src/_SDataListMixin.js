@@ -47,11 +47,13 @@ define('Sage/Platform/Mobile/_SDataListMixin', [
     string
 ) {
     return declare('Sage.Platform.Mobile._SDataListMixin', null, {
+
+        checkOfflineState: true,
         /**
          * @property request Object SData request passed into the store. Optional.
          */
         request: null,
-
+        
         /**
          * @cfg {String} resourceKind
          * The SData resource kind the view is responsible for.  This will be used as the default resource kind

@@ -37,7 +37,12 @@ define('Sage/Platform/Mobile/Application', [
     'snap',
     'dojo/sniff',
     'dojox/mobile/sniff',
-    'Sage/Platform/Mobile/ReUI/main'
+    'Sage/Platform/Mobile/ReUI/main',
+    'Sage/Platform/Mobile/OfflineManager',
+    'Sage/Platform/Mobile/Data/DataManager',
+    'Sage/Platform/Mobile/Models/ModelManager',
+    'Sage/Platform/Mobile/Data/SDataAdapter',
+    'Sage/Platform/Mobile/Data/LocalAdapter'
 ], function(
     json,
     array,
@@ -53,7 +58,10 @@ define('Sage/Platform/Mobile/Application', [
     snap,
     sniff,
     mobileSniff,
-    ReUI
+    ReUI,
+    OfflineManager,
+    DataManager,
+    ModelManager
 ) {
 
     // Polyfill for Funcion.bind, taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind
@@ -149,6 +157,19 @@ define('Sage/Platform/Mobile/Application', [
     });
 
     return declare('Sage.Platform.Mobile.Application', null, {
+
+        /**
+        *  OfflineManager
+        */
+        OfflineManager: null,
+        /**
+       *  DataManager
+       */
+        ModelManager: null,
+        /**
+       *  DataManager
+       */
+        DataManager: null,
         /**
          * @property enableConcurrencyCheck {Boolean} Option to skip concurrency checks to avoid precondition/412 errors.
          */
@@ -247,7 +268,9 @@ define('Sage/Platform/Mobile/Application', [
 
             this.context = {};
             this.viewShowOptions = [];
-
+            this.OfflineManager = OfflineManager;
+            this.DataManager = DataManager;
+            this.ModelManager = ModelManager;
             lang.mixin(this, options);
         },
         /**
@@ -384,6 +407,9 @@ define('Sage/Platform/Mobile/Application', [
             this.initModules();
             this.initToolbars();
             this.initReUI();
+            this.ModelManager.init();
+            this.DataManager.init();
+            this.OfflineManager.init();
         },
         /**
          * Establishes various connections to events.

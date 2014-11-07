@@ -30,7 +30,7 @@ define('Sage/Platform/Mobile/View', [
     'dijit/_WidgetBase',
     'Sage/Platform/Mobile/_ActionMixin',
     'Sage/Platform/Mobile/_CustomizationMixin',
-    'Sage/Platform/Mobile/_Templated'
+    'Sage/Platform/Mobile/_Templated',
 ], function(
     declare,
     lang,
@@ -38,6 +38,7 @@ define('Sage/Platform/Mobile/View', [
     _ActionMixin,
     _CustomizationMixin,
     _Templated
+
 ) {
     return declare('Sage.Platform.Mobile.View', [_WidgetBase, _ActionMixin, _CustomizationMixin, _Templated], {
         /**
@@ -73,11 +74,13 @@ define('Sage/Platform/Mobile/View', [
          * The titleText string will be applied to the top toolbar during {@link #show show}.
          */
         titleText: 'Generic View',
+        checkOfflineState: false,
+        offlineViewId: null,
         /**
          * This views toolbar layout that defines all toolbar items in all toolbars.
          * @property {Object}
          */
-        tools: null,
+         tools: null,
         /**
          * May be defined along with {@link App#hasAccessTo Application hasAccessTo} to incorporate View restrictions.
          */
@@ -219,10 +222,22 @@ define('Sage/Platform/Mobile/View', [
          * @param transitionOptions {Object} Optional transition object that is forwarded to ReUI.
          */
         show: function(options, transitionOptions) {
-            var tag, data;
+            var tag, data, offlineView;
 
             if (this.onShow(this) === false) {
                 return;
+            }
+            if (App.OfflineManager.isOffline() && this.checkOfflineState) {
+                offlineView = App.OfflineManager.getOfflineView(this);
+                if (offlineView) {
+                    if (!options) {
+                        options = {};
+
+                    }
+                    options['entityName'] = this.entityName;
+                    offlineView.show(options, transitionOptions);
+                    return;
+                }
             }
 
             if (this.refreshRequiredFor(options)) {
@@ -320,7 +335,7 @@ define('Sage/Platform/Mobile/View', [
          */
         getSecurity: function(access) {
             return this.security;
-        },
+        }
     });
 });
 

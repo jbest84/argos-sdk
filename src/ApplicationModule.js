@@ -27,12 +27,14 @@ define('Sage/Platform/Mobile/ApplicationModule', [
     'dojo/_base/connect',
     'dojo/_base/declare',
     'dojo/_base/lang',
+    'Sage/Platform/Mobile/Views/DefaultOfflineView',
     'Sage/Platform/Mobile/Application'
 ], function(
     array,
     connect,
     declare,
-    lang
+    lang,
+    DefaultOfflineView
 ) {
 
     return declare('Sage.Platform.Mobile.ApplicationModule', null, {
@@ -93,7 +95,6 @@ define('Sage/Platform/Mobile/ApplicationModule', [
          */
         init: function(application) {
             this.application = application;
-
             this.loadCustomizations();
             this.loadToolbars();
             this.loadViews();
@@ -109,6 +110,9 @@ define('Sage/Platform/Mobile/ApplicationModule', [
          * This function should be overriden in the app and be used to register all views.
          */
         loadViews: function() {
+            this.registerView(new DefaultOfflineView({
+                expose: false
+            }));
         },
         /**
          * @template
