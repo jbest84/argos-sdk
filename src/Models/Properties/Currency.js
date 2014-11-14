@@ -14,32 +14,36 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.Models.DateTime
+ * @class Sage.Platform.Mobile.Models.CurrencyProperty
  
  * @alternateClassName _PropertylBase
  * @requires Sage/Platform/Mobile/Models/_PropertyBase
  */
-define('Sage/Platform/Mobile/Models/Properties/DateTime', [
+define('Sage/Platform/Mobile/Models/Properties/Currency', [
     'dojo/_base/declare',
     'dojo/_base/lang',
-    'Sage/Platform/Mobile/Models/Properties/_PropertyBase'
+    'Sage/Platform/Mobile/Models/Properties/_PropertyBase',
+    'Sage/Platform/Mobile/Models/PropertyManager'
 ], function(
     declare,
     lang,
-    _PropertyBase
+    _PropertyBase,
+    PropertyManager
 ) {
 
-    return declare('Sage.Platform.Mobile.Models.Properties.DateTime', _PropertyBase, {
+    var prop = declare('Sage.Platform.Mobile.Models.Properties.Currency', _PropertyBase, {
+        
+        
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: 'DateTime',
-        displayName: 'Date Time',
-        dataType:'DateTime',
+        name: 'Curreny',
+        displayName: 'Currency',
+        dataType: 'Fixed',
         constructor: function(o) {
             lang.mixin(this, o);
-
         }
     });
+    return PropertyManager.register('Currency', prop);
 });

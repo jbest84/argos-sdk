@@ -21,9 +21,11 @@
  * @singleton
  */
 define('Sage/Platform/Mobile/Models/ModelManager', [
-    'dojo/_base/lang'
+    'dojo/_base/lang',
+    'Sage/Platform/Mobile/Models/_ModelBase'
 ], function(
-    lang
+    lang,
+    _ModelBase
 ) {
     var _store = {};
     return lang.setObject('Sage.Platform.Mobile.Models.ModelManager', {
@@ -31,6 +33,7 @@ define('Sage/Platform/Mobile/Models/ModelManager', [
          * @property {Object}
          * The type map that translates string type names to constructor functions
          */
+        
         types: _store,
         /**
          * Registers a field type by providing a unique name and the constructor to be called
@@ -38,7 +41,7 @@ define('Sage/Platform/Mobile/Models/ModelManager', [
          * @param {Function} ctor Constructor function of field
          */
         register: function(name, ctor) {
-            _store[name] = ctor;
+            _store[name] ={ctor: ctor, instance: null};
             return ctor;
         },
         /**
@@ -53,13 +56,30 @@ define('Sage/Platform/Mobile/Models/ModelManager', [
 
         },
         getModel:function(name){
-            var model, ctor = _store[name];
-            model = null;
-            if (ctor) {
-                model = new ctor();
-                model.init();
+            var instance, model;
+            instance = null;
+            model = _store[name];
+            if (!model) {
+                model = _store['_Base'];
+                if (!model) {
+                    instance = new _ModelBase();
+                    instance.init();
+                    _store['_Base'] = { instance: instance };
+                } else {
+                    instance = model.instance;
+                }
             }
-            return model;
+            else if (model.instance) {
+                instance = model.instance;
+            } else {
+                if (model.ctor) {
+                    instance = new model.ctor();
+                    instance.init();
+                    model.instance = instance;
+                    _store[name] = model;
+                }
+            }
+            return instance;
         }
     });
 });

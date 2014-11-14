@@ -14,36 +14,40 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.Models.Properties.Property
- 
- * @alternateClassName _PropertylBase
- * @requires Sage/Platform/Mobile/Models/Properties/_PropertyBase
+ * @class Sage.Platform.Mobile.Models._ModelBase
+ * Model is the base class for all data models. It describes all the functions a model should support giving no implementation itself, merely a shell. The one function that `_Field` does provide that most fields leave untouched is `validate`.
+ *
+ * 
+ * @alternateClassName _ModelBase
+ * @requires Sage.Platform.Mobile.ModelManager
  */
-define('Sage/Platform/Mobile/Models/Properties/IdProperty', [
+define('Sage/Platform/Mobile/Models/Properites/Boolean', [
     'dojo/_base/declare',
     'dojo/_base/lang',
-    'Sage/Platform/Mobile/Models/Properties/_PropertyBase'
+    'Sage/Platform/Mobile/Models/Properties/_PropertyBase',
+    'Sage/Platform/Mobile/Models/PropertyManager'
 ], function(
     declare,
     lang,
-    _PropertyBase
+    _PropertyBase,
+    PropertyManager
+
 ) {
 
-    return declare('Sage.Platform.Mobile.Models.Properties.IdProperty', _PropertyBase, {
+    return declare('Sage.Platform.Mobile.Models.Properties.Boolean', _PropertyBase, {
         
         
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: 'IdProp',
-        propretyName: null,
-        displayName: 'IdProp',
-        dataType: 'String',
-        idPrimary: false,
+        name: 'Boolean',
+        displayName: 'Boolean',
+        dataType: 'Boolean',
         constructor: function(o) {
             lang.mixin(this, o);
 
         }
     });
+    return PropertyManager.register('Boolean', prop);
 });

@@ -30,7 +30,7 @@ define('Sage/Platform/Mobile/_OfflineViewMixin', [
 ) {
     return declare('Sage.Platform.Mobile._OfflineViewMixin', null, {
         dataAdapter:null,
-
+        
         show: function(options, transitionOptions) {
             var tag, data;
 

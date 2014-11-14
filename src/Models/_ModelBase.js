@@ -23,13 +23,13 @@
  */
 define('Sage/Platform/Mobile/Models/_ModelBase', [
     'dojo/_base/declare',
-    'dojo/_base/lang'
-    //'Sage/Platform/Mobile/Models/PropertyManager'
+    'dojo/_base/lang',
+    'Sage/Platform/Mobile/Models/PropertyManager',
 
 ], function(
     declare,
-    lang
-    //PropertyManager
+    lang,
+    PropertyManager
 ) {
 
     return declare('Sage.Platform.Mobile.Models._ModelBase', null, {
@@ -45,6 +45,7 @@ define('Sage/Platform/Mobile/Models/_ModelBase', [
         entityName: 'entityName',
         properties: null,
         relationships: null,
+        actions: null,
 
         constructor: function(o) {
             lang.mixin(this, o);
@@ -54,6 +55,7 @@ define('Sage/Platform/Mobile/Models/_ModelBase', [
 
             this._initProperties();
             this._initRelationships();
+            this._initActions();
         },
         _initProperties: function() {
             this.createProperties();
@@ -61,11 +63,11 @@ define('Sage/Platform/Mobile/Models/_ModelBase', [
                 this.properties = [];
             }
             this.properties.push({
-                name: 'CreateUserId',
-                displayName: 'CreateUserId',
-                propertyName: 'CreateUserId',
-                type: 'Id',
-                adapterMap: { 'SData': { dataPath: 'CreateUser' } },
+                name: 'CreateUser',
+                displayName: 'CreateUser',
+                propertyName: 'CreateUser',
+                type: 'User',
+                //adapterMap: { 'SData': { dataPath: 'CreateUser' } },
             });
             this.properties.push({
                 name: 'CreateDate',
@@ -74,11 +76,11 @@ define('Sage/Platform/Mobile/Models/_ModelBase', [
                 type: 'DateTime'
             });
             this.properties.push({
-                name: 'ModifyUserId',
-                displayName: 'ModifyUserId',
-                propertyName: 'ModifyUserId',
-                type: 'Id',
-                adapterMap: { 'SData': { dataPath: 'ModifyUser' } },
+                name: 'ModifyUser',
+                displayName: 'ModifyUser',
+                propertyName: 'ModifyUser',
+                type: 'User',
+                //adapterMap: { 'SData': { dataPath: 'ModifyUser' } },
             });
             this.properties.push({
                 name: 'ModifyDate',
@@ -93,11 +95,22 @@ define('Sage/Platform/Mobile/Models/_ModelBase', [
             this.createRelationships();
 
         },
+        _initActions: function () {
+            this.createActions();
+
+        },
         createRelationships: function(){
-        
+            if (!this.relationships) {
+                this.relationships = [];
+            }
         },
         createProperties: function() {
 
+        },
+        createActions: function () {
+            if (!this.actions) {
+                this.actions = [];
+            }
         },
         wrap: function(entity) {
             var doc = {
@@ -133,6 +146,124 @@ define('Sage/Platform/Mobile/Models/_ModelBase', [
         },
         getEntityTransType: function(entity) {
             return entity['transType'];
+        },
+        getDescriptor: function(entity) {
+            var self = this
+            if(!this._desciptorProperties){
+                this._desciptorProperties = [];
+                this.properties.forEach(function(prop) {
+                    if (!prop.disabled && prop.isDescriptor) {
+                        self._desciptorProperties.push(prop);
+                    }
+                });
+            }
+            var description = [];
+            this._desciptorProperties.forEach(function(prop) {
+                if (entity[prop.propertyName]) {
+                    description.push( entity[prop.propertyName]);
+                }
+            });
+            if (description.length > 0) {
+                return description.join(' ');
+            }
+            return entity && entity['$descriptor'];
+        },
+        getPropertyType: function(prop){
+            var propType = null;
+            if (!this._propertyTypes) { 
+                this._propertyTypes = {};
+            }
+            propType = this._propertyTypes[prop.type];
+            if(!propType){
+                propType = PropertyManager.getProperty(prop.type);
+            }
+            return propType;
+        },
+        getPropertyValue: function(property, entity) {
+            var relationship, value = null;            
+            value = entity[property.propertyName];
+            return value;
+        },
+        getRelationship:function(name){
+            var relationship = null;
+            this.relationships.forEach(function(rel){
+                if(rel.name === name){
+                    relationship = rel;
+                }
+            
+            }.bind(this));
+            return relationship;
+        },
+        getPropertyTemplate: function(prop, entity, options) {
+            var template, value, propType;
+            propType = this.getPropertyType(prop);
+            value = this.getPropertyValue(prop, entity);
+            if (value) {
+                if (prop.relationship) {
+                    template = this.getRelatedTemplate(prop, propType, value, options);
+                } else {
+                    template = propType.getTemplate(value);
+                }
+            }
+            return template;
+        },
+        getRelatedTemplate: function(prop, propType, relatedEntity, options) {
+            var model, rel, template, value, propType;
+            rel = this.getRelationship(prop.relationship);
+            template = [];
+            if (rel && rel.type === 'ManyToOne') {
+                relModel = App.ModelManager.getModel(rel.childEntity);
+                if (relModel) {
+                    relModel.properties.forEach(function(prop) {
+                        var include= false, _template = null;
+                        
+                        if (options.forList && prop.showInList) {
+                            include = true;
+                        }
+                        if (options.forDetail && prop.showInDetail) {
+                            include = true;
+                        }
+                        if (include) {
+                            _template = relModel.getPropertyTemplate(prop, relatedEntity, options)
+                            if (_template) {
+                                template.push(_template);
+                            }
+                        }
+
+                    }.bind(this));
+                }
+            }
+            return new Simplate(template).apply();
+        },
+        getListActions: function(){
+            var actions = [];
+            this.actions.forEach(function (action) {
+                if (action.showInList) {
+                    actions.push(action);
+                }
+            });
+            return actions;
+        },
+        getDetailActions: function () {
+            var actions = [];
+            this.actions.forEach(function (action) {
+                if (action.showInDetail) {
+                    actions.push(action);
+                }
+            });
+            return actions;
+        },
+        createNewEntity:function(){
+            var entity = {
+                entityName: this.entityName,
+                tranType: 'Insert'
+            };
+            this.properties.forEach(function (prop) {
+                if (!prop.disabled) {
+                    entity[prop.propertyName] = (prop.defaultValue) ? prop.defaultValue : null;
+                }
+            });
+            return entity;
         },
         validateEntry: function(entry) {
             

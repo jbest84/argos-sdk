@@ -59,11 +59,28 @@ define('Sage/Platform/Mobile/OfflineList', [
 
 ) {
     return declare('Sage.Platform.Mobile.OfflineList', [_ListBase,_OfflineViewMixin], {
-        itemTemplate: new Simplate([
-           '<h3>{%: $$.getDecription($) %}</h3>'
+        actionsApplied: false,
+        rowTemplate: new Simplate([
+            '<li data-action="activateEntry" data-key="{%: $$.getKey($) %}" data-descriptor="{%: $$.getDescriptor($) %}">',
+                '<button data-action="selectEntry" class="list-item-selector button">',
+                    '{% if ($$.selectIconClass) { %}',
+                        '<span class="{%= $$.selectIconClass %}"></span>',
+                    '{% } else if ($$.icon || $$.selectIcon) { %}',
+                        '<img src="{%= $$.icon || $$.selectIcon %}" class="icon" />',
+                    '{% } %}',
+                '</button>',
+                '<div class="list-item-content" data-snap-ignore="true">{%! $$.itemTemplate %}</div>',
+                '<div id="list-item-content-related"></div>',
+            '</li>'
         ]),
-        getDecription: function(entry) {
-            return entry && entry.$descriptor;
+        getKey: function (entity) {
+            return this.layout.model.getEntityId(entity);
+        },
+        getDescriptor: function (entity) {
+            return this.layout.model.getDescriptor(entity);
+        },
+        beforeTransitionTo: function () {
+            this.inherited(arguments);
         },
         show: function(options, transitionOptions) {
             var tag, data;
@@ -81,13 +98,15 @@ define('Sage/Platform/Mobile/OfflineList', [
             this.entityName = options.entityName;
             if (this.entityName) {
                 this.dataAdapter = App.DataManager.getAdapter('Local', this.entityName);
+                this.layout = App.LayoutManager.getLayout('List', this.entityName);
+                this.applyLayoutActions();
             }
 
             if (this.options.title) {
                 this.set('title', this.options.title);
             } else {
                 if (this.dataAdapter && this.dataAdapter.model) {
-                    this.set('title', (this.dataAdapter.model.displayNamePlural + ' [Offlinelist]' || this.titleText));
+                    this.set('title', (this.dataAdapter.model.displayNamePlural + ' [Offline]' || this.titleText));
                 } else {
                     this.set('title', (this.entityName + ' [Offline]' || get('title') || this.titleText));
                 }
@@ -134,6 +153,7 @@ define('Sage/Platform/Mobile/OfflineList', [
         },
         processData: function(data) {
             var entries,
+                rowHTML,
                 rowNode,
                 output,
                 docfrag,
@@ -157,6 +177,7 @@ define('Sage/Platform/Mobile/OfflineList', [
                     this.entries[key] = entry;
 
                     try {
+                        this.setItemTemplate(entry);
                         rowNode = domConstruct.toDom(this.rowTemplate.apply(entry, this));
                     } catch (err) {
                         console.error(err);
@@ -175,8 +196,22 @@ define('Sage/Platform/Mobile/OfflineList', [
                 }
             }
         },
-
-
+        setItemTemplate: function (entity) {
+            this.itemTemplate = new Simplate(this.layout.getHTML(entity, this));
+        },
+        applyLayoutActions: function() {
+            if (this.actionsApplied)
+            {
+                return;
+            }
+            this.actionsApplied = true;
+            var actionHtml = this.layout.getActionsHTML();
+            domConstruct.place(actionHtml, this.actionsNode, 'last');
+            this.actions = this.layout.getActions();
+            this.enableActions = (this.actions.length > 0)?  true: false;
+            
+        }
+        
 
     });
 });

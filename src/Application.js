@@ -41,8 +41,11 @@ define('Sage/Platform/Mobile/Application', [
     'Sage/Platform/Mobile/OfflineManager',
     'Sage/Platform/Mobile/Data/DataManager',
     'Sage/Platform/Mobile/Models/ModelManager',
-    'Sage/Platform/Mobile/Data/SDataAdapter',
-    'Sage/Platform/Mobile/Data/LocalAdapter'
+     'Sage/Platform/Mobile/Layout/LayoutManager',
+
+     'Sage/Platform/Mobile/Models/main',
+     'Sage/Platform/Mobile/Data/main',
+     'Sage/Platform/Mobile/Layout/main'
 ], function(
     json,
     array,
@@ -61,7 +64,8 @@ define('Sage/Platform/Mobile/Application', [
     ReUI,
     OfflineManager,
     DataManager,
-    ModelManager
+    ModelManager,
+    LayoutManager
 ) {
 
     // Polyfill for Funcion.bind, taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/bind
@@ -171,6 +175,13 @@ define('Sage/Platform/Mobile/Application', [
        */
         DataManager: null,
         /**
+
+       /**
+       *  LayoutManager
+       */
+        LayoutManager: null,
+        /**
+
          * @property enableConcurrencyCheck {Boolean} Option to skip concurrency checks to avoid precondition/412 errors.
          */
         enableConcurrencyCheck: false,
@@ -271,6 +282,7 @@ define('Sage/Platform/Mobile/Application', [
             this.OfflineManager = OfflineManager;
             this.DataManager = DataManager;
             this.ModelManager = ModelManager;
+            this.LayoutManager = LayoutManager;
             lang.mixin(this, options);
         },
         /**
@@ -410,6 +422,7 @@ define('Sage/Platform/Mobile/Application', [
             this.ModelManager.init();
             this.DataManager.init();
             this.OfflineManager.init();
+            this.LayoutManager.init();
         },
         /**
          * Establishes various connections to events.

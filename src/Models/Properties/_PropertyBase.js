@@ -21,30 +21,58 @@
  * @alternateClassName _ModelBase
  * @requires Sage.Platform.Mobile.ModelManager
  */
-define('Sage/Platform/Mobile/Models/Properites/BooleanProperty', [
+define('Sage/Platform/Mobile/Models/Properties/_PropertyBase', [
     'dojo/_base/declare',
     'dojo/_base/lang',
-    'Sage/Platform/Mobile/Models/Properties/_PropertyBase'
 ], function(
     declare,
-    lang,
-    _PropertyBase
+    lang
 
 ) {
 
-    return declare('Sage.Platform.Mobile.Models.Properties.BooleanProperty', _PropertyBase, {
+    return declare('Sage.Platform.Mobile.Models.Properties._PropertyBase', null, {
         
         
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: 'Boolean',
-        displayName: 'Boolean',
-        dataType: 'Boolean',
+        
+        name: null,
+        propretyName: null,
+        displayName: null,
+        isKey: null,
+        dataType: 'String',
+        size: 64,
+        showInList: false,
+        showInDetail: false,
+        showInEdit: false,
+        showInSummary: false,
+        propertyOrder: 0,
+        listOrder: 0,
+        detailOrder: 0,
+        editOrder: 0,
+        summaryOrder: 0,
+        autoFocus: false,
+        template: new Simplate(['<div class="modelProperty">{%: $ %}<div>']),
         constructor: function(o) {
             lang.mixin(this, o);
 
+        },
+        init: function() {
+
+        },
+        validator: function(value) {
+        },
+        getTemplate: function(value) {
+            if (this.template) {
+                return this.template.apply(this.formatValue(value));
+            }
+            return value;
+        },
+        formatValue:function(value){
+            return value;
         }
+
     });
 });

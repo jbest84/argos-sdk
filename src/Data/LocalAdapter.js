@@ -106,7 +106,14 @@ define('Sage/Platform/Mobile/Data/LocalAdapter', [
                 def.reject(err);
             }.bind(this));
             return def;
+        },
+        getEntityDescription: function(entity) {
+            if (this.model) {
+                return this.model.getEntityDescription(entity);
+            }
+            return entity && entity['$descriptor'];
         }
+
     });
     return DataManager.register('Local', adpater);
 });

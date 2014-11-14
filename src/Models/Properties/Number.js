@@ -14,38 +14,36 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.Models._ModelBase
- * Model is the base class for all data models. It describes all the functions a model should support giving no implementation itself, merely a shell. The one function that `_Field` does provide that most fields leave untouched is `validate`.
- *
- * 
- * @alternateClassName _ModelBase
- * @requires Sage.Platform.Mobile.ModelManager
+ * @class Sage.Platform.Mobile.Models.NumberProperty
+ 
+ * @alternateClassName _PropertylBase
+ * @requires Sage/Platform/Mobile/Models/_PropertyBase
  */
-define('Sage/Platform/Mobile/Models/Property', [
+define('Sage/Platform/Mobile/Models/Properties/Number', [
     'dojo/_base/declare',
     'dojo/_base/lang',
-    'Sage/Platform/Mobile/Models/_PropertyBase'
+    'Sage/Platform/Mobile/Models/Properties/_PropertyBase',
+    'Sage/Platform/Mobile/Models/PropertyManager'
 ], function(
     declare,
     lang,
-    _PropertyBase
-
+    _PropertyBase,
+    PropertyManager
 ) {
 
-    return declare('Sage.Platform.Mobile.Models.StringProperty', _PropertyBase, {
+    var prop = declare('Sage.Platform.Mobile.Models.Properties.Number', _PropertyBase, {
         
         
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: 'String',
-        displayName: 'String',
-        dataType: 'String',
-        size:64,
+        name: 'Number',
+        displayName: 'Number',
+        dataType: 'Fixed',
         constructor: function(o) {
             lang.mixin(this, o);
-
         }
     });
+    return PropertyManager.register('Number', prop);
 });

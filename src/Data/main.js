@@ -13,30 +13,15 @@
  * limitations under the License.
  */
 
-/**
- * @class Sage.Platform.Mobile.LayoutManager
- *  Manages offline resources.
- * 
- * @alternateClassName LayoutManager
- * @singleton
- */
-define('Sage/Platform/Mobile/LayoutManager', [
-    'dojo/_base/lang'
+define('Sage/Platform/Mobile/Data/main', [
+    'dojo/_base/lang',
+    'Sage/Platform/Mobile/Data/SDataAdapter',
+    'Sage/Platform/Mobile/Data/LocalAdapter',
+   
+
 ], function(
     lang
-) {
-    var lauyouts = {};
-    return lang.setObject('Sage.Platform.Mobile.LayoutManager', {
-        
-        types: layouts,
-        
-        registerLayout: function(name, ctor) {
-            layout[name] = ctor;
-            return ctor;
-        },
-        
-        getLayout: function(name) {
-            return layout[name];
-        }
-    });
+    )
+{
+
 });

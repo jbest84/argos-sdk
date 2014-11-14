@@ -19,30 +19,34 @@
  * @alternateClassName _PropertylBase
  * @requires Sage/Platform/Mobile/Models/Properties/_PropertyBase
  */
-define('Sage/Platform/Mobile/Models/Properties/PhoneProperty', [
+define('Sage/Platform/Mobile/Models/Properties/Object', [
     'dojo/_base/declare',
     'dojo/_base/lang',
-    'Sage/Platform/Mobile/Models/Properties/_PropertyBase'
+    'Sage/Platform/Mobile/Models/Properties/_PropertyBase',
+    'Sage/Platform/Mobile/Models/PropertyManager'
 ], function(
     declare,
     lang,
-    _PropertyBase
+    _PropertyBase,
+    PropertyManager
 ) {
 
-    return declare('Sage.Platform.Mobile.Models.Properties.PhoneProperty', _PropertyBase, {
+   var prop = declare('Sage.Platform.Mobile.Models.Properties.Object', _PropertyBase, {
         
         
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: 'Phone',
-        displayName: 'Phone',
-        dataType: 'String',
-        size:64,
+        name: 'Object',
+        propretyName: null,
+        displayName: 'Object',
+        dataType: 'Object',
+        idPrimary: false,
         constructor: function(o) {
             lang.mixin(this, o);
 
         }
-    });
+   });
+   return PropertyManager.register('Object', prop);
 });

@@ -48,6 +48,18 @@ define('Sage/Platform/Mobile/Models/PropertyManager', [
          */
         get: function(name) {
             return store[name];
+        },
+        init: function() {
+
+        },
+        getProperty: function(name, option) {
+            var prop, ctor = store[name];
+            prop = null;
+            if (ctor) {
+                prop = new ctor(option);
+                prop.init();
+            }
+            return prop;
         }
     });
 });

@@ -14,35 +14,37 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.Models.Properties.PicklistProperty
+ * @class Sage.Platform.Mobile.Models.Properties.Property
  
  * @alternateClassName _PropertylBase
  * @requires Sage/Platform/Mobile/Models/Properties/_PropertyBase
  */
-define('Sage/Platform/Mobile/Models/Properties/PicklistProperty', [
+define('Sage/Platform/Mobile/Models/Properties/Owner', [
     'dojo/_base/declare',
     'dojo/_base/lang',
-    'Sage/Platform/Mobile/Models/Properties/_PropertyBase'
+    'Sage/Platform/Mobile/Models/Properties/_PropertyBase',
+    'Sage/Platform/Mobile/Models/PropertyManager'
 ], function(
     declare,
     lang,
-    _PropertyBase
+    _PropertyBase,
+    PropertyManager
 ) {
 
-    return declare('Sage.Platform.Mobile.Models.Properties.PicklistProperty', _PropertyBase, {
+    var prop = declare('Sage.Platform.Mobile.Models.Properties.Owner', _PropertyBase, {
         
         
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: 'Picklist',
-        displayName: 'Picklist',
-        dataType: 'String',
-        picklistName: '',
+        name: 'Owner',
+        displayName: 'Owner',
+        dataType: 'Owner',
         constructor: function(o) {
             lang.mixin(this, o);
 
         }
     });
+    return PropertyManager.register('Owner', prop);
 });

@@ -24,13 +24,14 @@ define('Sage/Platform/Mobile/OfflineManager', [
     'dojo/_base/lang',
      'Sage/Platform/Mobile/Views/DefaultOfflineView',
     'Sage/Platform/Mobile/OfflineList',
-    'Sage/Platform/Mobile/_ListBase'
+    'Sage/Platform/Mobile/_ListBase',
+     'Sage/Platform/Mobile/OfflineEdit'
 ], function(
     lang,
     DefaultOfflineView,
     OfflineList,
-    _ListBase
-    //DefaultOfflineView
+    _ListBase,
+    OfflineEdit
 ) {
     var _defaultMap = { contextViewId: '*', viewId: 'default_offline_view', viewCtor: DefaultOfflineView };
     var _offLineState = { isOffLine: false };
@@ -52,6 +53,9 @@ define('Sage/Platform/Mobile/OfflineManager', [
             window.applicationCache.addEventListener("error", function(e) {
                 self.setOffline(true);
             });
+        },
+        toggleOffline: function() {
+            this._state.isOffLine = !this._state.isOffLine;
         },
         setOffline:function(offline) {
             this._state.isOffLine = offline;
@@ -97,6 +101,20 @@ define('Sage/Platform/Mobile/OfflineManager', [
                 }
             }
             return offlineView;
+        },
+        getEditView: function (context) {
+            var view, viewId;
+            viewId = "offlineEdit_" + context.entityName;
+            view = App.getView(viewId);
+            if (!view) {
+                App.registerView(new OfflineEdit({
+                    id: viewId,
+                    entityName: context.entityName,
+                    expose: false
+                }));
+                view = App.getView(viewId);
+            }
+            return view;
         },
         registarView:function(contextId, viewId, viewCtor){
             this._views.push({ contextViewId: contextViewId, viewId: viewId, viewCtor: viewCtor });

@@ -14,51 +14,38 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.Models._ModelBase
- * Model is the base class for all data models. It describes all the functions a model should support giving no implementation itself, merely a shell. The one function that `_Field` does provide that most fields leave untouched is `validate`.
- *
- * 
- * @alternateClassName _ModelBase
- * @requires Sage.Platform.Mobile.ModelManager
+ * @class Sage.Platform.Mobile.Models.Properties.Property
+ 
+ * @alternateClassName _PropertylBase
+ * @requires Sage/Platform/Mobile/Models/Properties/_PropertyBase
  */
-define('Sage/Platform/Mobile/Models/Properties/_PropertyBase', [
+define('Sage/Platform/Mobile/Models/Properties/User', [
     'dojo/_base/declare',
     'dojo/_base/lang',
+    'Sage/Platform/Mobile/Models/Properties/_PropertyBase',
+    'Sage/Platform/Mobile/Models/PropertyManager'
 ], function(
     declare,
-    lang
-
+    lang,
+    _PropertyBase,
+    PropertyManager
 ) {
 
-    return declare('Sage.Platform.Mobile.Models.Properties._PropertyBase', null, {
+    var prop = declare('Sage.Platform.Mobile.Models.Properties.User', _PropertyBase, {
         
         
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: null,
-        propretyName: null,
-        displayName: null,
-        isKey: null,
+        name: 'User',
+        displayName: 'User',
         dataType: 'String',
-        size: 64,
-        showInList: false,
-        showInDetail: false,
-        showInEdit: false,
-        showInSummary: false,
-        propertyOrder: 0,
-        listOrder: 0,
-        detailOrder: 0,
-        editOrder: 0,
-        summaryOrder: 0,
-        autoFocus: false,
+        size:12,
         constructor: function(o) {
             lang.mixin(this, o);
 
-        },
-        validator: function(value) {
         }
-
     });
+    return PropertyManager.register('User', prop);
 });

@@ -18,44 +18,36 @@
  * Model is the base class for all data models. It describes all the functions a model should support giving no implementation itself, merely a shell. The one function that `_Field` does provide that most fields leave untouched is `validate`.
  *
  * 
- * @alternateClassName _DataAdapterBase
-
+ * @alternateClassName _ModelBase
+ * @requires Sage.Platform.Mobile.ModelManager
  */
-define('Sage/Platform/Mobile/Data/_DataAdapterBase', [
+define('Sage/Platform/Mobile/Models/Properties/String', [
     'dojo/_base/declare',
     'dojo/_base/lang',
-
+    'Sage/Platform/Mobile/Models/Properties/_PropertyBase',
+    'Sage/Platform/Mobile/Models/PropertyManager'
 ], function(
     declare,
-    lang
-
+    lang,
+    _PropertyBase,
+    PropertyManager
 ) {
 
-    return declare('Sage.Platform.Mobile.Data_DataAdapterBase', null, {
+    var prop = declare('Sage.Platform.Mobile.Models.Properties.String', _PropertyBase, {
         
         
         /**
          * @property {String}
          * The unique (within the current form) name of the model
          */
-        name: 'baseAdapter',
-        displayName: 'baseAdpater',
-        entityName: null,
-        model: null,
-        store: null,
+        name: 'String',
+        displayName: 'String',
+        dataType: 'String',
+        size:64,
         constructor: function(o) {
             lang.mixin(this, o);
-        },
-        init: function() { },
 
-        getEntityId: function(entity) { },
-        saveEntity: function(entity) { },
-        getEntity:function(entityId){},
-        getEntities:function(queryOptions){},
-        removeEntity: function(entityId) { },
-        getEntityDescription: function(entity) {
-            return entity && entity.$descriptor;
         }
-        
     });
+    return PropertyManager.register('String', prop);
 });

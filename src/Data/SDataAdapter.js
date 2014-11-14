@@ -186,7 +186,7 @@ define('Sage/Platform/Mobile/Data/SDataAdapter', [
             var self =  this, requests = [];
             this.model.relationships.forEach(function(rel){
                 var request = null;
-                if(rel.includeInParent){
+                if(!rel.disabled && rel.includeInParent){
                     request = self.getRelatedRequest(entityId, rel);
                     if(request){
                         requests.push(request);
@@ -241,18 +241,20 @@ define('Sage/Platform/Mobile/Data/SDataAdapter', [
             select = [];
             include = [];
             model.properties.forEach(function(prop) {
-                if(prop.adapterMap){
-                    map = prop.adapterMap['SData'];
-                    if (map) {
-                        if (prop.Type === 'Id') {
-                            select.push(map.dataPath);
-                        } else {
-                            select.push(map.dataPath);
+                if (!prop.disabled) {
+                    if (prop.adapterMap) {
+                        map = prop.adapterMap['SData'];
+                        if (map) {
+                            if (prop.Type === 'Id') {
+                                select.push(map.dataPath);
+                            } else {
+                                select.push(map.dataPath);
+                            }
                         }
-                    }
-                } else {
-                    if (!prop.isPrimaryKey) {
-                        select.push(prop.propertyName);
+                    } else {
+                        if (!prop.isPrimaryKey) {
+                            select.push(prop.propertyName);
+                        }
                     }
                 }
             });
