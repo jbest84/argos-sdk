@@ -257,17 +257,22 @@ define('argos/View', [
 
             transitionOptions = lang.mixin(transitionOptions || {}, {tag: tag, data: data});
             this._transitionOptions = transitionOptions;
-            page(this.buildRoute());
+            this.open();
         },
-        hashPrefix: '#!',
-        currentHash: '',
+        formatHashForPage: function(options) {
+            var segments = options && options.tag
+                ? [this.id].concat(options.tag)
+                : [this.id];
+            return App.hashPrefix + segments.join(';');
+        },
         transitionComplete: function(page, options) {
             if (options.track !== false) {
-                this.currentHash = location.hash;
+                App.currentHash = this.formatHashForPage(options);
+                location.hash = App.currentHash;
 
                 if (options.trimmed !== true) {
                     App.context.history.push({
-                        hash: this.currentHash,
+                        hash: App.currentHash,
                         page: this.id,
                         tag: options.tag,
                         data: options.data
@@ -324,11 +329,13 @@ define('argos/View', [
                 return;
             }
 
-            App.setPrimaryTitle(this.get('title'));
+            if (App.currentHash === this.formatHashForPage(options)) {
+                return;
+            }
 
             if (options.track !== false) {
                 count = App.context.history.length;
-                hash = location.hash;
+                hash = this.formatHashForPage(options);
                 position = -1;
 
                 // do loop and trim
@@ -343,7 +350,7 @@ define('argos/View', [
 
                     App.context.history = App.context.history.splice(0, position + 1);
 
-                    this.currentHash = hash;
+                    App.currentHash = hash;
 
                     // indicate that context.history has already been taken care of (i.e. nothing needs to be pushed).
                     options.trimmed = true;
@@ -351,6 +358,9 @@ define('argos/View', [
                     // if the requested hash does not equal the current location hash, trim up history.
                     // location hash will not match requested hash when show is called directly, but will match
                     // for detected location changes (i.e. the back button).
+                    if (location.hash != hash) {
+                        history.go(position - (count - 1));
+                    }
                 } else if (options.returnTo) {
                     if (typeof options.returnTo === 'function') {
                         for (position = count - 1; position >= 0; position--) {
@@ -366,7 +376,11 @@ define('argos/View', [
                         // we fix up the history, but do not flag as trimmed, since we do want the new view to be pushed.
                         App.context.history = App.context.history.splice(0, position + 1);
 
-                        this.currentHash = App.context.history[App.context.history.length - 1] && App.context.history[App.context.history.length - 1].hash;
+                        App.currentHash = App.context.history[App.context.history.length - 1] && App.context.history[App.context.history.length - 1].hash;
+
+                        if (location.hash != hash) {
+                            history.go(position - (count - 1));
+                        }
                     }
                 }
             }
@@ -481,45 +495,6 @@ define('argos/View', [
          */
         getSecurity: function(access) {
             return this.security;
-        },
-        /**
-         * @property {String}
-         * Route passed into the router. RegEx expressions are also accepted.
-         */
-        route: '',
-        /**
-         * Gets the route associated with this view. Returns this.id if no route is defined.
-         */
-        getRoute: function() {
-            if ((typeof this.route === 'string' && this.route.length > 0) || this.route instanceof RegExp) {
-                return this.route;
-            }
-
-            return this.id;
-        },
-        /**
-         * Show method calls this to build a route that it can navigate to. If you add a custom route,
-         * this should change to build a route that can match that.
-         * @returns {String}
-         */
-        buildRoute: function() {
-            return this.id;
-        },
-        /**
-         * Fires first when a route is triggered. Any pre-loading should happen here.
-         * @param {Object} ctx
-         * @param {Function} next
-         */
-        routeLoad: function(ctx, next) {
-            next();
-        },
-        /**
-         * Fires second when a route is triggered. Any pre-loading should happen here.
-         * @param {Object} ctx
-         * @param {Function} next
-         */
-        routeShow: function(ctx, next) {
-            this.open();
         }
     });
 

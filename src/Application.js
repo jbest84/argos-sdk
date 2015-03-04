@@ -382,7 +382,6 @@ define('argos/Application', [
             this.initModules();
             this.initToolbars();
             this.initHash();
-            this.startOrientationCheck();
         },
         /**
          * Check if the browser supports touch events.
@@ -408,9 +407,7 @@ define('argos/Application', [
         run: function() {
             this._started = true;
             this.startOrientationCheck();
-            page({
-                hashbang: true
-            });
+            this.startHashCheck();
         },
         /**
          * Returns the `window.navigator.onLine` property for detecting if an internet connection is available.
@@ -595,18 +592,9 @@ define('argos/Application', [
 
             view._placeAt = domNode || this._rootDomNode;
 
-            this.registerViewRoute(view);
-
             this.onRegistered(view);
 
             return this;
-        },
-        registerViewRoute: function(view) {
-            if (!view) {
-                return;
-            }
-
-            page(view.getRoute(), view.routeLoad.bind(view), view.routeShow.bind(view));
         },
         /**
          * Registers a toolbar with the application and renders it to HTML.
@@ -695,6 +683,82 @@ define('argos/Application', [
 
                 context.height = window.innerHeight;
                 context.width = window.innerWidth;
+            }
+        },
+        hashPrefix: '#!',
+        hashCheckHandle: null,
+        hashCheckInterval: 100,
+        startHashCheck: function() {
+            if (!this.hashCheckHandle) {
+                this.hashCheckHandle = window.setInterval(this.hashCheckWatcher.bind(this), this.hashCheckInterval);
+            }
+        },
+        stopHashCheck: function() {
+            window.clearInterval(this.hashCheckHandle);
+            this.hashCheckHandle = null;
+        },
+        extractInfoFromHash: function(hash) {
+            var segments = [], position, el, context = this.context;
+            if (hash) {
+                if (hash.indexOf(this.hashPrefix) === 0) {
+                    segments = hash.substr(this.hashPrefix.length).split(';');
+                }
+
+                return {
+                    hash: hash,
+                    page: segments[0],
+                    tag: segments.length <= 2 ? segments[1] : segments.slice(1)
+                };
+            } else {
+                // no hash? IE9 can lose it on history.back()
+                el = this.getCurrentPage();
+                if (el && el.id) {
+                    for (position = context.history.length - 1; position > 0; position--) {
+                        if (context.history[position].hash.match(el.id)) {
+                            break;
+                        }
+                    }
+                }
+
+                return context.history[position - 1];
+
+            }
+
+            return false;
+        },
+        transitioning: false,
+        currentHash: '',
+        hashCheckWatcher: function() {
+            var context = this.context, reverse = false, info, page;
+
+            if (this.transitioning) {
+                return;
+            }
+
+            if (this.currentHash !== location.hash) {
+                // do reverse checking here, loop-and-trim will be done by show
+                for (var position = context.history.length - 2; position >= 0; position--) {
+                    if (context.history[position].hash === location.hash) {
+                        info = context.history[position];
+                        reverse = true;
+                        break;
+                    }
+                }
+
+                info = info || this.extractInfoFromHash(location.hash);
+                if (info && info.page) {
+                    page = this.getView(info.page);
+                    if (page) {
+                        page._transitionOptions = {
+                            external: true,
+                            reverse: reverse,
+                            tag: info.tag,
+                            data: info.data
+                        };
+
+                        page.open();
+                    }
+                }
             }
         },
         checkOrientationTime: 100,
@@ -837,6 +901,7 @@ define('argos/Application', [
         },
         _onBeforeTransition: function(evt) {
             var view = this.getView(evt.target);
+            this.transitioning = true;
             if (view)
             {
                 if (evt.out)
@@ -847,6 +912,7 @@ define('argos/Application', [
         },
         _onAfterTransition: function(evt) {
             var view = this.getView(evt.target);
+            this.transitioning = false;
             if (view)
             {
                 if (evt.out)
