@@ -13,18 +13,16 @@
  * limitations under the License.
  */
 
-define('Sage/Platform/Mobile/Fields/LookupField', [
+define('argos/Fields/LookupField', [
     'dojo/_base/array',
     'dojo/_base/declare',
     'dojo/_base/event',
     'dojo/_base/lang',
     'dojo/string',
     'dojo/query',
-    'dojo/has',
-    'dojo/sniff',
-    'Sage/Platform/Mobile/Utility',
-    'Sage/Platform/Mobile/Fields/_Field',
-    'Sage/Platform/Mobile/FieldManager'
+    '../Utility',
+    './_Field',
+    '../FieldManager'
 ], function(
     array,
     declare,
@@ -32,14 +30,12 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
     lang,
     string,
     query,
-    has,
-    sniff,
     utility,
     _Field,
     FieldManager
 ) {
     /**
-     * @class Sage.Platform.Mobile.Fields.LookupField
+     * @class argos.Fields.LookupField
      * The LookupField is similiar to an Edit View in that it is a field that takes the user to another
      * view but the difference is that an EditorField takes the user to an Edit View, whereas LookupField
      * takes the user to a List View.
@@ -57,11 +53,11 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
      *     }
      *
      * @alternateClassName LookupField
-     * @extends Sage.Platform.Mobile.Fields._Field
-     * @requires Sage.Platform.Mobile.FieldManager
-     * @requires Sage.Platform.Mobile.Utility
+     * @extends argos.Fields._Field
+     * @requires argos.FieldManager
+     * @requires argos.Utility
      */
-    var control = declare('Sage.Platform.Mobile.Fields.LookupField', [_Field], {
+    var control = declare('argos.Fields.LookupField', [_Field], {
         /**
          * @property {Object}
          * Creates a setter map to html nodes, namely:
@@ -97,10 +93,14 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          *
          */
         widgetTemplate: new Simplate([
-            '<label for="{%= $.name %}">{%: $.label %}</label>',
-            '<button class="button simpleSubHeaderButton" aria-label="{%: $.lookupLabelText %}"><span aria-hidden="true">{%: $.lookupText %}</span></button>',
+            '{% if ($.label) { %}',
+                '<label for="{%= $.name %}">{%: $.label %}</label>',
+            '{% } %}',
+            '<button style="z-index: 5;" data-action="buttonClick" class="button simpleSubHeaderButton {% if ($$.iconClass) { %} {%: $$.iconClass %} {% } %}" aria-label="{%: $.lookupLabelText %}"><span aria-hidden="true">{%: $.lookupText %}</span></button>',
             '<input data-dojo-attach-point="inputNode" type="text" {% if ($.requireSelection) { %}readonly="readonly"{% } %} />'
         ]),
+
+        iconClass: 'fa fa-search fa-lg',
 
         // Localization
         /**
@@ -267,13 +267,10 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
 
             this.connect(this.containerNode, 'onclick', this._onClick);
 
-            if (this.isReadOnly())
-            {
+            if (this.isReadOnly()) {
                 this.disable();
                 this.set('inputReadOnly', true);
-            }
-            else if (!this.requireSelection)
-            {
+            } else if (!this.requireSelection) {
                 this.connect(this.inputNode, 'onkeyup', this._onKeyUp);
                 this.connect(this.inputNode, 'onblur', this._onBlur);
             }
@@ -294,6 +291,11 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
 
             this.set('inputDisabled', true);
         },
+        focus: function() {
+            if (!this.isReadOnly()) {
+                this.inputNode.focus();
+            }
+        },
         /**
          * Determines if the field is readonly by checking for a target view
          * @return {Boolean}
@@ -306,10 +308,11 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * @return {String/Object/Number/Boolean}
          */
         getDependentValue: function() {
-            if (this.dependsOn && this.owner)
-            {
+            if (this.dependsOn && this.owner) {
                 var field = this.owner.fields[this.dependsOn];
-                if (field) return field.getValue();
+                if (field) {
+                    return field.getValue();
+                }
             }
         },
         /**
@@ -317,10 +320,11 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * @return {String}
          */
         getDependentLabel: function() {
-            if (this.dependsOn && this.owner)
-            {
+            if (this.dependsOn && this.owner) {
                 var field = this.owner.fields[this.dependsOn];
-                if (field) return field.label;
+                if (field) {
+                    return field.label;
+                }
             }
         },
         /**
@@ -329,10 +333,11 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * @return {String} String expression.
          */
         expandExpression: function(expression) {
-            if (typeof expression === 'function')
+            if (typeof expression === 'function') {
                 return expression.apply(this, Array.prototype.slice.call(arguments, 1));
-            else
+            } else {
                 return expression;
+            }
         },
         /**
          * Creates the options to be passed in navigation to the target view
@@ -353,7 +358,13 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          *
          */
         createNavigationOptions: function() {
-            var options = {
+            var options,
+                expand,
+                dependentValue,
+                item,
+                key;
+
+            options = {
                 enableActions: false,
                 selectionOnly: true,
                 singleSelect: this.singleSelect,
@@ -365,46 +376,47 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
                 orderBy: this.orderBy,
                 negateHistory: true,
                 continuousScrolling: false,
-                simpleMode:true,
+                simpleMode: true,
                 tools: {
                     tbar: [{
                         id: 'complete',
+                        cls: 'fa fa-check fa-fw fa-lg',
                         fn: this.complete,
                         scope: this
                     }, {
                         id: 'cancel',
                         side: 'left',
-                        fn: ReUI.back,
-                        scope: ReUI
+                        cls: 'fa fa-ban fa-fw fa-lg',
+                        fn: this.reui.back,
+                        scope: this.reui
                     }]
-                    }
-                },
-                expand = ['resourceKind', 'resourcePredicate', 'where', 'previousSelections'],
-                dependentValue = this.getDependentValue();
+                }
+            };
+            expand = ['resourceKind', 'resourcePredicate', 'where', 'previousSelections'];
+            dependentValue = this.getDependentValue();
 
-            if (options.singleSelect && options.singleSelectAction)
-            {
-                for (var key in options.tools.tbar)
-                {
-                    var item = options.tools.tbar[key];
-                    if (item.id == options.singleSelectAction)
-                    {
-                        item.cls = 'invisible';
+            if (options.singleSelect && options.singleSelectAction) {
+                for (key in options.tools.tbar) {
+                    if (options.tools.tbar.hasOwnProperty(key)) {
+                        item = options.tools.tbar[key];
+                        if (item.id === options.singleSelectAction) {
+                            item.cls = 'invisible';
+                        }
                     }
                 }
             }
 
-            if (this.dependsOn && !dependentValue)
-            {
-                alert(string.substitute(this.dependentErrorText, [this.getDependentLabel()]));
+            if (this.dependsOn && !dependentValue) {
+                console.error(string.substitute(this.dependentErrorText, [this.getDependentLabel() || '']));
                 return false;
             }
 
             array.forEach(expand, function(item) {
-                if (this[item])
+                if (this[item]) {
                     options[item] = this.dependsOn // only pass dependentValue if there is a dependency
                         ? this.expandExpression(this[item], dependentValue)
                         : this.expandExpression(this[item]);
+                }
             }, this);
 
             options.dependentValue = dependentValue;
@@ -416,12 +428,16 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * Navigates to the `this.view` id passing the options created from {@link #createNavigationOptions createNavigationOptions}.
          */
         navigateToListView: function() {
-            var view = App.getView(this.view),
+            var view = this.app.getView(this.view),
                 options = this.createNavigationOptions();
+
             if (view && options && !this.disabled) {
                 lang.mixin(view, this.viewMixin);
                 view.show(options);
             }
+        },
+        buttonClick: function() {
+            this.navigateToListView();
         },
         /**
          * Handler for the click event, fires {@link #navigateToListView navigateToListView} if the
@@ -431,19 +447,8 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
         _onClick: function(evt) {
             var buttonNode = query(evt.target).closest('.button')[0];
 
-            if (has('bb')) {
-                /*
-                 * The Blackberry Z10 has an issue where the event target of the onclick will never be the button
-                 * or span element. The event target for blackberry will alway be the input. This might be beause the
-                 * spans the entire screen, and the button overlays it.
-                 */
-                buttonNode = true;
-            }
-
-            if (!this.isDisabled() && (buttonNode || this.requireSelection))
-            {
+            if (!this.isDisabled() && (buttonNode || this.requireSelection)) {
                 event.stop(evt);
-
                 this.navigateToListView();
             }
         },
@@ -453,8 +458,9 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * @param {Event} evt Click event
          */
         _onKeyUp: function(evt) {
-            if (!this.isDisabled() && this.notificationTrigger == 'keyup')
+            if (!this.isDisabled() && this.notificationTrigger === 'keyup') {
                 this.onNotificationTrigger(evt);
+            }
         },
         /**
          * Handler for onblur, fires {@link #onNotificationTrigger onNotificationTrigger} if
@@ -462,8 +468,9 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * @param {Event} evt Blur event
          */
         _onBlur: function(evt) {
-            if (!this.isDisabled() && this.notificationTrigger == 'blur')
+            if (!this.isDisabled() && this.notificationTrigger === 'blur') {
                 this.onNotificationTrigger(evt);
+            }
         },
         /**
          * Called from onkeyup and onblur handlers if the trigger is set.
@@ -476,8 +483,9 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
         onNotificationTrigger: function(evt) {
             var currentValue = this.getValue();
 
-            if (this.previousValue != currentValue)
+            if (this.previousValue !== currentValue) {
                 this.onChange(currentValue, this);
+            }
 
             this.previousValue = currentValue;
         },
@@ -510,38 +518,40 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * transition issues, namely in IE.
          */
         complete: function() {
-            // todo: should there be a better way?
-            var view = App.getPrimaryActiveView();
+            var view, selectionModel, selections, selectionCount, val, selectionKey;
 
-            if (view && view.get('selectionModel'))
-            {
-                var selectionModel = view.get('selectionModel'),
-                    selections = selectionModel.getSelections();
+            view = this.app.getPrimaryActiveView();
+            selectionModel = view.get('selectionModel');
 
-                if (selectionModel.getSelectionCount() === 0 && view.options.allowEmptySelection)
+            if (view && selectionModel) {
+                selections = selectionModel.getSelections();
+                selectionCount = selectionModel.getSelectionCount();
+
+                if (selectionCount === 0 && view.options.allowEmptySelection) {
                     this.clearValue(true);
+                }
 
-                if (this.singleSelect)
-                {
-                    for (var selectionKey in selections)
-                    {
-                        var val = selections[selectionKey].data;
-                        this.setSelection(val, selectionKey);
-                        break;
+                if (this.singleSelect) {
+                    for (selectionKey in selections) {
+                        if (selections.hasOwnProperty(selectionKey)) {
+                            val = selections[selectionKey].data;
+                            this.setSelection(val, selectionKey);
+                            break;
+                        }
+                    }
+                } else {
+                    if (selectionCount > 0) {
+                        this.setSelections(selections);
                     }
                 }
-                else
-                {
-                    this.setSelections(selections);
-                }
 
-                ReUI.back();
+                this.reui.back();
 
                 // if the event is fired before the transition, any XMLHttpRequest created in an event handler and
                 // executing during the transition can potentially fail (status 0).  this might only be an issue with CORS
                 // requests created in this state (the pre-flight request is made, and the request ends with status 0).
                 // wrapping thing in a timeout and placing after the transition starts, mitigates this issue.
-                setTimeout(lang.hitch(this, this._onComplete), 0);
+                setTimeout(this._onComplete.bind(this), 0);
             }
         },
         /**
@@ -555,38 +565,40 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
          * @return {Boolean}
          */
         isDirty: function() {
-            if (this.originalValue && this.currentValue)
-            {
-                if (this.originalValue.key != this.currentValue.key)
+            if (this.originalValue && this.currentValue) {
+                if (this.originalValue.key !== this.currentValue.key) {
                     return true;
+                }
 
-                if (this.originalValue.text != this.currentValue.text)
+                if (this.originalValue.text !== this.currentValue.text) {
                     return true;
+                }
 
-                if (!this.requireSelection && !this.textTemplate)
-                    if (this.originalValue.text != this.getText())
-                        return true;                
+                if (!this.requireSelection && !this.textTemplate) {
+                    if (this.originalValue.text !== this.getText()) {
+                        return true;
+                    }
+                }
 
                 return false;
             }
 
-            if (this.originalValue)
-            {
-                if (!this.requireSelection && !this.textTemplate)
-                    if (this.originalValue.text != this.getText())
-                        return true; 
-            }
-            else
-            {
-                if (!this.requireSelection && !this.textTemplate)
-                {
-                    var text = this.getText();
-                    if (text && text.length > 0)
+            if (this.originalValue) {
+                if (!this.requireSelection && !this.textTemplate) {
+                    if (this.originalValue.text !== this.getText()) {
                         return true;
+                    }
+                }
+            } else {
+                if (!this.requireSelection && !this.textTemplate) {
+                    var text = this.getText();
+                    if (text && text.length > 0) {
+                        return true;
+                    }
                 }
             }
 
-            return (this.originalValue != this.currentValue);
+            return (this.originalValue !== this.currentValue);
         },
         /**
          * Returns the current selection that was set from the target list view.
@@ -612,47 +624,42 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
                     ? this.valueTextProperty || this.textProperty
                     : false;
 
-            if (keyProperty || textProperty)
-            {
-                if (this.currentValue)
-                {
-                    if (keyProperty)
+            if (keyProperty || textProperty) {
+                if (this.currentValue) {
+                    if (keyProperty) {
                         value = utility.setValue(value || {}, keyProperty, this.currentValue.key);
+                    }
 
                     // if a text template has been applied there is no way to guarantee a correct
                     // mapping back to the property
-                    if (textProperty && !this.textTemplate)
+                    if (textProperty && !this.textTemplate) {
                         value = utility.setValue(value || {}, textProperty, this.requireSelection ? this.currentValue.text : text);
-                }
-                else if (!this.requireSelection)
-                {
-                    if (keyProperty && text.length > 0)
+                    }
+                } else if (!this.requireSelection) {
+                    if (keyProperty && text.length > 0) {
                         value = utility.setValue(value || {}, keyProperty, text);
+                    }
 
                     // if a text template has been applied there is no way to guarantee a correct
                     // mapping back to the property
-                    if (textProperty && !this.textTemplate && text.length > 0)
-                    {
+                    if (textProperty && !this.textTemplate && text.length > 0) {
                         value = utility.setValue(value || {}, textProperty, text);
                     }
-                }                
-            }
-            else
-            {
-                if (this.currentValue)
-                {
-                    value = this.requireSelection
-                        ? this.currentValue.key
-                        : this.currentValue.text != text && !this.textTemplate
+                }
+            } else {
+                if (this.currentValue) {
+                    if (this.requireSelection) {
+                        value = this.currentValue.key ? this.currentValue.key : this.currentValue;
+                    } else {
+                        value = this.currentValue.text !== text && !this.textTemplate
                             ? text
                             : this.currentValue.key;
-                }
-                else if (!this.requireSelection && text.length > 0)
-                {
+                    }
+                } else if (!this.requireSelection && text.length > 0) {
                     value = text;
                 }
             }
-            
+
             return value;
         },
         /**
@@ -706,10 +713,11 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
 
             key = utility.getValue(val, this.keyProperty, val) || key; // if we can extract the key as requested, use it instead of the selection key
 
-            if (text && this.textTemplate)
+            if (text && this.textTemplate) {
                 text = this.textTemplate.apply(text, this);
-            else if (this.textRenderer)
+            } else if (this.textRenderer) {
                 text = this.textRenderer.call(this, val, key, text);
+            }
 
             this.currentSelection = val;
 
@@ -718,7 +726,7 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
                 text: text || key
             };
 
-            this.setText(text);
+            this.setText(this.currentValue.text);
         },
         /**
          * Sets the given value to `this.currentValue` using the initial flag if to set it as
@@ -738,63 +746,69 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
                     ? this.valueTextProperty || this.textProperty
                     : false;
 
-            if (typeof val === 'undefined' || val === null)
-            {
+            if (typeof val === 'undefined' || val === null) {
                 this.currentValue = false;
-                if (initial) this.originalValue = this.currentValue;
+                if (initial) {
+                    this.originalValue = this.currentValue;
+                }
+
                 this.setText(this.requireSelection ? this.emptyText : '');
                 return false;
             }
 
-            if (keyProperty || textProperty)
-            {
-                if (keyProperty)
+            if (keyProperty || textProperty) {
+                if (keyProperty) {
                     key = utility.getValue(val, keyProperty);
+                }
 
-                if (textProperty)
+                if (textProperty) {
                     text = utility.getValue(val, textProperty);
+                }
 
-                if (text && this.textTemplate)
+                if (text && this.textTemplate) {
                     text = this.textTemplate.apply(text, this);
-                else if (this.textRenderer)
+                } else if (this.textRenderer) {
                     text = this.textRenderer.call(this, val, key, text);
+                }
 
-                if (key || text)
-                {
+                if (key || text) {
                     this.currentValue = {
                         key: key || text,
                         text: text || key
                     };
 
-                    if (initial) this.originalValue = this.currentValue;
+                    if (initial) {
+                        this.originalValue = this.currentValue;
+                    }
 
                     this.setText(this.currentValue.text);
-                }
-                else
-                {
+                } else {
                     this.currentValue = false;
 
-                    if (initial) this.originalValue = this.currentValue;
+                    if (initial) {
+                        this.originalValue = this.currentValue;
+                    }
 
-                    this.setText(this.requireSelection ? this.emptyText : '');    
+                    this.setText(this.requireSelection ? this.emptyText : '');
                 }
-            }
-            else
-            {
+            } else {
                 key = val;
                 text = val;
 
-                if (text && this.textTemplate)
+                if (text && this.textTemplate) {
                     text = this.textTemplate.apply(text, this);
-                else if (this.textRenderer)
+                } else if (this.textRenderer) {
                     text = this.textRenderer.call(this, val, key, text);
+                }
 
                 this.currentValue = {
-                    key: key,
-                    text: text
+                    key: key || text,
+                    text: text || key
                 };
 
-                if (initial) this.originalValue = this.currentValue;
+                if (initial) {
+                    this.originalValue = this.currentValue;
+                }
 
                 this.setText(text);
             }
@@ -813,5 +827,6 @@ define('Sage/Platform/Mobile/Fields/LookupField', [
         }
     });
 
+    lang.setObject('Sage.Platform.Mobile.Fields.LookupField', control);
     return FieldManager.register('lookup', control);
 });

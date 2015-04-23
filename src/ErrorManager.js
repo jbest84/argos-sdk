@@ -14,34 +14,39 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.ErrorManager
+ * @class argos.ErrorManager
  * ErrorManager is a singleton that parses and stores SData error responses into localStorage.
  * @alternateClassName ErrorManager
  * @singleton
  */
-define('Sage/Platform/Mobile/ErrorManager', [
-    'dojo/_base/json',
+define('argos/ErrorManager', [
+    'dojo/json',
     'dojo/_base/lang',
     'dojo/_base/connect',
-    'dojo/string'
+    'dojo/string',
+    'moment',
+    './Utility'
 ], function(
     json,
     lang,
     connect,
-    string
+    string,
+    moment,
+    utility
 ) {
-    var errors = [];
-    try
-    {
-        if (window.localStorage)
-            errors = json.fromJson(window.localStorage.getItem('errorlog')) || [];
-    }
-    catch(e)
-    {
+    var errors,
+        __class;
 
+    errors = [];
+
+    try {
+        if (window.localStorage) {
+            errors = json.parse(window.localStorage.getItem('errorlog')) || [];
+        }
+    } catch(e) {
     }
 
-    return lang.setObject('Sage.Platform.Mobile.ErrorManager', {
+    __class = lang.setObject('argos.ErrorManager', {
         //Localization
 
         /**
@@ -60,6 +65,25 @@ define('Sage/Platform/Mobile/ErrorManager', [
         errorCacheSizeMax: 10,
 
         /**
+         * Adds a custom error item and fires the onErrorAdd event
+         * @param description Short title or description of the Error. Ex: Duplicate Found, Invalid Email
+         * @param error Object The error object that will be JSON-stringified and stored for use.
+         */
+        addSimpleError: function(description, error) {
+            var errorItem = {
+                    '$key': new Date().getTime(),
+                    'Date': moment().format(),
+                    'Description': description,
+                    'Error': json.stringify(utility.sanitizeForJson(error))
+                };
+
+            this.checkCacheSize();
+            errors.push(errorItem);
+            this.onErrorAdd();
+            this.save();
+        },
+
+        /**
          * Adds a custom error item by combining error message/options for easier tech support
          * @param {Object} serverResponse Full response from server, status, responsetext, etc.
          * @param {Object} requestOptions GET or POST options sent, only records the URL at this time
@@ -67,21 +91,23 @@ define('Sage/Platform/Mobile/ErrorManager', [
          * @param {String} failType Either "failure" or "aborted" as each response has different properties
          */
         addError: function(serverResponse, requestOptions, viewOptions, failType) {
+            if (typeof serverResponse === 'string' && arguments.length === 2) {
+                this.addSimpleError.apply(this, arguments);
+                return;
+            }
+
             var errorDate = new Date(),
-                dateStamp = string.substitute('/Date(${0})/',[errorDate.getTime()]),
+                dateStamp = new Date().getTime(),
                 errorItem = {
-                    errorDate: errorDate.toString(),
-                    errorDateStamp: dateStamp,
-                    url: requestOptions.url,
-                    viewOptions: this.serializeValues(viewOptions),
-                    "$key": dateStamp
+                    '$key': dateStamp,
+                    'Date': moment().format(),
+                    'Error': json.stringify(utility.sanitizeForJson({
+                        serverResponse: serverResponse,
+                        requestOptions: requestOptions,
+                        viewOptions: viewOptions,
+                        failType: failType
+                    }))
                 };
-
-            if (failType === 'failure')
-                lang.mixin(errorItem, this.extractFailureResponse(serverResponse));
-
-            if (failType === 'aborted')
-                lang.mixin(errorItem, this.extractAbortResponse(serverResponse));
 
             this.checkCacheSize();
             errors.push(errorItem);
@@ -96,17 +122,17 @@ define('Sage/Platform/Mobile/ErrorManager', [
          */
         extractFailureResponse: function(response) {
             var failureResponse = {
-                "$descriptor": response.statusText,
-                "serverResponse": {
-                    "readyState": response.readyState,
-                    "responseXML": response.responseXML,
-                    "status": response.status,
-                    "responseType": response.responseType,
-                    "withCredentials": response.withCredentials,
-                    "responseText": response.responseText
+                '$descriptor': response.statusText,
+                'serverResponse': {
+                    'readyState': response.readyState,
+                    'responseXML': response.responseXML,
+                    'status': response.status,
+                    'responseType': response.responseType,
+                    'withCredentials': response.withCredentials,
+                    'responseText': response.responseText
                         ? this.fromJsonArray(response.responseText)
-                        : "",
-                    "statusText": response.statusText
+                        : '',
+                    'statusText': response.statusText
                 }
             };
             return failureResponse;
@@ -120,16 +146,13 @@ define('Sage/Platform/Mobile/ErrorManager', [
          */
         fromJsonArray: function(json) {
             var o;
-            try
-            {
-                o = json.fromJson(json);
+            try {
+                o = json.parse(json);
                 o = o[0];
-            }
-            catch(e)
-            {
+            } catch(e) {
                 o = {
                     message: json,
-                    severity: ""
+                    severity: ''
                 };
             }
             return o;
@@ -143,15 +166,15 @@ define('Sage/Platform/Mobile/ErrorManager', [
          */
         extractAbortResponse: function(response) {
             var abortResponse = {
-                "$descriptor": this.abortedText,
-                "serverResponse": {
-                    "readyState": 4,
-                    "responseXML": "",
-                    "status": 0,
-                    "responseType": "",
-                    "withCredentials": response.withCredentials,
-                    "responseText": "",
-                    "statusText": this.abortedText
+                '$descriptor': this.abortedText,
+                'serverResponse': {
+                    'readyState': 4,
+                    'responseXML': '',
+                    'status': 0,
+                    'responseType': '',
+                    'withCredentials': response.withCredentials,
+                    'responseText': '',
+                    'statusText': this.abortedText
                 }
             };
             return abortResponse;
@@ -163,27 +186,31 @@ define('Sage/Platform/Mobile/ErrorManager', [
          * @return {Object} Cleaned object for for JSON serialization
          */
         serializeValues: function(obj) {
-            for (var key in obj){
-                switch(typeof obj[key]){
-                    case 'undefined':
-                        obj[key] = 'undefined';
-                        break;
-                    case 'function':
-                        delete obj[key];
-                        break;
-                    case 'object':
-                        if (obj[key] === null) {
-                            obj[key] = 'null';
+            for (var key in obj) {
+                if (obj.hasOwnProperty(key)) {
+                    switch (typeof obj[key]){
+                        case 'undefined':
+                            obj[key] = 'undefined';
                             break;
-                        }
-                        if(key === 'scope') { // eliminate recursive self call
-                            obj[key] = this.scopeSaveText;
+                        case 'function':
+                            delete obj[key];
                             break;
-                        }
-                        obj[key] = this.serializeValues(obj[key]);
-                        break;
+                        case 'object':
+                            if (obj[key] === null) {
+                                obj[key] = 'null';
+                                break;
+                            }
+
+                            if (key === 'scope') { // eliminate recursive self call
+                                obj[key] = this.scopeSaveText;
+                                break;
+                            }
+                            obj[key] = this.serializeValues(obj[key]);
+                            break;
+                    }
                 }
             }
+
             return obj;
         },
 
@@ -195,8 +222,9 @@ define('Sage/Platform/Mobile/ErrorManager', [
             var errLength = errors.length,
                 cacheSizeIndex = this.errorCacheSizeMax - 1;
 
-            if (errLength > cacheSizeIndex)
-                this.removeError(cacheSizeIndex, errLength - cacheSizeIndex);
+            if (errLength > cacheSizeIndex) {
+                this.removeError(0, errLength - cacheSizeIndex);
+            }
         },
 
         /**
@@ -206,12 +234,15 @@ define('Sage/Platform/Mobile/ErrorManager', [
          * @return {Object} Returns the first error item in the match set or null if none found
          */
         getError: function(key, value) {
-            var errorList = this.getAllErrors();
+            var errorList,
+                i;
 
-            for (var i = 0; i < errorList.length; i++)
-            {
-                if (errorList[i][key] == value)
+            errorList = this.getAllErrors();
+
+            for (i = 0; i < errorList.length; i++) {
+                if (errorList[i][key] === parseInt(value, 10)) {
                     return errorList[i];
+                }
             }
 
             return null;
@@ -247,16 +278,16 @@ define('Sage/Platform/Mobile/ErrorManager', [
          * Attempts to save all errors into localStorage under the `errorlog` key.
          */
         save: function() {
-            try
-            {
-                if (window.localStorage)
-                    window.localStorage.setItem('errorlog', json.toJson(errors));
-            }
-            catch(e)
-            {
-
+            try {
+                if (window.localStorage) {
+                    window.localStorage.setItem('errorlog', json.stringify(errors));
+                }
+            } catch(e) {
+                console.error(e);
             }
         }
-    }
-);
+    });
+
+    lang.setObject('Sage.Platform.Mobile.ErrorManager', __class);
+    return __class;
 });

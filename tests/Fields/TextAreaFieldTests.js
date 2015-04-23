@@ -1,4 +1,4 @@
-define('tests/Fields/TextAreaFieldTests', ['dojo/query','Sage/Platform/Mobile/Fields/TextAreaField'], function(query, TextArea) {
+define('tests/Fields/TextAreaFieldTests', ['dojo/query','argos/Fields/TextAreaField'], function(query, TextArea) {
 return describe('Sage.Platform.Mobile.Fields.TextArea', function() {
 
     it('Can default to 4 rows', function() {
@@ -13,6 +13,18 @@ return describe('Sage.Platform.Mobile.Fields.TextArea', function() {
         expect(field.enableClearButton).toEqual(false);
         expect(query('> button', field.domNode).length).toEqual(0);
         expect(field.clearNode).toEqual(null);
+    });
+
+    it('Can set the value', function() {
+        var field = new TextArea();
+        field.setValue('abc');
+        expect(field.getValue()).toBe('abc');
+
+        field.setValue();
+        expect(field.getValue()).toBe('');
+
+        field.setValue('abc', true); // initial value
+        expect(field.originalValue).toBe('abc');
     });
 
 });

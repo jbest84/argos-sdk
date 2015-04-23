@@ -14,15 +14,17 @@
  */
 
 
-define('Sage/Platform/Mobile/Fields/TextField', [
+define('argos/Fields/TextField', [
     'dojo/_base/declare',
+    'dojo/_base/lang',
     'dojo/_base/event',
     'dojo/dom-attr',
     'dojo/dom-class',
-    'Sage/Platform/Mobile/Fields/_Field',
-    'Sage/Platform/Mobile/FieldManager'
+    './_Field',
+    '../FieldManager'
 ], function(
     declare,
+    lang,
     event,
     domAttr,
     domClass,
@@ -30,7 +32,7 @@ define('Sage/Platform/Mobile/Fields/TextField', [
     FieldManager
 ) {
     /**
-     * @class Sage.Platform.Mobile.Fields.TextField
+     * @class argos.Fields.TextField
      * The TextField is the base method of inputting just a string that is bound to a `<input type="text">`.
      *
      * It does introduce:
@@ -47,10 +49,10 @@ define('Sage/Platform/Mobile/Fields/TextField', [
      *     }
      *
      * @alternateClassName TextField
-     * @extends Sage.Platform.Mobile.Fields._Field
-     * @requires Sage.Platform.Mobile.FieldManager
+     * @extends argos.Fields._Field
+     * @requires argos.FieldManager
      */
-    var control = declare('Sage.Platform.Mobile.Fields.TextField', [_Field], {
+    var control = declare('argos.Fields.TextField', [_Field], {
         /**
          * @property {Object}
          * Creates a setter map to html nodes, namely:
@@ -77,7 +79,7 @@ define('Sage/Platform/Mobile/Fields/TextField', [
             '{% if ($.enableClearButton && !$.readonly) { %}',
                 '<button class="clear-button" tabindex="-1" data-dojo-attach-point="clearNode" data-dojo-attach-event="onclick:_onClearClick"></button>',
             '{% } %}',
-            '<input data-dojo-attach-point="inputNode" data-dojo-attach-event="onkeyup: _onKeyUp, onblur: _onBlur, onfocus: _onFocus" class="text-input" type="{%: $.inputType %}" name="{%= $.name %}" {% if ($.readonly) { %} readonly {% } %}>'
+            '<input data-dojo-attach-point="inputNode" tabindex="0" placeholder="{%: $.placeHolderText %}" data-dojo-attach-event="onkeyup: _onKeyUp, onblur: _onBlur, onfocus: _onFocus" class="text-input" type="{%: $.inputType %}" name="{%= $.name %}" {% if ($.readonly) { %} readonly {% } %}>'
         ]),
         /**
          * @property {HTMLElement}
@@ -107,12 +109,12 @@ define('Sage/Platform/Mobile/Fields/TextField', [
          * @cfg {String}
          * The `<input type=` for the field, may be overridden to use the HTML5 enhanced types.
          */
-		inputType: 'text',
+        inputType: 'text',
         /**
          * @cfg {Boolean}
          * Flag for controlling the addition of the clear button.
          */
-        enableClearButton: true,
+        enableClearButton: false,
         /**
          * @cfg {Boolean}
          * Flag that if true connects the `onkeypress` event to {@link #_onKeyPress _onKeyPress}
@@ -131,23 +133,21 @@ define('Sage/Platform/Mobile/Fields/TextField', [
          */
         originalValue: null,
 
-
         /**
          * Extends the parent implementation to optionally bind the `onkeypress` event if `validInputOnly`
          * is true.
          */
         init: function() {
             this.inherited(arguments);
-            
-            if (this.validInputOnly)
+            if (this.validInputOnly) {
                 this.connect(this.inputNode, 'onkeypress', this._onKeyPress);
+            }
         },
         /**
          * Extends the parent implementation to set the disabled attribute of the input to false
          */
         enable: function() {
             this.inherited(arguments);
-            
             domAttr.set(this.inputNode, 'disabled', false);
         },
         /**
@@ -157,6 +157,9 @@ define('Sage/Platform/Mobile/Fields/TextField', [
             this.inherited(arguments);
 
             domAttr.set(this.inputNode, 'disabled', true);
+        },
+        focus: function() {
+            this.inputNode.focus();
         },
         /**
          * Handler for the `onkeypress` event which is not connected unless `validInputOnly` is true.
@@ -168,11 +171,10 @@ define('Sage/Platform/Mobile/Fields/TextField', [
          */
         _onKeyPress: function(evt) {
             var v = this.getValue() + evt.keyChar;
-            if (this.validate(v))
-            {
+            if (this.validate(v)) {
                 event.stop(evt);
                 return false;
-            }            
+            }
         },
         /**
          * Handler for the `onkeyup` event.
@@ -183,11 +185,13 @@ define('Sage/Platform/Mobile/Fields/TextField', [
          * @param {Event} evt
          */
         _onKeyUp: function(evt) {
-            if (this.validationTrigger == 'keyup')
+            if (this.validationTrigger === 'keyup') {
                 this.onValidationTrigger(evt);
+            }
 
-            if (this.notificationTrigger == 'keyup')
+            if (this.notificationTrigger === 'keyup') {
                 this.onNotificationTrigger(evt);
+            }
         },
         /**
          * Handler for the `onfocus` event.
@@ -208,11 +212,13 @@ define('Sage/Platform/Mobile/Fields/TextField', [
          * @param {Event} evt
          */
         _onBlur: function(evt) {
-            if (this.validationTrigger == 'blur')
+            if (this.validationTrigger === 'blur') {
                 this.onValidationTrigger(evt);
+            }
 
-            if (this.notificationTrigger == 'blur')
+            if (this.notificationTrigger === 'blur') {
                 this.onNotificationTrigger(evt);
+            }
 
             domClass.remove(this.domNode, 'text-field-active');
         },
@@ -224,8 +230,7 @@ define('Sage/Platform/Mobile/Fields/TextField', [
          * @param {Event} evt
          */
         _onClearClick: function(evt) {
-            if(!domClass.contains(this.domNode, 'text-field-active'))
-            {
+            if (!domClass.contains(this.domNode, 'text-field-active')) {
                 this.clearValue(true);
                 event.stop(evt);
             }
@@ -242,8 +247,9 @@ define('Sage/Platform/Mobile/Fields/TextField', [
         onNotificationTrigger: function(evt) {
             var currentValue = this.getValue();
 
-            if (this.previousValue !== currentValue)
+            if (this.previousValue !== currentValue) {
                 this.onChange(currentValue, this);
+            }
 
             this.previousValue = currentValue;
         },
@@ -252,10 +258,11 @@ define('Sage/Platform/Mobile/Fields/TextField', [
          * @param {Event} evt
          */
         onValidationTrigger: function(evt) {
-            if (this.validate())
+            if (this.validate()) {
                 domClass.add(this.containerNode, 'row-error');
-            else
+            } else {
                 domClass.remove(this.containerNode, 'row-error');
+            }
         },
         /**
          * Returns the input nodes value
@@ -312,5 +319,6 @@ define('Sage/Platform/Mobile/Fields/TextField', [
         }
     });
 
+    lang.setObject('Sage.Platform.Mobile.Fields.TextField', control);
     return FieldManager.register('text', control);
 });

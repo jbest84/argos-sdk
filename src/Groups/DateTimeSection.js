@@ -3,15 +3,15 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.Groups.DateTimeSection
+ * @class argos.Groups.DateTimeSection
  */
-define('Sage/Platform/Mobile/Groups/DateTimeSection', [
+define('argos/Groups/DateTimeSection', [
     'dojo/_base/declare',
     'dojo/_base/lang',
     'dojo/string',
-    'Sage/Platform/Mobile/Convert',
-    'Sage/Platform/Mobile/Utility',
-    'Sage/Platform/Mobile/Groups/_GroupBySection',
+    '../Convert',
+    '../Utility',
+    './_GroupBySection',
     'moment'
 ], function(
     declare,
@@ -23,8 +23,8 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
     moment
 ) {
 
-    return declare('Sage.Platform.Mobile.Groups.DateTimeSection', [_GroupBySection], {
-        name: 'DateTimeSectionFilter',        
+    var __class = declare('argos.Groups.DateTimeSection', [_GroupBySection], {
+        name: 'DateTimeSectionFilter',
         displayNameText: 'Date Time Section',
         todayText: 'Today',
         tomorrowText: 'Tomorrow',
@@ -53,6 +53,7 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
             this.init();
         },
         init: function() {
+            this.inherited(arguments);
             this.sections = [];
 
             this.sections.push({ key: 'Today', title: this.todayText, value: null });
@@ -70,7 +71,7 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
             this.sections.push({ key: 'NextYear', title: this.nextYearText, value: null, collapsed: true });
             this.sections.push({ key: 'NextMonth', title: this.nextMonthText, value: null, collapsed: true });
             this.sections.push({ key: 'NextWeek', title: this.nextWeekText, value: null, collapsed: true });
-            this.sections.push({ key: 'Future', title: this.futureText,value: null, collapsed: true });
+            this.sections.push({ key: 'Future', title: this.futureText, value: null, collapsed: true });
         },
         getSection: function(entry) {
             var value;
@@ -85,10 +86,10 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
             }
             return null;
         },
-        getDefaultSection:function(){
+        getDefaultSection:function() {
             return { key: 'Unknown', title: this.unknownText, collapsed: true };
         },
-        getSectionKey: function(value){
+        getSectionKey: function(value) {
             var valueDate;
 
             if (!this.currentDate) {
@@ -97,6 +98,8 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
 
             if (value) {
                 valueDate = moment(value);
+            } else {
+                return 'Unknown';
             }
 
             if (this.momentLang) {
@@ -104,74 +107,67 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
                 this.currentDate.lang(this.momentLang);
             }
 
-            if (this.isPastYear(valueDate)) {
-                return "PastYear";
-            }
-
             if (this.isLastMonth(valueDate)) {
-                return "LastMonth";
+                return 'LastMonth';
             }
 
             if (this.isEarlierThisMonth(valueDate)) {
-                return "EarlierThisMonth";
+                return 'EarlierThisMonth';
             }
 
             if (this.isLastWeek(valueDate)) {
-                return "LastWeek";
+                return 'LastWeek';
             }
 
             if (this.isEarlierThisWeek(valueDate)) {
-                return "EarlierThisWeek";
+                return 'EarlierThisWeek';
             }
-            
+
             if (this.isYesterday(valueDate)) {
-                return "Yesterday";
+                return 'Yesterday';
+            }
+
+            if (this.isPastYear(valueDate)) {
+                return 'PastYear';
             }
 
             if (this.isToday(valueDate)) {
-                return "Today";
+                return 'Today';
             }
 
             if (this.isTomorrow(valueDate)) {
-                return "Tomorrow";
+                return 'Tomorrow';
             }
 
             if (this.isLaterThisWeek(valueDate)) {
-                return "LaterThisWeek";
+                return 'LaterThisWeek';
             }
 
             if (this.isNextWeek(valueDate)) {
-                return "NextWeek";
+                return 'NextWeek';
             }
 
             if (this.isLaterThisMonth(valueDate)) {
-                return "LaterThisMonth";
+                return 'LaterThisMonth';
             }
 
             if (this.isNextMonth(valueDate)) {
-                return "NextMonth";
+                return 'NextMonth';
             }
 
             if (this.isEarlierThisYear(valueDate)) {
-                return "EarlierThisYear";
+                return 'EarlierThisYear';
             }
 
             if (this.isLaterThisYear(valueDate)) {
-                return "LaterThisYear";
+                return 'LaterThisYear';
             }
 
             if (this.isNextYear(valueDate)) {
-                return "NextYear";
+                return 'NextYear';
             }
 
-            if (this.isFuture(valueDate)) {
-                return "Future";
-            }
-
-            return "Unknown";
-        },
-        isFuture: function(value) {
-            return value.year() > (this.currentDate.year() + 1); 
+            return 'Future';
         },
         isNextYear: function(value) {
             // Next year excluding anything that could be within the next month (next week, later this week, tomorrow)
@@ -221,7 +217,7 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
             var monthEnd = this.currentDate.clone().endOf('month'),
                 nextWeekEnd = this.currentDate.clone().add(1, 'week').endOf('week');
 
-            return value.isAfter(this.nextWeekEnd) &&
+            return value.isAfter(nextWeekEnd) &&
                 value.isBefore(monthEnd);
         },
         isNextWeek: function(value) {
@@ -267,7 +263,7 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
                 lastWeekEnd = lastWeekStart.clone().endOf('week');
 
             return value.isAfter(lastWeekStart) &&
-                value.isBefore(lastWeekEnd) && 
+                value.isBefore(lastWeekEnd) &&
                 !this.isYesterday(value);
         },
         isLastMonth: function(value) {
@@ -281,20 +277,23 @@ define('Sage/Platform/Mobile/Groups/DateTimeSection', [
                 !this.isLastWeek(value) &&
                 !this.isYesterday(value);
         },
-        getSectionByKey:function(key, value){
+        getSectionByKey:function(key, value) {
             var section;
-            for(section in this.sections){
+            for (section in this.sections) {
                 if (this.sections[section].key === key) {
                     return this.sections[section];
                 }
             }
             return this.getDefaultSection();
         },
-        getSectionByDateTime:function(value){
-            var section,key;
+        getSectionByDateTime:function(value) {
+            var section, key;
             key = this.getSectionKey(value);
             section = this.getSectionByKey(key, value);
             return section;
         }
     });
+
+    lang.setObject('Sage.Platform.Mobile.Groups.DateTimeSection', __class);
+    return __class;
 });

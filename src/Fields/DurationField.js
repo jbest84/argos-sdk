@@ -13,15 +13,17 @@
  * limitations under the License.
  */
 
-define('Sage/Platform/Mobile/Fields/DurationField', [
+define('argos/Fields/DurationField', [
     'dojo/_base/declare',
+    'dojo/_base/lang',
     'dojo/string',
     'dojo/dom-class',
-    'Sage/Platform/Mobile/Format',
-    'Sage/Platform/Mobile/Fields/LookupField',
-    'Sage/Platform/Mobile/FieldManager'
+    '../Format',
+    './LookupField',
+    '../FieldManager'
 ], function(
     declare,
+    lang,
     string,
     domClass,
     format,
@@ -29,7 +31,7 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
     FieldManager
 ) {
     /**
-     * @class Sage.Platform.Mobile.DurationField
+     * @class argos.Fields.DurationField
      * The Duration field is a mashup of an auto-complete box and a {@link LookupField LookupField} for handling
      * duration's of: minutes, hours, days, weeks or years. Meaning a user can type directly into the input area the
      * amount of time or press the lookup button and choose from pre-determined list of times.
@@ -53,10 +55,10 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
      *     }
      *
      * @alternateClassName DurationField
-     * @extends Sage.Platform.Mobile.Fields.LookupField
-     * @requires Sage.Platform.Mobile.FieldManager
+     * @extends argos.Fields.LookupField
+     * @requires argos.FieldManager
      */
-    var control = declare('Sage.Platform.Mobile.Fields.DurationField', [LookupField], {
+    var control = declare('argos.Fields.DurationField', [LookupField], {
         /**
          * Maps various attributes of nodes to setters.
          */
@@ -88,9 +90,10 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
         widgetTemplate: new Simplate([
             '<label for="{%= $.name %}">{%: $.label %}</label>',
             '<div class="autoComplete-watermark" data-dojo-attach-point="autoCompleteNode"></div>',
-            '<button class="button simpleSubHeaderButton" data-dojo-attach-event="onclick:navigateToListView" aria-label="{%: $.lookupLabelText %}"><span aria-hidden="true">{%: $.lookupText %}</span></button>',
+            '<button class="button simpleSubHeaderButton {% if ($$.iconClass) { %} {%: $$.iconClass %} {% } %}" data-dojo-attach-event="onclick:navigateToListView" aria-label="{%: $.lookupLabelText %}"><span aria-hidden="true">{%: $.lookupText %}</span></button>',
             '<input data-dojo-attach-point="inputNode" data-dojo-attach-event="onkeyup: _onKeyUp, onblur: _onBlur, onfocus: _onFocus" class="text-input" type="{%: $.inputType %}" name="{%= $.name %}" {% if ($.readonly) { %} readonly {% } %}>'
         ]),
+        iconClass: 'fa fa-ellipsis-h fa-lg',
 
         // Localization
         /**
@@ -110,11 +113,11 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
          * Override ride this object to change the autocomplete units or their localization.
          */
         autoCompleteText: {
-            1 : 'minute(s)',
-            60 : 'hour(s)',
-            1440 : 'day(s)',
-            10080 : 'week(s)',
-            525960 : 'year(s)'
+            1: 'minute(s)',
+            60: 'hour(s)',
+            1440: 'day(s)',
+            10080: 'week(s)',
+            525960: 'year(s)'
         },
         /**
          * @property {Boolean}
@@ -148,7 +151,7 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
          * The first capture group must be non-text part
          * Second capture is the phrase to be used in auto complete
          */
-        autoCompletePhraseRE: /^((?:\d+(?:\.\d*)?|\.\d+)\s*?)(\w+)/,
+        autoCompletePhraseRE: /^((?:\d+(?:\.\d*)?|\.\d+)\s*?)(.+)/,
 
         /**
          * @property {RegExp}
@@ -166,7 +169,7 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
             var numberDecimalSeparator = Mobile.CultureInfo.numberFormat.numberDecimalSeparator;
 
             this.autoCompletePhraseRE = new RegExp(
-                string.substitute('^((?:\\d+(?:\\${0}\\d*)?|\\${0}\\d+)\\s*?)(\\w+)', [numberDecimalSeparator])
+                string.substitute('^((?:\\d+(?:\\${0}\\d*)?|\\${0}\\d+)\\s*?)(.+)', [numberDecimalSeparator])
             );
 
             this.autoCompleteValueRE = new RegExp(
@@ -181,18 +184,16 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
          */
         _onKeyUp: function(evt) {
             var val = this.inputNode.value.toString(),
+                key,
                 match = this.autoCompletePhraseRE.exec(val);
 
-            if (!match || val.length < 1)
-            {
+            if (!match || val.length < 1) {
                 this.hideAutoComplete();
                 return true;
             }
 
-            for (var key in this.autoCompleteText)
-            {
-                if (this.isWordMatch(match[2], this.autoCompleteText[key]))
-                {
+            for (key in this.autoCompleteText) {
+                if (this.isWordMatch(match[2], this.autoCompleteText[key])) {
                     this.currentKey = this.autoCompleteText[key];
                     this.showAutoComplete(match[1] + this.autoCompleteText[key]);
                     return true;
@@ -214,10 +215,11 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
          * @return {Boolean} True if they are equal.
          */
         isWordMatch: function(val, word) {
-            if (val.length > word.length)
+            if (val.length > word.length) {
                 val = val.slice(0, word.length);
-            else
+            } else {
                 word = word.slice(0, val.length);
+            }
 
             return val.toUpperCase() === word.toUpperCase();
         },
@@ -246,8 +248,13 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
                 multiplier = this.getMultiplier(this.currentKey),
                 newValue = 0;
 
-            if (val.length < 1) return true;
-            if (!match) return true;
+            if (val.length < 1) {
+                return true;
+            }
+
+            if (!match) {
+                return true;
+            }
 
             newValue = parseFloat(match[0]) * multiplier;
             this.setValue(newValue);
@@ -259,8 +266,9 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
         getMultiplier: function(key) {
             var k;
             for (k in this.autoCompleteText) {
-                if (this.autoCompleteText.hasOwnProperty(k) && key == this.autoCompleteText[k])
+                if (this.autoCompleteText.hasOwnProperty(k) && key === this.autoCompleteText[k]) {
                     break;
+                }
             }
             return k;
         },
@@ -268,7 +276,7 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
          * Returns the current value in minutes
          * @return {Number}
          */
-        getValue: function(){
+        getValue: function() {
             return this.currentValue;
         },
         /**
@@ -302,23 +310,25 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
         textFormat: function(val) {
             var stepValue,
                 finalUnit = 1,
+                key,
                 autoCompleteValues = this.autoCompleteText;
 
-            for (var key in autoCompleteValues)
-            {
-                stepValue = parseInt(key, 10);
-                if (val === 0 && stepValue === 1)
-                {
-                    this.currentKey = autoCompleteValues[key];
-                    break;
-                }
-                if (val / stepValue >= 1)
-                {
-                    finalUnit = stepValue;
-                    this.currentKey = autoCompleteValues[key];
+            for (key in autoCompleteValues) {
+                if (autoCompleteValues.hasOwnProperty(key)) {
+                    stepValue = parseInt(key, 10);
+                    if (val === 0 && stepValue === 1) {
+                        this.currentKey = autoCompleteValues[key];
+                        break;
+                    }
+
+                    if (val / stepValue >= 1) {
+                        finalUnit = stepValue;
+                        this.currentKey = autoCompleteValues[key];
+                    }
                 }
             }
-            return this.convertUnit(val, finalUnit) + ' ' +this.currentKey;
+
+            return this.formatUnit(this.convertUnit(val, finalUnit));
         },
         /**
          * Divides two numbers and fixes the decimal point to two places.
@@ -327,7 +337,35 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
          * @return {Number}
          */
         convertUnit: function(val, to) {
-            return format.fixed(val/to, 2);
+            return format.fixed(val / to, 2);
+        },
+        /**
+         * Formats the unit with correct decimal separator.
+         * @param {Number} unit
+         * @return {string}
+         */
+        formatUnit: function(unit) {
+            var sval;
+            if (isNaN(unit)) {
+                sval = '0';
+            } else {
+                sval = unit.toString().split('.');
+                if (sval.length === 1) {
+                    sval = sval[0];
+                } else {
+                    if (sval[1] === '0') {
+                        sval = sval[0];
+                    } else {
+                        sval = string.substitute('${0}${1}${2}',
+                                [
+                                    sval[0],
+                                    Mobile.CultureInfo.numberFormat.currencyDecimalSeparator || '.',
+                                    sval[1]
+                                ]);
+                    }
+                }
+            }
+            return sval + ' ' + this.currentKey;
         },
         /**
          * Extends the {@link LookupField#createNavigationOptions parent implementation} to explicitly set hide search
@@ -348,18 +386,16 @@ define('Sage/Platform/Mobile/Fields/DurationField', [
             var val = this.inputNode.value.toString(),
                 phraseMatch = this.autoCompletePhraseRE.exec(val);
 
-            if (!phraseMatch)
-            {
-               domClass.add(this.containerNode, 'row-error');
-               return string.substitute(this.invalidDurationErrorText, [val]);
-            }
-            else
-            {
-               domClass.remove(this.containerNode, 'row-error');
-               return false;
+            if (!phraseMatch) {
+                domClass.add(this.containerNode, 'row-error');
+                return string.substitute(this.invalidDurationErrorText, [val]);
+            } else {
+                domClass.remove(this.containerNode, 'row-error');
+                return false;
             }
         }
     });
-    
+
+    lang.setObject('Sage.Platform.Mobile.Fields.DurationField', control);
     return FieldManager.register('duration', control);
 });

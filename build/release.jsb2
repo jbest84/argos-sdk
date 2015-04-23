@@ -4,7 +4,7 @@
   "deployDir": "deploy/",
   "pkgs": [
     {
-      "name": "Argos SDK Dependencies",
+      "name": "Argos SDK Global Dependencies",
       "file": "content/javascript/argos-dependencies.js",
       "isDebug": true,
       "fileIncludes": [
@@ -29,19 +29,26 @@
           "path": "../libraries/sdata/"
         },
         {
-          "text": "reui.js",
-          "path": "../libraries/reui/"
+          "text": "deep-diff-0.2.0.min.js",
+          "path": "../libraries/deep-diff/"
         },
+        {
+          "text": "Chart.min.js",
+          "path": "../libraries/"
+        }
+      ]
+    },
+    {
+      "name": "Argos SDK AMD Dependencies",
+      "file": "content/javascript/argos-amd-dependencies.js",
+      "isDebug": true,
+      "fileIncludes": [
         {
           "text": "snap.js",
           "path": "../libraries/snap/"
         },
         {
-          "text": "overthrow.js",
-          "path": "../libraries/overthrow/"
-        },
-        {
-          "text": "moment.js",
+          "text": "moment-with-langs.min.js",
           "path": "../libraries/moment/"
         }
       ]
@@ -52,11 +59,23 @@
       "isDebug": true,
       "fileIncludes": [
         {
-          "text": "Application.js",
+          "text": "DomHelper.js",
+          "path": "../src/ReUI"
+        },
+        {
+          "text": "main.js",
+          "path": "../src/ReUI"
+        },
+        {
+          "text": "SelectionModel.js",
           "path": "../src"
         },
         {
-          "text": "ApplicationModule.js",
+          "text": "ConfigurableSelectionModel.js",
+          "path": "../src"
+        },
+        {
+          "text": "Application.js",
           "path": "../src"
         },
         {
@@ -69,6 +88,10 @@
         },
         {
           "text": "_Templated.js",
+          "path": "../src"
+        },
+        {
+          "text": "_ErrorHandleMixin.js",
           "path": "../src"
         },
         {
@@ -92,7 +115,43 @@
           "path": "../src"
         },
         {
+          "text": "SData.js",
+          "path": "../src/Store"
+        },
+        {
           "text": "ErrorManager.js",
+          "path": "../src"
+        },
+        {
+          "text": "_PullToRefreshMixin.js",
+          "path": "../src"
+        },
+        {
+          "text": "_RelatedViewWidgetBase.js",
+          "path": "../src"
+        },
+        {
+          "text": "RelatedViewWidget.js",
+          "path": "../src"
+        },
+        {
+          "text": "RelatedViewManager.js",
+          "path": "../src"
+        },
+        {
+          "text": "_DetailBase.js",
+          "path": "../src"
+        },
+        {
+          "text": "_SDataDetailMixin.js",
+          "path": "../src"
+        },
+        {
+          "text": "_LegacySDataDetailMixin.js",
+          "path": "../src"
+        },
+        {
+          "text": "_RelatedViewWidgetDetailMixin.js",
           "path": "../src"
         },
         {
@@ -102,10 +161,6 @@
         {
           "text": "FieldManager.js",
           "path": "../src"
-        },
-        {
-          "text": "SData.js",
-          "path": "../src/Store"
         },
         {
           "text": "_Field.js",
@@ -144,10 +199,6 @@
           "path": "../src/Fields"
         },
         {
-          "text": "NoteField.js",
-          "path": "../src/Fields"
-        },
-        {
           "text": "PhoneField.js",
           "path": "../src/Fields"
         },
@@ -162,6 +213,26 @@
         {
           "text": "TextAreaField.js",
           "path": "../src/Fields"
+        },
+        {
+          "text": "NoteField.js",
+          "path": "../src/Fields"
+        },
+        {
+          "text": "_EditBase.js",
+          "path": "../src"
+        },
+        {
+          "text": "_SDataEditMixin.js",
+          "path": "../src"
+        },
+        {
+          "text": "_LegacySDataEditMixin.js",
+          "path": "../src"
+        },
+        {
+          "text": "_RelatedViewWidgetEditMixin.js",
+          "path": "../src"
         },
         {
           "text": "Edit.js",
@@ -180,15 +251,23 @@
           "path": "../src/Groups"
         },
         {
-          "text": "RelatedViewManager.js",
-          "path": "../src"
-        },
-        {
-          "text": "RelatedViewWidget.js",
-          "path": "../src"
-        },
-        {
           "text": "SearchWidget.js",
+          "path": "../src"
+        },
+        {
+          "text": "_ListBase.js",
+          "path": "../src"
+        },
+        {
+          "text": "_SDataListMixin.js",
+          "path": "../src"
+        },
+        {
+          "text": "_LegacySDataListMixin.js",
+          "path": "../src"
+        },
+        {
+          "text": "_RelatedViewWidgetListMixin.js",
           "path": "../src"
         },
         {
@@ -197,6 +276,10 @@
         },
         {
           "text": "GroupedList.js",
+          "path": "../src"
+        },
+        {
+          "text": "_ConfigureBase.js",
           "path": "../src"
         },
         {
@@ -212,6 +295,10 @@
           "path": "../src"
         },
         {
+          "text": "ConfigureQuickActions.js",
+          "path": "../src/Views"
+        },
+        {
           "text": "FileSelect.js",
           "path": "../src/Views"
         },
@@ -222,11 +309,20 @@
         {
           "text": "_ServiceMixin.js",
           "path": "../src"
-        }
+        },
+        {
+          "text": "ApplicationModule.js",
+          "path": "../src"
+        },
       ]
     }
   ],
   "resources": [
+    {
+      "src": "../libraries/font-awesome-4.1.0/fonts",
+      "dest": "content/css/themes/fonts",
+      "filters": ".*(\\.otf|\\.eot|\\.svg|\\.ttf|\\.woff)"
+    },
     {
       "src": "../content",
       "dest": "content",
@@ -240,17 +336,12 @@
     {
       "src": "../libraries/dojo/dojo",
       "dest": "content/dojo/dojo",
-      "filters": "(dojo\\.js|acme\\.js)"
+      "filters": "(dojo\\.js)"
     },
     {
       "src": "../libraries/dojo/dojo/cldr/nls",
       "dest": "content/dojo/dojo/cldr/nls",
       "filters": ".*js"
-    },
-    {
-      "src": "../libraries/dojo/dojox",
-      "dest": "content/dojo/dojox",
-      "filters": "((gfx|svg|shape|path)\\.js)"
     }
   ]
 }

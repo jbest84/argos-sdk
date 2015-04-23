@@ -1,71 +1,13 @@
-module.exports = function(grunt) { 
+module.exports = function(grunt) {
     grunt.initConfig({
-        jshint: {
-            options: {
-                jshintrc: '.jshintrc'
-            },
-            all: ['src/**/*.js']
-        },
-        connect: {
-            server: {
-                options: {
-                    port: 8000,
-                    hostname: '127.0.0.1',
-                    base: '.'
-                }
-            }
-        },
-        jasmine: {
-            src: ['src/**/*.js'],
-            options: {
-                specs: 'tests/**/*.js',
-                host: 'http://127.0.0.1:8000/',
-                template: 'GruntRunner.tmpl'
-            }
-        },
-        less: {
-            development: {
-                options: {
-                },
-                files: {
-                    'min/css/themes/sage-green/sdk.min.sage-green.debug.css': 'content/css/themes/sage-green.less',
-                    'min/css/themes/swiftpage/sdk.min.swiftpage.debug.css': 'content/css/themes/swiftpage.less'
-                }
-            },
-            production: {
-                options: {
-                    yuicompress: true
-                },
-                files: {
-                    'min/css/themes/sage-green/sdk.min.sage-green.css': 'content/css/themes/sage-green.less',
-                    'min/css/themes/swiftpage/sdk.min.swiftpage.css': 'content/css/themes/swiftpage.less'
-                }
-            }
-        },
-        watch: {
-            scripts: {
-                files: ['src/**/*.js'],
-                tasks: ['jshint'],
-                options: {
-                    spawn: false
-                }
-            },
-            less: {
-                files: ['content/**/*.less'],
-                tasks: ['less'],
-                options: {
-                    spawn: false
-                }
-            }
-        }
+        pkg: grunt.file.readJSON('package.json')
     });
-    
-    grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.loadNpmTasks('grunt-contrib-connect');
-    grunt.loadNpmTasks('grunt-contrib-jasmine');
-    grunt.loadNpmTasks('grunt-contrib-less');
-    grunt.loadNpmTasks('grunt-contrib-watch');
 
-    grunt.registerTask('test', ['connect', 'jasmine']);
+    // Load per-task config from separate files
+    grunt.loadTasks('grunt-tasks');
+
+    // Register alias tasks
+    grunt.registerTask('check', ['jshint', 'jscs']);
+    grunt.registerTask('test', ['check', 'connect', 'jasmine:coverage']);
     grunt.registerTask('default', ['test']);
 };

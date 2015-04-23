@@ -14,28 +14,31 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.ApplicationModule
+ * @class argos.ApplicationModule
  * ApplicationModule is intended to be extended in the resulting application so that it
  * references all the views, toolbars and customizations and registers them to App.
  *
  * You may think of ApplicationModule as "loader" or initializer.
  * @alternateClassName ApplicationModule
- * @requires Sage.Platform.Mobile.Application
+ * @requires argos.Application
  */
-define('Sage/Platform/Mobile/ApplicationModule', [
+define('argos/ApplicationModule', [
     'dojo/_base/array',
     'dojo/_base/connect',
     'dojo/_base/declare',
     'dojo/_base/lang',
-    'Sage/Platform/Mobile/Application'
+    './Application',
+    './Views/ConfigureQuickActions'
 ], function(
     array,
     connect,
     declare,
-    lang
+    lang,
+    Application,
+    ConfigureQuickActions
 ) {
 
-    return declare('Sage.Platform.Mobile.ApplicationModule', null, {
+    var __class = declare('argos.ApplicationModule', null, {
         /**
          * @property {Array}
          * Array of dojo.connect bound to ApplicationModule
@@ -70,7 +73,7 @@ define('Sage/Platform/Mobile/ApplicationModule', [
                 connect.disconnect(handle);
             });
 
-            array.forEach(this._subscribes, function(handle){
+            array.forEach(this._subscribes, function(handle) {
                 connect.unsubscribe(handle);
             });
 
@@ -94,9 +97,16 @@ define('Sage/Platform/Mobile/ApplicationModule', [
         init: function(application) {
             this.application = application;
 
+            this.loadAppStatPromises();
             this.loadCustomizations();
             this.loadToolbars();
             this.loadViews();
+        },
+        /**
+        * @template
+        * This function should be overriden in the app and be used to register all app state promises.
+        */
+        loadAppStatPromises: function() {
         },
         /**
          * @template
@@ -109,6 +119,7 @@ define('Sage/Platform/Mobile/ApplicationModule', [
          * This function should be overriden in the app and be used to register all views.
          */
         loadViews: function() {
+            this.registerView(new ConfigureQuickActions());
         },
         /**
          * @template
@@ -119,21 +130,23 @@ define('Sage/Platform/Mobile/ApplicationModule', [
         /**
          * Passes the view instance to {@link App#registerView App.registerView}.
          * @param {Object} view View instance to register
-         * @param {DOMNode} domNode Optional. DOM node to place the view in. 
+         * @param {DOMNode} domNode Optional. DOM node to place the view in.
          */
         registerView: function(view, domNode) {
-            if (this.application)
+            if (this.application) {
                 this.application.registerView(view, domNode);
+            }
         },
         /**
          * Passes the toolbar instance to {@link App#registerToolbar App.registerToolbar}.
          * @param {String} name Unique name of the toolbar to register.
          * @param {Object} toolbar Toolbar instance to register.
-         * @param {DOMNode} domNode Optional. DOM node to place the view in. 
+         * @param {DOMNode} domNode Optional. DOM node to place the view in.
          */
         registerToolbar: function(name, toolbar, domNode) {
-            if (this.application)
+            if (this.application) {
                 this.application.registerToolbar(name, toolbar, domNode);
+            }
         },
         /**
          * Passes the customization instance to {@link App#registerCustomization App.registerCustomization}.
@@ -142,8 +155,21 @@ define('Sage/Platform/Mobile/ApplicationModule', [
          * @param {Object} spec The customization object containing at least `at` and `type`.
          */
         registerCustomization: function(set, id, spec) {
-            if (this.application)
+            if (this.application) {
                 this.application.registerCustomization(set, id, spec);
+            }
+        },
+        /**
+         * Registers a promise that will resolve when initAppState is invoked.
+         * @param {Promise|Function} promise A promise or a function that returns a promise
+         */
+        registerAppStatePromise: function(promise) {
+            if (this.application) {
+                this.application.registerAppStatePromise(promise);
+            }
         }
     });
+
+    lang.setObject('Sage.Platform.Mobile.ApplicationModule', __class);
+    return __class;
 });

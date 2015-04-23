@@ -1,4 +1,4 @@
-define('tests/FormatTests', ['Sage/Platform/Mobile/Format'], function(format) {
+define('tests/FormatTests', ['argos/Format'], function(format) {
 return describe('Sage.Platform.Mobile.Format', function() {
 
     it('Can tell if empty string is empty', function() {
@@ -112,6 +112,10 @@ return describe('Sage.Platform.Mobile.Format', function() {
     it('Can fix decimal place - as string for fixed, should fallback to 2 for fixed', function() {
         var testStr = 1.999999999;
         expect(format.fixed(testStr, '6')).toEqual(1.99);
+    });
+    it('Can handle bad input', function() {
+        expect(format.fixed(null)).toEqual(null);
+        expect(format.fixed()).toEqual(undefined);
     });
 
     it('Can present as percent - single digit with default places of 2', function() {
@@ -298,7 +302,7 @@ return describe('Sage.Platform.Mobile.Format', function() {
         expect(format.phone(testStr)).toEqual('(123)-456-7890x123');
     });
     it('Can call alphaToPhoneNumeric when formatting a phone number', function() {
-        spyOn(format, 'alphaToPhoneNumeric').andReturn('test');
+        spyOn(format, 'alphaToPhoneNumeric').and.returnValue('test');
 
         format.phone('test');
 

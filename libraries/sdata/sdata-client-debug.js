@@ -67,6 +67,18 @@
         }
     };
 
+    var onTimeout = function(xhr, o) {
+        if (o.failure)
+            o.failure.call(o.scope || this, xhr, o);
+    };
+
+    var bindOnTimeout = function(xhr, o) {
+        xhr.ontimeout = function() {
+            onTimeout.call(xhr, xhr, o);
+        };
+    };
+
+
     var bindOnReadyStateChange = function(xhr, o) {
         xhr.onreadystatechange = function() {
             onReadyStateChange.call(xhr, xhr, o);
@@ -126,8 +138,16 @@
             {
             }
 
+
             if (o.async !== false)
             {
+                // Set the timeout only if the request is async
+                if (typeof o.timeout === 'number' && o.timeout >= 0 && xhr.hasOwnProperty('timeout'))
+                {
+                    xhr.timeout = o.timeout;
+                    bindOnTimeout(xhr, o);
+                }
+
                 bindOnReadyStateChange(xhr, o);
 
                 xhr.send(o.body || null);
@@ -178,11 +198,13 @@
             this.completeHeaders = {};
             this.extendedHeaders = {};
             this.uri = new Sage.SData.Client.SDataUri();
+            var includeContent;
 
             if (this.service)
             {
                 this.uri.setVersion(this.service.getVersion());
-                this.uri.setIncludeContent(this.service.getIncludeContent());
+                includeContent = this.service.getIncludeContent();
+                if (typeof includeContent !== 'undefined') this.uri.setIncludeContent(includeContent);
                 this.uri.setServer(this.service.getVirtualDirectory() ? this.service.getVirtualDirectory() : 'sdata');
                 this.uri.setScheme(this.service.getProtocol());
                 this.uri.setHost(this.service.getServerName());
@@ -901,11 +923,26 @@
             return this;
         },
         getIncludeContent: function() {
-            var name = this.version.major >= 1
+            var name, value;
+            name = this.version.major >= 1
                 ? C.SDataUri.QueryArgNames.IncludeContent
                 : C.SDataUri.QueryArgNames.LegacyIncludeContent;
 
-            return trueRE.test(this.queryArgs[name]);
+            value = this.queryArgs[name];
+
+            if (typeof value !== 'undefined') {
+                return trueRE.test(value);
+            } else {
+                return value;
+            }
+        },
+        setCompact: function(value) {
+            this.queryArgs[C.SDataUri.QueryArgNames.Compact] = value;
+
+            return this;
+        },
+        getCompact: function() {
+            return this.queryArgs[C.SDataUri.QueryArgNames];
         },
         setIncludeContent: function(value) {
             var name = this.version.major >= 1
@@ -1029,6 +1066,7 @@
         UnspecifiedPort: -1,
         UriName: 'uri',
         QueryArgNames: {
+            Compact: '_compact',
             Count: 'count',
             Exclude: 'exclude',
             Format: 'format',
@@ -1123,6 +1161,7 @@
         userName: false,
         password: '',
         batchScope: null,
+        timeout: 0,
         constructor: function(options, userName, password) {
             // pass the first argument to the base class; will only have an effect if the argument
             // is an object and has a `listeners` property.
@@ -1145,6 +1184,11 @@
             if (isDefined(expanded.includeContent)) this.uri.setIncludeContent(expanded.includeContent);
             if (isDefined(expanded.version)) this.uri.setVersion(expanded.version);
             if (isDefined(expanded.json)) this.json = expanded.json;
+
+            if (isDefined(expanded.timeout)) this.timeout = expanded.timeout;
+
+            // Support for the new compact mode in Saleslogix 8.1 and higher
+            if (isDefined(expanded.compact)) this.uri.setCompact(expanded.compact);
 
             if (isDefined(expanded.userName)) this.userName = expanded.userName;
             if (isDefined(expanded.password)) this.password = expanded.password;
@@ -1319,6 +1363,10 @@
             }, ajax);
 
             S.apply(o.headers, this.createHeadersForRequest(request), request.completeHeaders);
+
+            if (typeof this.timeout === 'number') {
+                o.timeout = this.timeout;
+            }
 
             /* we only handle `Accept` for now */
             if (request.extendedHeaders['Accept'])
@@ -1660,7 +1708,7 @@
             return xml.parseXML(text);
         },
         isIncludedReference: function(ns, name, value) {
-            return value.hasOwnProperty('@sdata:key');
+            return value && value.hasOwnProperty('@sdata:key');
         },
         isIncludedCollection: function(ns, name, value) {
             if (value.hasOwnProperty('@sdata:key')) return false;
@@ -1974,7 +2022,7 @@
                         ]
                     };
                 else
-                    return false;
+                    return doc;
             }
         }
     });

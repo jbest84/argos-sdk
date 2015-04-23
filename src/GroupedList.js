@@ -14,23 +14,23 @@
  */
 
 /**
- * @class Sage.Platform.Mobile.GroupedList
+ * @class argos.GroupedList
  * Grouped List provides a hook for grouping rows before rendering them to the page.
  * The grouping adds a container for the set of rows and is collapsible.
  * Note that it constructs the page sequentially meaning the rows should be in the correct
  * order before attempting to group.
- * @extends Sage.Platform.Mobile.List
+ * @extends argos.List
  * @alternateClassName GroupedList
  */
-define('Sage/Platform/Mobile/GroupedList', [
+define('argos/GroupedList', [
     'dojo/_base/declare',
     'dojo/_base/lang',
     'dojo/query',
     'dojo/string',
     'dojo/dom-class',
     'dojo/dom-construct',
-    'Sage/Platform/Mobile/List',
-    'Sage/Platform/Mobile/Utility'
+    './List',
+    './Utility'
 ], function(
     declare,
     lang,
@@ -42,13 +42,16 @@ define('Sage/Platform/Mobile/GroupedList', [
     Utility
 ) {
 
-    return declare('Sage.Platform.Mobile.GroupedList', [List], {
+    var __class = declare('argos.GroupedList', [List], {
         // Localization
         /**
          * @property {String}
          * Text used in ARIA label for collapsible button
          */
         toggleCollapseText: 'toggle collapse',
+
+        collapsedIconClass: 'fa-chevron-right',
+        expanedIconClass: 'fa-chevron-down',
 
         /**
          * @property {Simplate}
@@ -69,7 +72,7 @@ define('Sage/Platform/Mobile/GroupedList', [
          */
         groupTemplate: new Simplate([
             '<h2 data-action="toggleGroup" class="{% if ($.collapsed) { %}collapsed{% } %}">',
-            '{%: $.title %}<button class="collapsed-indicator" aria-label="{%: $$.toggleCollapseText %}"></button>',
+            '<button class="fa {% if ($.collapsed) { %}{%: $$.collapsedIconClass %} {% } else { %}{%: $$.expanedIconClass %}{% } %}" aria-label="{%: $$.toggleCollapseText %}"></button>{%: $.title %}',
             '</h2>',
             '<ul data-group="{%= $.tag %}" class="list-content {%= $.cls %}"></ul>'
         ]),
@@ -152,21 +155,35 @@ define('Sage/Platform/Mobile/GroupedList', [
          * @param {Object} params Object containing the event and other properties
          */
         toggleGroup: function(params) {
-            var node = params.$source;
-            if (node)
+            var node = params.$source,
+                child;
+
+            if (node) {
                 domClass.toggle(node, 'collapsed');
+                child = node.children[0];
+
+                // Child is the button icon indicator for collapsed/expanded
+                if (child) {
+                    if (domClass.contains(child, this.expanedIconClass)) {
+                        domClass.replace(child, this.collapsedIconClass, this.expanedIconClass);
+                    } else {
+                        domClass.replace(child, this.expanedIconClass, this.collapsedIconClass);
+                    }
+                }
+            }
         },
         /**
          * Overwrites the parent {@link List#processFeed processFeed} to introduce grouping by group tags, see {@link #getGroupForEntry getGroupForEntry}.
          * @param {Object} feed The SData feed result
+         * @deprecated Use processData instead
          */
         processFeed: function(feed) {
             var i, entry, entryGroup, rowNode, remaining, getGroupsNode;
-            getGroupsNode = Utility.memoize(lang.hitch(this, this.getGroupsNode), function(entryGroup) {
+            getGroupsNode = Utility.memoize(this.getGroupsNode.bind(this), function(entryGroup) {
                 return entryGroup.tag;
             });
 
-            if (!this.feed){
+            if (!this.feed) {
                 this.set('listContent', '');
             }
 
@@ -179,8 +196,8 @@ define('Sage/Platform/Mobile/GroupedList', [
                     entry = feed['$resources'][i];
                     entryGroup = this.getGroupForEntry(entry);
 
-                    entry["$groupTag"] = entryGroup.tag;
-                    entry["$groupTitle"] = entryGroup.title;
+                    entry['$groupTag'] = entryGroup.tag;
+                    entry['$groupTitle'] = entryGroup.title;
 
                     this.entries[entry.$key] = entry;
                     rowNode = domConstruct.toDom(this.rowTemplate.apply(entry, this));
@@ -197,6 +214,29 @@ define('Sage/Platform/Mobile/GroupedList', [
             }
 
             domClass.toggle(this.domNode, 'list-has-more', this.hasMoreData());
+        },
+        processData: function(entries) {
+            var i, entry, count = entries.length, store = this.get('store'), entryGroup, rowNode, getGroupsNode;
+            getGroupsNode = Utility.memoize(this.getGroupsNode.bind(this), function(entryGroup) {
+                return entryGroup.tag;
+            });
+
+            if (count > 0) {
+                for (i = 0; i < count; i++) {
+                    entry = this._processEntry(entries[i]);
+                    this.entries[store.getIdentity(entry)] = entry;
+
+                    entryGroup = this.getGroupForEntry(entry);
+
+                    entry['$groupTag'] = entryGroup.tag;
+                    entry['$groupTitle'] = entryGroup.title;
+
+                    rowNode = domConstruct.toDom(this.rowTemplate.apply(entry, this));
+                    this.onApplyRowTemplate(entry, rowNode);
+
+                    domConstruct.place(rowNode, getGroupsNode(entryGroup), 'last');
+                }
+            }
         },
         getGroupsNode: function(entryGroup) {
             var results = query('[data-group="' + entryGroup.tag + '"]', this.contentNode);
@@ -220,16 +260,19 @@ define('Sage/Platform/Mobile/GroupedList', [
             this._initGroupBySections();
 
         },
-        _initGroupBySections:function(){
+        _initGroupBySections: function() {
             this._groupBySections = this.getGroupBySections();
             this.setDefaultGroupBySection();
             this.applyGroupByOrderBy();
         },
         setDefaultGroupBySection: function() {
-            var count = 0;
+            var count,
+                i;
+
+            count = 0;
             if (this._groupBySections) {
                 count = this._groupBySections.length;
-                for (var i = 0; i < count; i++) {
+                for (i = 0; i < count; i++) {
                     if (this._groupBySections[i].isDefault === true) {
                         this._currentGroupBySection = this._groupBySections[i];
                     }
@@ -238,12 +281,14 @@ define('Sage/Platform/Mobile/GroupedList', [
                     this._currentGroupBySection = this._groupBySections[0];
                 }
             }
-            
         },
         getGroupBySection: function(sectionId) {
-            var groupSection = null;
+            var groupSection,
+                i;
+
+            groupSection = null;
             if (this._groupBySections) {
-                for (var i = 0; i < this._groupBySections.length; i++) {
+                for (i = 0; i < this._groupBySections.length; i++) {
                     if (this._groupBySections[i].Id === sectionId) {
                         groupSection = this._groupBySections[i];
                     }
@@ -251,7 +296,7 @@ define('Sage/Platform/Mobile/GroupedList', [
             }
             return groupSection;
         },
-        setCurrentGroupBySection:function(sectionId){
+        setCurrentGroupBySection: function(sectionId) {
             this._currentGroupBySection = this.getGroupBySection(sectionId);
             this.applyGroupByOrderBy(); //need to refresh view
         },
@@ -263,6 +308,8 @@ define('Sage/Platform/Mobile/GroupedList', [
                 this.queryOrderBy = this._currentGroupBySection.section.getOrderByQuery();
             }
         }
-        
     });
+
+    lang.setObject('Sage.Platform.Mobile.GroupedList', __class);
+    return __class;
 });
