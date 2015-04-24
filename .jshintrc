@@ -28,6 +28,7 @@
         "it": false,
         "expect": false,
         "spyOn": false,
-        "module": false
+        "module": false,
+        "React": false
     }
 }

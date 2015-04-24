@@ -209,6 +209,17 @@ define('argos/_EditBase', [
             '</h2>',
             '<fieldset class="{%= ($.cls || $.options.cls) %}">'
         ]),
+        sectionBeginComponent: React.createClass({
+            render: function() {
+                var d = React.DOM;
+                return (
+                    d.div(null,
+                          d.h2(null, this.props.title),
+                          d.fieldset(null, { 'class': this.props.cls })
+                         )
+                );
+            }
+        }),
         /**
          * @property {Simplate}
          * HTML that ends a section
