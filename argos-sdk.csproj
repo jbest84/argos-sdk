@@ -1136,6 +1136,7 @@
     <TypeScriptCompile Include="declarations\dojo.d.ts" />
     <TypeScriptCompile Include="declarations\jasmine.d.ts" />
     <TypeScriptCompile Include="declarations\moment.d.ts" />
+    <TypeScriptCompile Include="declarations\react-global.d.ts" />
     <TypeScriptCompile Include="src\Application.ts" />
     <TypeScriptCompile Include="src\ApplicationModule.ts" />
     <TypeScriptCompile Include="declarations\argos.d.ts" />

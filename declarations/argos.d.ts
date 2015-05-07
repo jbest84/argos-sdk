@@ -1,12 +1,11 @@
 ﻿/// <reference path="dojo.d.ts" />
-
+/// <reference path="react-global.d.ts" />
 declare function define(dependencies: String[], factory: Function): any;
 declare function define(mid: String, dependencies: String[], factory: Function): any;
 declare function require(config?: Object, dependencies?: String[], callback?: Function): any;
 
 declare var Sage: any;
 declare var Simplate: any;
-declare var React: any;
 
 declare var ReUI: {
     back: () => void;

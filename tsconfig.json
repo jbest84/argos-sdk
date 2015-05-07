@@ -12,6 +12,7 @@
         "./declarations/dojo.d.ts",
         "./declarations/jasmine.d.ts",
         "./declarations/moment.d.ts",
+        "./declarations/react-global.d.ts",
         "./src/Application.ts",
         "./src/ApplicationModule.ts",
         "./src/Calendar.ts",
