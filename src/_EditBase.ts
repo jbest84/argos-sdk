@@ -213,11 +213,11 @@ define('argos/_EditBase', [
         ]),
         sectionBeginComponent: React.createClass({
             render: function() {
-                var d = React.DOM;
+                var {div, h2, fieldset} = React.DOM;
                 return (
-                    d.div(null,
-                          d.h2(null, this.props.title),
-                          d.fieldset(null, { 'class': this.props.cls })
+                    div(null,
+                          h2(null, this.props.title),
+                          fieldset(null, { 'class': this.props.cls })
                          )
                 );
             }
