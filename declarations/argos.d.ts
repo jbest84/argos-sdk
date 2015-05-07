@@ -6,6 +6,7 @@ declare function require(config?: Object, dependencies?: String[], callback?: Fu
 
 declare var Sage: any;
 declare var Simplate: any;
+declare var React: any;
 
 declare var ReUI: {
     back: () => void;
