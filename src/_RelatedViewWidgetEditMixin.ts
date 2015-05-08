@@ -35,7 +35,7 @@ define('argos/_RelatedViewWidgetEditMixin', [
             if (layout['relatedView']) {
                 content.push(this.relatedContentViewsTemplate.apply(layout['relatedView'], this));
             } else {
-                this.inherited(arguments);
+                return this.inherited(arguments);
             }
         },
         processData: function(entry) {

@@ -34,6 +34,7 @@
         "./src/Fields/SelectField.ts",
         "./src/Fields/SignatureField.ts",
         "./src/Fields/TextAreaField.ts",
+        "./src/Fields/TextComponent.ts",
         "./src/Fields/TextField.ts",
         "./src/Fields/_Field.ts",
         "./src/Format.ts",

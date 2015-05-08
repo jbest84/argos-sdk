@@ -43,6 +43,7 @@
  * @requires argos.Fields.SignatureField
  * @requires argos.Fields.TextAreaField
  * @requires argos.Fields.TextField
+ * @requires argos.Fields.TextComponent
  */
 define('argos/_EditBase', [
     'dojo/_base/declare',
@@ -73,7 +74,8 @@ define('argos/_EditBase', [
     './Fields/SelectField',
     './Fields/SignatureField',
     './Fields/TextAreaField',
-    './Fields/TextField'
+    './Fields/TextField',
+    './Fields/TextComponent'
 ], function (declare, lang, connect, array, Deferred, win, dom, domAttr, domClass, domConstruct, query, convert, utility, ErrorManager, FieldManager, View) {
     var __class = declare('argos._EditBase', [View], {
         /**
@@ -190,10 +192,11 @@ define('argos/_EditBase', [
             '</h2>',
             '<fieldset class="{%= ($.cls || $.options.cls) %}">'
         ]),
-        sectionBeginComponent: React.createClass({
+        sectionComponent: React.createClass({
+            displayName: 'sectionBegin',
             render: function () {
                 var _a = React.DOM, div = _a.div, h2 = _a.h2, fieldset = _a.fieldset;
-                return (div(null, h2(null, this.props.title), fieldset(null, { 'class': this.props.cls })));
+                return (div(null, h2(null, this.props.title), fieldset(null, { 'class': this.props.cls }, this.props.children)));
             }
         }),
         /**
@@ -346,7 +349,9 @@ define('argos/_EditBase', [
             this.inherited(arguments);
             for (var name in this.fields) {
                 if (this.fields.hasOwnProperty(name)) {
-                    this.fields[name].init();
+                    if (this.fields[name].init) {
+                        this.fields[name].init();
+                    }
                 }
             }
         },
@@ -608,7 +613,7 @@ define('argos/_EditBase', [
         processLayout: function (layout) {
             var rows = (layout['children'] || layout['as'] || layout), options = layout['options'] || (layout['options'] = {
                 title: this.detailsText
-            }), sectionQueue = [], sectionStarted = false, content = [], current, ctor, field, i, template, sectionNode;
+            }), sectionQueue = [], sectionStarted = false, content = [], current, ctor, field, i, template, rowComponent, sectionNode;
             for (i = 0; i < rows.length; i++) {
                 current = rows[i];
                 if (current['children'] || current['as']) {
@@ -624,7 +629,10 @@ define('argos/_EditBase', [
                     sectionStarted = true;
                     content.push(this.sectionBeginTemplate.apply(layout, this));
                 }
-                this.createRowContent(current, content);
+                rowComponent = this.createRowContent(current, content);
+                if (rowComponent) {
+                    content.push(React.renderToString(rowComponent));
+                }
             }
             content.push(this.sectionEndTemplate.apply(layout, this));
             sectionNode = domConstruct.toDom(content.join(''));
@@ -638,12 +646,19 @@ define('argos/_EditBase', [
         onApplySectionNode: function (sectionNode, layout) {
         },
         createRowContent: function (layout, content) {
-            var ctor, field, template;
-            ctor = FieldManager.get(layout['type']);
+            var ctor, field, template, fieldType;
+            fieldType = layout['type'];
+            ctor = FieldManager.get(fieldType);
             if (ctor) {
-                field = this.fields[layout['name'] || layout['property']] = new ctor(lang.mixin({
-                    owner: this
-                }, layout));
+                if (fieldType.indexOf('_component') >= 0) {
+                    field = this.fields[layout['name'] || layout['property']] = React.createElement(ctor, lang.mixin({
+                        owner: this
+                    }, layout));
+                    return field;
+                }
+                else {
+                    field = this.fields[layout['name'] || layout['property']] = new ctor();
+                }
                 template = field.propertyTemplate || this.propertyTemplate;
                 if (field.autoFocus && !this._focusField) {
                     this._focusField = field;
@@ -697,8 +712,10 @@ define('argos/_EditBase', [
         clearValues: function () {
             for (var name in this.fields) {
                 if (this.fields.hasOwnProperty(name)) {
-                    this.fields[name].clearHighlight();
-                    this.fields[name].clearValue();
+                    if (this.fields[name].clearHighlight) {
+                        this.fields[name].clearHighlight();
+                        this.fields[name].clearValue();
+                    }
                 }
             }
         },

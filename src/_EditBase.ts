@@ -45,6 +45,7 @@
  * @requires argos.Fields.SignatureField
  * @requires argos.Fields.TextAreaField
  * @requires argos.Fields.TextField
+ * @requires argos.Fields.TextComponent
  */
 define('argos/_EditBase', [
     'dojo/_base/declare',
@@ -76,7 +77,8 @@ define('argos/_EditBase', [
     './Fields/SelectField',
     './Fields/SignatureField',
     './Fields/TextAreaField',
-    './Fields/TextField'
+    './Fields/TextField',
+    './Fields/TextComponent'
 ], function(
     declare,
     lang,
@@ -211,13 +213,14 @@ define('argos/_EditBase', [
             '</h2>',
             '<fieldset class="{%= ($.cls || $.options.cls) %}">'
         ]),
-        sectionBeginComponent: React.createClass({
+        sectionComponent: React.createClass({
+            displayName: 'sectionBegin',
             render: function() {
-                var {div, h2, fieldset} = React.DOM;
+                let {div, h2, fieldset} = React.DOM;
                 return (
                     div(null,
                           h2(null, this.props.title),
-                          fieldset(null, { 'class': this.props.cls })
+                          fieldset(null, { 'class': this.props.cls }, this.props.children)
                          )
                 );
             }
@@ -379,7 +382,9 @@ define('argos/_EditBase', [
 
             for (var name in this.fields) {
                 if (this.fields.hasOwnProperty(name)) {
-                    this.fields[name].init();
+                    if (this.fields[name].init) {
+                        this.fields[name].init();
+                    }
                 }
             }
         },
@@ -672,6 +677,7 @@ define('argos/_EditBase', [
                 field,
                 i,
                 template,
+                rowComponent,
                 sectionNode;
 
             for (i = 0; i < rows.length; i++) {
@@ -692,7 +698,10 @@ define('argos/_EditBase', [
                     content.push(this.sectionBeginTemplate.apply(layout, this));
                 }
 
-                this.createRowContent(current, content);
+                rowComponent = this.createRowContent(current, content);
+                if (rowComponent) {
+                    content.push(React.renderToString(rowComponent));
+                }
             }
 
             content.push(this.sectionEndTemplate.apply(layout, this));
@@ -709,12 +718,18 @@ define('argos/_EditBase', [
         onApplySectionNode: function(sectionNode, layout) {
         },
         createRowContent: function(layout, content) {
-            var ctor, field, template;
-            ctor = FieldManager.get(layout['type']);
+            var ctor, field, template, fieldType;
+            fieldType = layout['type'];
+            ctor = FieldManager.get(fieldType);
             if (ctor) {
-                field = this.fields[layout['name'] || layout['property']] = new ctor(lang.mixin({
-                    owner: this
-                }, layout));
+                if (fieldType.indexOf('_component') >= 0) {
+                    field = this.fields[layout['name'] || layout['property']] = React.createElement(ctor, lang.mixin({
+                        owner: this
+                    }, layout));
+                    return field;
+                } else {
+                    field = this.fields[layout['name'] || layout['property']] = new ctor();
+                }
 
                 template = field.propertyTemplate || this.propertyTemplate;
 
@@ -783,8 +798,10 @@ define('argos/_EditBase', [
         clearValues: function() {
             for (var name in this.fields) {
                 if (this.fields.hasOwnProperty(name)) {
-                    this.fields[name].clearHighlight();
-                    this.fields[name].clearValue();
+                    if (this.fields[name].clearHighlight) {
+                        this.fields[name].clearHighlight();
+                        this.fields[name].clearValue();
+                    }
                 }
             }
         },

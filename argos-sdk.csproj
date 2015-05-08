@@ -844,6 +844,7 @@
     <Content Include="LICENSE.Snap.js" />
     <Content Include="min\css\themes\crm\sdk.min.crm.css" />
     <Content Include="min\css\themes\crm\sdk.min.crm.debug.css" />
+    <TypeScriptCompile Include="src\Fields\TextComponent.ts" />
     <Content Include="tests\ApplicationModuleTests.js" />
     <Content Include="tests\CalendarTests.js" />
     <Content Include="tests\ConvertTests.js" />
