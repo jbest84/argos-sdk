@@ -1,9 +1,11 @@
 define('argos/Fields/TextComponent', [
     'dojo/_base/event',
+    'dojo/_base/lang',
     'dojo/dom-class',
     '../FieldManager'
 ], function(
     event,
+    lang,
     domClass,
     FieldManager
 ) {
@@ -218,6 +220,8 @@ define('argos/Fields/TextComponent', [
             return (this.originalValue !== this.getValue());
         }
     });
+
+    lang.setObject('argos.Fields.TextComponent', control);
 
     return FieldManager.register('text_component', control);
 });
