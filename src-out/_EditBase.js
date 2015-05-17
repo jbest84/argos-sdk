@@ -632,7 +632,7 @@ define('argos/_EditBase', [
                 rowComponent = this.createRowContent(current, content);
                 if (rowComponent) {
                     content.push(React.renderToString(rowComponent));
-                    comps.push(rowComponent);
+                    comps.push({ layout: current, component: rowComponent });
                 }
             }
             content.push(this.sectionEndTemplate.apply(layout, this));
@@ -640,7 +640,8 @@ define('argos/_EditBase', [
             this.onApplySectionNode(sectionNode, current);
             domConstruct.place(sectionNode, this.contentNode, 'last');
             array.forEach(comps, function (comp) {
-                React.render(comp, this.contentNode);
+                var current = comp.layout;
+                this.fields[current['name'] || current['property']] = React.render(comp.component, this.contentNode);
             }.bind(this));
             for (i = 0; i < sectionQueue.length; i++) {
                 current = sectionQueue[i];
@@ -655,10 +656,9 @@ define('argos/_EditBase', [
             ctor = FieldManager.get(fieldType);
             if (ctor) {
                 if (fieldType.indexOf('_component') >= 0) {
-                    field = this.fields[layout['name'] || layout['property']] = React.createElement(ctor, lang.mixin({
+                    return React.createElement(ctor, lang.mixin({
                         owner: this
                     }, layout));
-                    return field;
                 }
                 else {
                     field = this.fields[layout['name'] || layout['property']] = new ctor();

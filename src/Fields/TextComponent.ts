@@ -30,6 +30,7 @@ define('argos/Fields/TextComponent', [
             return null;
         },
         componentWillMount: function() {
+            console.log('TextComponent will mount.');
         },
         render: function() {
             var children = [], elem;
