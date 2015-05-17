@@ -613,7 +613,7 @@ define('argos/_EditBase', [
         processLayout: function (layout) {
             var rows = (layout['children'] || layout['as'] || layout), options = layout['options'] || (layout['options'] = {
                 title: this.detailsText
-            }), sectionQueue = [], sectionStarted = false, content = [], current, ctor, field, i, template, rowComponent, sectionNode;
+            }), sectionQueue = [], sectionStarted = false, content = [], current, ctor, field, i, template, rowComponent, sectionNode, comps = [];
             for (i = 0; i < rows.length; i++) {
                 current = rows[i];
                 if (current['children'] || current['as']) {
@@ -632,12 +632,16 @@ define('argos/_EditBase', [
                 rowComponent = this.createRowContent(current, content);
                 if (rowComponent) {
                     content.push(React.renderToString(rowComponent));
+                    comps.push(rowComponent);
                 }
             }
             content.push(this.sectionEndTemplate.apply(layout, this));
             sectionNode = domConstruct.toDom(content.join(''));
             this.onApplySectionNode(sectionNode, current);
             domConstruct.place(sectionNode, this.contentNode, 'last');
+            array.forEach(comps, function (comp) {
+                React.render(comp, this.contentNode);
+            }.bind(this));
             for (i = 0; i < sectionQueue.length; i++) {
                 current = sectionQueue[i];
                 this.processLayout(current);

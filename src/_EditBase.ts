@@ -678,7 +678,8 @@ define('argos/_EditBase', [
                 i,
                 template,
                 rowComponent,
-                sectionNode;
+                sectionNode,
+                comps = [];
 
             for (i = 0; i < rows.length; i++) {
                 current = rows[i];
@@ -701,6 +702,7 @@ define('argos/_EditBase', [
                 rowComponent = this.createRowContent(current, content);
                 if (rowComponent) {
                     content.push(React.renderToString(rowComponent));
+                    comps.push(rowComponent);
                 }
             }
 
@@ -708,6 +710,9 @@ define('argos/_EditBase', [
             sectionNode = domConstruct.toDom(content.join(''));
             this.onApplySectionNode(sectionNode, current);
             domConstruct.place(sectionNode, this.contentNode, 'last');
+            array.forEach(comps, function (comp) {
+                React.render(comp, this.contentNode);
+            }.bind(this));
 
             for (i = 0; i < sectionQueue.length; i++) {
                 current = sectionQueue[i];

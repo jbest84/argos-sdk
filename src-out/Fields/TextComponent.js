@@ -18,7 +18,7 @@ define('argos/Fields/TextComponent', [
                 placeHolderText: 'placeholder',
                 readonly: false,
                 name: 'name',
-                label: 'label'
+                label: ''
             };
         },
         getInitialState: function () {
@@ -29,7 +29,9 @@ define('argos/Fields/TextComponent', [
         render: function () {
             var children = [], elem;
             var _a = React.DOM, label = _a.label, button = _a.button, input = _a.input, div = _a.div;
-            children.push(label({ 'for': this.props.name }, this.props.label));
+            if (this.props.label) {
+                children.push(label({ 'for': this.props.name }, this.props.label));
+            }
             if (this.props.enableClearButton && !this.props.readonly) {
                 children.push(button({ 'class': 'clear-button', 'onClick': this._onClearClick }, null));
             }
