@@ -829,6 +829,10 @@
     <Content Include="libraries\less\less-1.7.5.min.js" />
     <Content Include="libraries\moment\moment-with-langs.min.js" />
     <Content Include="libraries\ObjTree.js" />
+    <Content Include="libraries\polymer\LICENSE.txt" />
+    <Content Include="libraries\polymer\polymer-micro.html" />
+    <Content Include="libraries\polymer\polymer-mini.html" />
+    <Content Include="libraries\polymer\polymer.html" />
     <Content Include="libraries\sage\class.js" />
     <Content Include="libraries\sage\deferred.js" />
     <Content Include="libraries\sage\event.js" />
@@ -840,6 +844,18 @@
     <Content Include="libraries\sdata\sdata-client.js" />
     <Content Include="libraries\Simplate.js" />
     <Content Include="libraries\snap\snap.js" />
+    <Content Include="libraries\webcomponentsjs\CustomElements.js" />
+    <Content Include="libraries\webcomponentsjs\CustomElements.min.js" />
+    <Content Include="libraries\webcomponentsjs\HTMLImports.js" />
+    <Content Include="libraries\webcomponentsjs\HTMLImports.min.js" />
+    <Content Include="libraries\webcomponentsjs\MutationObserver.js" />
+    <Content Include="libraries\webcomponentsjs\MutationObserver.min.js" />
+    <Content Include="libraries\webcomponentsjs\ShadowDOM.js" />
+    <Content Include="libraries\webcomponentsjs\ShadowDOM.min.js" />
+    <Content Include="libraries\webcomponentsjs\webcomponents-lite.js" />
+    <Content Include="libraries\webcomponentsjs\webcomponents-lite.min.js" />
+    <Content Include="libraries\webcomponentsjs\webcomponents.js" />
+    <Content Include="libraries\webcomponentsjs\webcomponents.min.js" />
     <Content Include="LICENSE.Chart.js" />
     <Content Include="LICENSE.Snap.js" />
     <Content Include="min\css\themes\crm\sdk.min.crm.css" />
@@ -1115,6 +1131,12 @@
     <Content Include="LICENSE.Simplate" />
     <Content Include=".jscsrc" />
     <Content Include=".travis.yml" />
+    <Content Include="libraries\polymer\bower.json" />
+    <Content Include="libraries\polymer\build.log" />
+    <Content Include="libraries\webcomponentsjs\bower.json" />
+    <Content Include="libraries\webcomponentsjs\build.log" />
+    <Content Include="libraries\webcomponentsjs\package.json" />
+    <Content Include="libraries\webcomponentsjs\README.md" />
     <None Include="tools\bundler\Configuration\Global\ModelTypes.xsd">
       <SubType>Designer</SubType>
     </None>
