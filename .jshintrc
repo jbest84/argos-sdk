@@ -7,6 +7,14 @@
     "laxbreak": true,
     "loopfunc": true,
     "undef": true,
+    "latedef": true,
+    "noarg": true,
+    "nonew": true,
+    "eqeqeq": true,
+    "curly": true,
+    "forin": true,
+    "maxerr": 200,
+    "freeze": true,
     "globals": {
         "App": false,
         "Simplate": false,
@@ -14,6 +22,12 @@
         "Mobile": false,
         "ReUI": false,
         "Base64": false,
-        "Canvas2Image": false
+        "Canvas2Image": false,
+        "argos": false,
+        "describe": false,
+        "it": false,
+        "expect": false,
+        "spyOn": false,
+        "module": false
     }
 }

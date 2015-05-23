@@ -18,6 +18,9 @@
     <!-- Simplate -->
     <script type="text/javascript" src="../libraries/Simplate.js"></script>
 
+    <!-- Deep Diff -->
+    <script type="text/javascript" src="../libraries/deep-diff/deep-diff-0.2.0.min.js"></script>
+
     <!-- Dojo -->
     <script type="text/javascript" src="../libraries/dojo/dojo/dojo.js" data-dojo-config="parseOnLoad:false, async:true"></script>
     <script type="text/javascript">
@@ -29,11 +32,13 @@
             { name: 'dojox', location: '../libraries/dojo/dojox' },
             { name: 'snap', location: '../libraries/snap', main: 'snap' },
             { name: 'moment', location: '../libraries/moment', main: 'moment-with-langs.min' },
-            { name: 'Sage/Platform/Mobile', location: '../src' },
+            { name: 'argos', location: '../src' },
             { name: 'tests', location: '.' }
         ],
-        paths: {
-            'Sage/Platform/Mobile': '../src'
+        map: {
+            '*': {
+                'Sage/Platform/Mobile': 'argos'
+            }
         }
     });
     </script>
@@ -53,6 +58,8 @@
         'tests/SearchWidgetTests',
         'tests/ToolbarTests',
         'tests/UtilityTests',
+        'tests/View',
+        'tests/_EditBase',
         'tests/Fields/_FieldTests',
         'tests/Fields/LookupFieldTests',
         'tests/Fields/NoteFieldTests',

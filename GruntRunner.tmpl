@@ -26,6 +26,9 @@
   <!-- canvas2image for when HTMLCanvasElement.prototype.toDataURL isn't available -->
   <script type="text/javascript" src="libraries/canvas2image.js"></script>
 
+  <!-- Deep Diff -->
+  <script type="text/javascript" src="libraries/deep-diff/deep-diff-0.2.0.min.js"></script>
+
   <!-- Dojo -->
   <script type="text/javascript" src="libraries/dojo/dojo/dojo.js" data-dojo-config="parseOnLoad:false, async:true"></script>
   <script type="text/javascript">
@@ -34,14 +37,15 @@
         packages: [
             { name: 'dojo', location: 'libraries/dojo/dojo' },
             { name: 'dijit', location: 'libraries/dojo/dijit' },
-            { name: 'dojox', location: 'libraries/dojo/dojox' },
             { name: 'snap', location: 'libraries/snap', main: 'snap' },
             { name: 'moment', location: '../libraries/moment', main: 'moment-with-langs.min' },
-            { name: 'Sage/Platform/Mobile', location: '.grunt/grunt-contrib-jasmine/src' },// istanbul outputs the instrumented to this temp folder
+            { name: 'argos', location: '.grunt/grunt-contrib-jasmine/src-out' },// istanbul outputs the instrumented to this temp folder
             { name: 'tests', location: 'tests' }
         ],
-        paths: {
-            'Sage/Platform/Mobile': '.grunt/grunt-contrib-jasmine/src'
+        map: {
+            '*': {
+                'Sage/Platform/Mobile': 'argos'
+            }
         }
   });
   </script>
