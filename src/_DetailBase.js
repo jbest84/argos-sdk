@@ -165,6 +165,19 @@ const __class = declare('argos._DetailBase', [View, TabWidget], {
     '<span>{%= $.value %}</span>', // todo: create a way to allow the value to not be surrounded with a span tag
     '</div>',
   ]),
+   /**
+   * @property {Simplate}
+   * HTML that is used for a property in the detail layout
+   *
+   * * `$` => detail layout row
+   * * `$$` => view instance
+   */
+  securedPropertyTemplate:new Simplate([
+    '<div class="row{% if(!$.value) { %} no-value{% } %} {%= $.cls %}" data-property="{%= $.property || $.name %}">',
+    '<label>{%: $.label %}</label>',
+    '<span>{%= $$.noAccessText %}</span>', 
+    '</div>',
+  ]),
   /**
    * @property {Simplate}
    * HTML that is used for detail layout items that point to related views, includes a label and links the value text
@@ -327,6 +340,11 @@ const __class = declare('argos._DetailBase', [View, TabWidget], {
    * Text shown while loading and used in loadingTemplate
    */
   loadingText: 'loading...',
+  /**
+   * @property {String}
+   * Text used in the notAvailableTemplate
+   */
+  noAccessText: 'No Access.',
   /**
    * @property {String}
    * Text used in the notAvailableTemplate
@@ -789,7 +807,15 @@ const __class = declare('argos._DetailBase', [View, TabWidget], {
       this.processLayout(current, entry);
     }
   },
+  createSecuredRowNode: function(fieldSecurityProfile, layout, sectionNode, entry, template, data){
+    return domConstruct.place(this.securedPropertyTemplate.apply(data, this), sectionNode);
+  },
   createRowNode: function createRowNode(layout, sectionNode, entry, template, data) {
+    let rowNode;
+    let fieldSecurityProfile = App.securityService.getFieldSecurityProfile(entry, layout.property);
+    if(fieldSecurityProfile && !fieldSecurityProfile.allowRead){
+      return  this.createSecuredRowNode(fieldSecurityProfile, layout, sectionNode, entry, template, data);
+    }     
     return domConstruct.place(template.apply(data, this), sectionNode);
   },
   _getStoreAttr: function _getStoreAttr() {
@@ -836,6 +862,7 @@ const __class = declare('argos._DetailBase', [View, TabWidget], {
   _onGetComplete: function _onGetComplete(entry) {
     try {
       if (entry) {
+        this.applySecurityProfile(entry);
         this.processEntry(entry);
       } else {
         domConstruct.place(this.notAvailableTemplate.apply(this), this.contentNode, 'only');
@@ -999,7 +1026,7 @@ const __class = declare('argos._DetailBase', [View, TabWidget], {
   },
   destroy: function destroy() {
     this.inherited(arguments);
-  },
+  }
 });
 
 lang.setObject('Sage.Platform.Mobile._DetailBase', __class);

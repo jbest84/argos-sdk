@@ -26,6 +26,7 @@ import all from 'dojo/promise/all';
 import snap from 'snap';
 import 'dojo/sniff';
 import ReUI from './ReUI/main';
+import securityService from './SecurityService';
 
 has.add('html5-file-api', function hasFileApi(global) {
   if (has('ie')) {
@@ -209,6 +210,7 @@ const __class = declare('argos.Application', null, {
    * All options are mixed into App itself
    * @param {Object} options
    */
+  securityService: securityService,
   constructor: function constructor(options) {
     this._connects = [];
     this._appStatePromises = [];

@@ -75,7 +75,11 @@
           "path": "../src-out/"
         },
         {
-          "text": "ConfigurableSelectionModel.js",
+            "text": "ConfigurableSelectionModel.js",
+            "path": "../src-out/"
+        },
+        {
+          "text": "SecurityService.js",
           "path": "../src-out/"
         },
         {

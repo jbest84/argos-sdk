@@ -318,6 +318,12 @@ const __class = declare('argos.View', [_WidgetBase, _ActionMixin, _Customization
   getSecurity: function getSecurity(/*access*/) {
     return this.security;
   },
+   /**
+   * Applys security profile to the entry.
+   * @param entry
+   */
+  applySecurityProfile: function(entry){
+  }
 });
 
 lang.setObject('Sage.Platform.Mobile.View', __class);
