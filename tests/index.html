@@ -8,9 +8,6 @@
     <script type="text/javascript" src="../libraries/jasmine-2.0.0/jasmine.js"></script>
     <script type="text/javascript" src="../libraries/jasmine-2.0.0/jasmine-html.js"></script>
 
-    <!-- JSON -->
-    <script type="text/javascript" src="../libraries/json2.js"></script>
-
     <!-- SData Client Library -->
     <script type="text/javascript" src="../libraries/sdata/sdata-client-dependencies-debug.js"></script>
     <script type="text/javascript" src="../libraries/sdata/sdata-client-debug.js"></script>
@@ -29,7 +26,7 @@
         packages: [
             { name: 'dojo', location: '../libraries/dojo/dojo' },
             { name: 'dijit', location: '../libraries/dojo/dijit' },
-            { name: 'dojox', location: '../libraries/dojo/dojox' },
+            { name: 'dstore', location: '../libraries/dstore' },
             { name: 'snap', location: '../libraries/snap', main: 'snap' },
             { name: 'moment', location: '../libraries/moment', main: 'moment-with-langs.min' },
             { name: 'argos', location: '../src-out' },
@@ -71,6 +68,7 @@
         'tests/Fields/DecimalFieldTests',
         'tests/Groups/DateTimeSectionTests',
         'tests/Stores/SData',
+        'tests/dstore/SData',
         '../libraries/jasmine-2.0.0/boot.js'
     ], function () {
     });
