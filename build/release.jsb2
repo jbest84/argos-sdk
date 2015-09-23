@@ -62,8 +62,16 @@
       "file": "content/javascript/argos-sdk.js",
       "isDebug": true,
       "fileIncludes": [
-        {
+      	{
           "text": "CultureInfo.js",
+          "path": "../src-out/"
+        },
+        {
+          "text": "DraggableList.js",
+          "path": "../src-out/"
+        },
+        {
+          "text": "_DraggabeBase.js",
           "path": "../src-out/"
         },
         {
@@ -128,6 +136,10 @@
         },
         {
           "text": "DateTimePicker.js",
+          "path": "../src-out/"
+        },
+        {
+          "text": "RelativeDateTimePicker.js",
           "path": "../src-out/"
         },
         {
