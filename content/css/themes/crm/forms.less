@@ -8,7 +8,6 @@ input, textarea {
     font-size: @font-size-input;
     border: @form-border;
     .box-sizing(border-box);
-    .border-radius(3px);
     width: 100%;
     margin: 0 0 8px 0;
     padding: 7px;
@@ -271,6 +270,8 @@ div.table-layout div input:not([type|=radio]):not([type|=checkbox]) {
     height: 32px;
     vertical-align: middle;
     margin: 0 !important;
+    line-height: 32px;
+    font-family: @toolbar-search-font;
 }
 
 .list-search .searchButton {
