@@ -137,13 +137,15 @@ body > .viewContainer {
   flex-flow: row wrap;
   justify-content: space-around;
   background-color: @color-deep-slate;
-  padding: 10px 5px 15px 5px;
+  padding: 10px 5px;
   > li {
     flex-grow: 1;
     flex-basis: 150px;
-    border-right: 2px solid #fff;
+    border-right: 1px solid @color-light-slate;
     > a {
-      margin: 0 0.25em 0 0;
+      margin: auto;
+      display: flex;
+      justify-content: center;
     }
   }
 }
@@ -220,8 +222,8 @@ body > .viewContainer {
 }
 
 .detail-header {
-    padding: 10px 0 !important;
-    font-size: 18px;
+    padding: 15px 0 !important;
+    font-size: @font-size-h2;
 }
 
 .animated-bar {
