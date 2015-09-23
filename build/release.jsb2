@@ -9,6 +9,10 @@
       "isDebug": true,
       "fileIncludes": [
         {
+          "text": "l20n.js",
+          "path": "../libraries/l20n/"
+        },
+        {
           "text": "Simplate.js",
           "path": "../libraries/"
         },
@@ -35,6 +39,10 @@
         {
           "text": "browser-polyfill.min.js",
           "path": "../libraries/babel/"
+        },
+        {
+          "text": "moment-with-locales.js",
+          "path": "../libraries/moment/"
         }
       ]
     },
@@ -46,10 +54,6 @@
         {
           "text": "snap.js",
           "path": "../libraries/snap/"
-        },
-        {
-          "text": "moment-with-langs.min.js",
-          "path": "../libraries/moment/"
         }
       ]
     },
@@ -58,6 +62,10 @@
       "file": "content/javascript/argos-sdk.js",
       "isDebug": true,
       "fileIncludes": [
+        {
+          "text": "CultureInfo.js",
+          "path": "../src-out/"
+        },
         {
           "text": "DomHelper.js",
           "path": "../src-out/ReUI/"
@@ -91,6 +99,18 @@
           "path": "../src-out/"
         },
         {
+          "text": "Modal.js",
+          "path": "../src-out/"
+        },
+        {
+          "text": "Toast.js",
+          "path": "../src-out/"
+        },
+        {
+          "text": "TimePicker.js",
+          "path": "../src-out/"
+        },
+        {
           "text": "_ErrorHandleMixin.js",
           "path": "../src-out/"
         },
@@ -104,6 +124,10 @@
         },
         {
           "text": "Calendar.js",
+          "path": "../src-out/"
+        },
+        {
+          "text": "DateTimePicker.js",
           "path": "../src-out/"
         },
         {
@@ -319,9 +343,14 @@
   ],
   "resources": [
     {
-      "src": "../libraries/font-awesome-4.1.0/fonts",
+      "src": "../localization/locales/argos",
+      "dest": "localization/locales/argos",
+      "filters": ".*(\\.l20n)",
+    },
+    {
+      "src": "../libraries/font-awesome-4.4.0/fonts",
       "dest": "content/css/themes/fonts",
-      "filters": ".*(\\.otf|\\.eot|\\.svg|\\.ttf|\\.woff)"
+      "filters": ".*(\\.otf|\\.eot|\\.svg|\\.ttf|\\.woff|\\.woff2)"
     },
     {
       "src": "../content",
