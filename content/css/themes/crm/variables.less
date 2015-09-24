@@ -1,84 +1,118 @@
 // Variables
+@import "variables_deprecated.less";
 
 // --------------------------------------------------------
-// Color palette
+// Color palette - SoHo Xi
 // --------------------------------------------------------
 
 // Azure
-@color-light-azure: #69b5dd;
-@color-azure: #368ac0;
-@color-deep-azure: #1d5f8a;
+@color-azure-1:  #c8e9f4;
+@color-azure-2:  #add8eb;
+@color-azure-3:  #8dc9e6;
+@color-azure-4:  #69b5dd;
+@color-azure-5:  #54a1d3;
+@color-azure-6:  #368ac0;
+@color-azure-7:  #2578a9;
+@color-azure-8:  #1d5f8a;
+@color-azure-9:  #134d71;
+@color-azure-10: #133c59;
 
 // Emerald
-@color-light-emerald: #9cce7c;
-@color-emerald: #76b051;
-@color-deep-emerald: #56932e;
+@color-emerald-1:  #d5f6c0;
+@color-emerald-2:  #c3e8ac;
+@color-emerald-3:  #afdc91;
+@color-emerald-4:  #9cce7c;
+@color-emerald-5:  #89bf65;
+@color-emerald-6:  #76b051;
+@color-emerald-7:  #66a140;
+@color-emerald-8:  #56932e;
+@color-emerald-9:  #488421;
+@color-emerald-10: #397514;
 
 // Amber
-@color-light-amber: #f2bc41;
-@color-amber: #efa836;
-@color-deep-amber: #e4882b;
+@color-amber-1:  #fbe9bf;
+@color-amber-2:  #f8e09c;
+@color-amber-3:  #f6d67b;
+@color-amber-4:  #f4c951;
+@color-amber-5:  #f2bc41;
+@color-amber-6:  #efa836;
+@color-amber-7:  #ee9a36;
+@color-amber-8:  #e4882b;
+@color-amber-9:  #db7726;
+@color-amber-10: #d66221;
 
 // Ruby
-@color-light-ruby: #d26d6d;
-@color-ruby: #b94e4e;
-@color-deep-ruby: #a13030;
-
-// Tourmaline
-@color-light-tourmaline: #ff80a2;
-@color-tourmaline: #e63262;
-@color-deep-tourmaline: #bf2951;
+@color-ruby-1:  #f4bcbc;
+@color-ruby-2:  #eb9d9d;
+@color-ruby-3:  #de8181;
+@color-ruby-4:  #d26d6d;
+@color-ruby-5:  #c65f5f;
+@color-ruby-6:  #b94e4e;
+@color-ruby-7:  #ad4242;
+@color-ruby-8:  #a13030;
+@color-ruby-9:  #941e1e;
+@color-ruby-10: #880e0e;
 
 // Amethyst
-@color-light-amethyst: #a38db7;
-@color-amethyst: #9279a6;
-@color-deep-amethyst: #6e5282;
+@color-amethyst-1:  #ede3fc;
+@color-amethyst-2:  #daccec;
+@color-amethyst-3:  #c7b4db;
+@color-amethyst-4:  #b5a1c9;
+@color-amethyst-5:  #a38db7;
+@color-amethyst-6:  #9279a6;
+@color-amethyst-7:  #806594;
+@color-amethyst-8:  #6e5282;
+@color-amethyst-9:  #5d3e70;
+@color-amethyst-10: #4b2a5e;
 
 // Graphite
-@color-lighter-graphite: #d8d8d8;
-@color-light-graphite: #999999;
-@color-graphite: #5c5c5c;
-@color-deep-graphite: #383838;
-@color-deeper-graphite: #1a1a1a;
+@color-graphite-1:  #f0f0f0;
+@color-graphite-2:  #d8d8d8;
+@color-graphite-3:  #bdbdbd;
+@color-graphite-4:  #999999;
+@color-graphite-5:  #737373;
+@color-graphite-6:  #5c5c5c;
+@color-graphite-7:  #454545;
+@color-graphite-8:  #383838;
+@color-graphite-9:  #292929;
+@color-graphite-10: #1a1a1a;
 
 // Slate
-@color-lighter-slate: #c8cbd4;
-@color-light-slate: #888b94;
-@color-slate: #50535a;
-@color-deep-slate: #313236;
-@color-deeper-slate: #1c1819;
+@color-slate-1:  #dee1e8;
+@color-slate-2:  #c8cbd4;
+@color-slate-3:  #abaeb7;
+@color-slate-4:  #888b94;
+@color-slate-5:  #656871;
+@color-slate-6:  #50535a;
+@color-slate-7:  #414247;
+@color-slate-8:  #313236;
+@color-slate-9:  #212224;
+@color-slate-10: #1c1819;
 
 // Turquoise
-@color-light-turquoise: #7cc0b5;
-@color-turquoise: #579e95;
-@color-deep-turquoise: #317c73;
+@color-turquoise-1:  #c0ede3;
+@color-turquoise-2:  #a9e1d6;
+@color-turquoise-3:  #8ed1c6;
+@color-turquoise-4:  #7cc0b5;
+@color-turquoise-5:  #69ada3;
+@color-turquoise-6:  #579e95;
+@color-turquoise-7:  #448d83;
+@color-turquoise-8:  #317c73;
+@color-turquoise-9:  #206b62;
+@color-turquoise-10: #0e5b52;
 
-@color-black: #1a1a1a;
-@color-fields-border: #b3b3b3;
+@color-black: @color-graphite-10;
+@color-fields-border: @color-graphite-3;
 
 // backgrounds
-@background-darker: #ebebeb;
-@background-dark: #f0f0f0;
-@background-light: #f3f3f3;
-@background-lighter: #f8f8f8;
-
-// primary black
-@black-darker: #0f1e1e;
-@black-dark: #4b5656;
-@black-light: #878e8e;
-@black-lighter: #c3c7c7;
-
-// cool dark gray
-@gray1-darker: #787d82;
-@gray1-dark: #9a9ea1;
-@gray1-light: #BBBEC0;
-@gray1-lighter: #dddee0;
-
-// cool light gray
-@gray2-darker: #b4b9be;
-@gray2-dark: #c7cbce;
-@gray2-light: #d9dcde;
-@gray2-lighter: #ecedef;
+@background-darker: @color-graphite-4;
+@background-dark: @color-graphite-3;
+@background-light: @color-graphite-2;
+@background-lighter: @color-graphite-1;
+// @background-darker: #ebebeb;
+// @background-dark: #f0f0f0;
+// @background-light: #f3f3f3;
+// @background-lighter: #f8f8f8;
 
 // --------------------------------------------------------
 // Common UI Elements
@@ -98,17 +132,29 @@
 
 // Fonts
 @font-family: Helvetica, Arial, Sans-serif;
-@font-size-h1: 20px;
-@font-size-h2: 16px;
-@font-size-h3: 14px;
-@font-size-h4: 12px;
-@font-size-h5: 10px;
-@font-size-small: 11px;
-@font-size-title: 32px;
-@font-size-subtitle: 24px;
-@font-size-paragraph: 14px;
-@font-size-input: 14px;
-@font-size-very-small: 9px;
+@font-size-h1: 2.8rem;
+@font-size-h2: 2.4rem;
+@font-size-h3: 2rem;
+@font-size-h4: 1.6rem;
+@font-size-h5: 1.4rem;
+@font-size-small: 1.1rem;
+@font-size-title: @font-size-h1;
+@font-size-subtitle: @font-size-h3;
+@font-size-paragraph: @font-size-h5;
+@font-size-input: @font-size-h5;
+@font-size-very-small: 1rem;
+// @font-family: Helvetica, Arial, Sans-serif;
+// @font-size-h1: 20px;
+// @font-size-h2: 16px;
+// @font-size-h3: 14px;
+// @font-size-h4: 12px;
+// @font-size-h5: 10px;
+// @font-size-small: 11px;
+// @font-size-title: 32px;
+// @font-size-subtitle: 24px;
+// @font-size-paragraph: 14px;
+// @font-size-input: 14px;
+// @font-size-very-small: 9px;
 
 @label-font-size: @font-size-paragraph;
 
