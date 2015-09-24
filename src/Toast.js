@@ -31,7 +31,7 @@ import Modal from './Modal';
 
 const __class = declare('argos.Toast', [_Widget, _Templated, Modal], {
   toastTemplate: new Simplate([
-    '<div class="toast effect-scale">',
+    '<div class="toast effect-scale--show">',
       '<button class="toast__btn-close fa fa-times"></button>',
       '<div class="toast__icon {%= $.icon %}" focusable="false" aria-hidden="true"></div>',
       '<span class="toast__title">',
@@ -126,7 +126,7 @@ const __class = declare('argos.Toast', [_Widget, _Templated, Modal], {
   },
   hideToast: function hideToast(toast = {}) {
     if (toast) {
-      domClass.add(toast, 'effect-scale-hide');
+      domClass.add(toast, 'effect-scale--hide');
       setTimeout(this.destroyToast.bind(toast), 500);
     }
     return this;

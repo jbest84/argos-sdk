@@ -1,12 +1,12 @@
 // Animation used for Toast scale in and out effect
-.effect-scale {
+.effect-scale--show {
   -webkit-animation-duration: .25s;
   animation-duration: .25s;
-  -webkit-animation-name: animScale;
-  animation-name: animScale;
+  -webkit-animation-name: animScaleIn;
+  animation-name: animScaleIn;
 }
 
-.effect-scale-hide {
+.effect-scale--hide {
   -webkit-animation-duration: .25s;
   animation-duration: .25s;
   -webkit-animation-name: animScaleOut;
@@ -14,12 +14,12 @@
   opacity: 0;
 }
 
-@-webkit-keyframes animScale {
+@-webkit-keyframes animScaleIn {
   0% { opacity: 0; -webkit-transform: translate3d(0, 40px, 0) scale3d(.1, .6, 1); }
   100% { opacity: 1; -webkit-transform: translate3d(0, 0, 0) scale3d(1, 1, 1); }
 }
 
-@keyframes animScale {
+@keyframes animScaleIn {
   0% { opacity: 0; transform: translate3d(0, 40px, 0) scale3d(.1, .6, 1); }
   100% { opacity: 1; transform: translate3d(0, 0, 0) scale3d(1, 1, 1); }
 }
