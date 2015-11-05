@@ -139,9 +139,19 @@ const __class = declare('argos.Models.Offline.OfflineModelBase', [_ModelBase, _C
     entries.forEach((related) => {
       const model = App.ModelManager.getModel(related.entityName, MODEL_TYPES.OFFLINE);
       if (model && related.entities) {
-        relatedPromises = related.entities.map((relatedEntry) => {
-          return model.saveEntry(relatedEntry, options);
-        });
+        if (related.relationship.type === 'ManyToMany') {
+          relatedPromises = related.entities.map((relatedEntry) => {
+            const fetchModel = App.ModelManager.getModel(related.relationship.fetchEntity, MODEL_TYPES.OFFLINE);
+            return fetchModel.saveEntry(relatedEntry, options);
+          });
+        } else {
+          relatedPromises = related.entities.map((relatedEntry) => {
+            return model.saveEntry(relatedEntry, options);
+          });
+        }
+      }
+      if (related.joins) {
+        relatedPromises.concat(related.joins.map((join) => model.saveEntry(join, options)));
       }
     });
     if (relatedPromises.length > 0) {

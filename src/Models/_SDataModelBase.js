@@ -182,20 +182,25 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
         when(queryResults, (entities) => {
           if (relationship.type === 'ManyToMany') {
             const deepEntities = entities.map((entity) => {
+              // TODO: Performance improvements here
+              // We don't need to fetch all the relationships, just the one we need (fetchEntity)
               return model.getEntry(entity[model.idProperty], {includeRelated: true}).then((r) => r.$relatedEntities);
             });
             all(deepEntities).then((results) => {
               const items = [].concat.apply([], results).filter((r) => {
-                return r.entityName === relationship.relatedProperty;
-              });
-              console.dir(items);
+                return r.entityName === relationship.fetchEntity;
+              }).reduce((prev, cur) => {
+                return prev.concat(cur.entities);
+              }, []);
+
               def.resolve({
                 entityName: model.entityName,
                 entityDisplayName: model.entityDisplayName,
                 entityDisplayNamePlural: model.entityDisplayNamePlural,
                 relationship: relationship,
-                count: results.length,
-                entities: results,
+                count: items.length,
+                entities: items,
+                joins: entities,
               });
             });
           } else {
