@@ -117,17 +117,16 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
     const includeRelated = (options && options.includeRelated) ? options.includeRelated : false;
     const queryOptions = this.getOptions(options);
     if (store) {
-      relatedRequests = [];
       queryResults = store.get(entityId, queryOptions);
       when(queryResults, function(relatedFeed) { // eslint-disable-line
         const entry = queryResults.results[0];
         if (includeRelated) {
           relatedRequests = this.getRelatedRequests(entry);
         }
-        if (relatedRequests.length > 0) {
+        if (relatedRequests && relatedRequests.length > 0) {
           all(relatedRequests).then(
               (relatedResults) => {
-                this.applyRelatedResults(entry, relatedResults);
+                entry.$relatedEntities = relatedResults;
                 def.resolve(entry);
               },
               (err) => {
@@ -163,25 +162,12 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
     return def.promise;
   },
   getRelatedRequests: function getRelatedRequests(entry) {
-    const self = this;
-    const requests = [];
-    this.relationships.forEach((rel) => {
-      let request = null;
-      if (!rel.disabled) {
-        request = self.getRelatedRequest(entry, rel);
-        if (request) {
-          requests.push(request);
-        }
-
-        if (rel.type === 'ManyToMany') {
-          const model = App.ModelManager.getModel(rel.relatedEntity, MODEL_TYPES.SDATA);
-          model.getRelatedRequests(entry).forEach((req) => {
-            requests.push(req);
-          });
-        }
-      }
-    });
-    return requests;
+    return this.relationships
+    .filter((rel) => !rel.disabled)
+    .map((rel) => {
+      return this.getRelatedRequest(entry, rel);
+    })
+    .filter((req) => req !== null && typeof req !== 'undefined');
   },
   getRelatedRequest: function getRelatedRequest(entry, relationship, options) {
     let model;
@@ -192,19 +178,36 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
     if (model) {
       queryOptions = this.getRelatedQueryOptions(entry, relationship, options);
       if (queryOptions) {
-        console.dir(relationship);
-        console.dir(queryOptions);
         queryResults = model.getEntries(null, queryOptions);
         when(queryResults, (entities) => {
-          const results = {
-            entityName: model.entityName,
-            entityDisplayName: model.entityDisplayName,
-            entityDisplayNamePlural: model.entityDisplayNamePlural,
-            relationship: relationship,
-            count: entities.length,
-            entities: entities,
-          };
-          def.resolve(results);
+          if (relationship.type === 'ManyToMany') {
+            const deepEntities = entities.map((entity) => {
+              return model.getEntry(entity[model.idProperty], {includeRelated: true}).then((r) => r.$relatedEntities);
+            });
+            all(deepEntities).then((results) => {
+              const items = [].concat.apply([], results).filter((r) => {
+                return r.entityName === relationship.relatedProperty;
+              });
+              console.dir(items);
+              def.resolve({
+                entityName: model.entityName,
+                entityDisplayName: model.entityDisplayName,
+                entityDisplayNamePlural: model.entityDisplayNamePlural,
+                relationship: relationship,
+                count: results.length,
+                entities: results,
+              });
+            });
+          } else {
+            def.resolve({
+              entityName: model.entityName,
+              entityDisplayName: model.entityDisplayName,
+              entityDisplayNamePlural: model.entityDisplayNamePlural,
+              relationship: relationship,
+              count: entities.length,
+              entities: entities,
+            });
+          }
         }, (err) => {
           def.reject(err);
         });
@@ -263,14 +266,6 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
     }
 
     return queryOptions;
-  },
-  applyRelatedResults: function applyRelatedResults(entry, relatedResults) {
-    let relatedEntities;
-    relatedEntities = [];
-    relatedResults.forEach((result) => {
-      relatedEntities.push(result);
-    });
-    entry.$relatedEntities = relatedEntities;
   },
 });
 
