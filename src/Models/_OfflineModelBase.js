@@ -141,6 +141,7 @@ const __class = declare('argos.Models.Offline.OfflineModelBase', [_ModelBase, _C
       if (model && related.entities) {
         if (related.relationship.type === 'ManyToMany') {
           relatedPromises = related.entities.map((relatedEntry) => {
+            // Switch to the model of the type we were fetching (fetchEntity)
             const fetchModel = App.ModelManager.getModel(related.relationship.fetchEntity, MODEL_TYPES.OFFLINE);
             return fetchModel.saveEntry(relatedEntry, options);
           });
@@ -151,6 +152,7 @@ const __class = declare('argos.Models.Offline.OfflineModelBase', [_ModelBase, _C
         }
       }
       if (related.joins) {
+        // Save off the join records
         relatedPromises.concat(related.joins.map((join) => model.saveEntry(join, options)));
       }
     });
@@ -222,6 +224,25 @@ const __class = declare('argos.Models.Offline.OfflineModelBase', [_ModelBase, _C
   },
   unWrapEntities: function unWrapEntities(docs) {
     return docs.map((doc) => this.unWrap(doc.doc));
+  },
+  getRelated: function getRelated(relationship, entry) {
+    const def = new Deferred();
+    const model = App.ModelManager.getModel(relationship.relatedEntity, MODEL_TYPES.OFFLINE);
+    if (model) {
+      const queryExpression = this.buildRelatedQueryExpression(relationship, entry);
+      const queryOptions = {
+        returnQueryResults: true,
+      };
+      model.getEntries(queryExpression, queryOptions).then((result) => {
+        def.resolve(result);
+      }, () => {
+        def.reject('Failed getting entries.');
+      });
+    } else {
+      def.reject('Missing model.');
+    }
+
+    return def.promise;
   },
   getRelatedCount: function getRelatedCount(relationship, entry) {
     const def = new Deferred();
