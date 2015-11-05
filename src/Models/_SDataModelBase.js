@@ -3,7 +3,6 @@ import SDataStore from '../Store/SData';
 import Deferred from 'dojo/Deferred';
 import all from 'dojo/promise/all';
 import when from 'dojo/when';
-import string from 'dojo/string';
 import utility from '../Utility';
 import _ModelBase from './_ModelBase';
 import Manager from './Manager';
@@ -173,6 +172,13 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
         if (request) {
           requests.push(request);
         }
+
+        if (rel.type === 'ManyToMany') {
+          const model = App.ModelManager.getModel(rel.relatedEntity, MODEL_TYPES.SDATA);
+          model.getRelatedRequests(entry).forEach((req) => {
+            requests.push(req);
+          });
+        }
       }
     });
     return requests;
@@ -186,6 +192,8 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
     if (model) {
       queryOptions = this.getRelatedQueryOptions(entry, relationship, options);
       if (queryOptions) {
+        console.dir(relationship);
+        console.dir(queryOptions);
         queryResults = model.getEntries(null, queryOptions);
         when(queryResults, (entities) => {
           const results = {
@@ -209,7 +217,6 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
     let parentDataPath;
     let relatedDataPath;
     let relatedValue;
-    let where;
     let optionsTemp = options;
 
     if (!optionsTemp) {
@@ -243,11 +250,10 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
     }
 
     relatedValue = utility.getValue(entry, parentDataPath);
-    where = "${0} eq '${1}'";
     if (!relatedValue) {
       return null;
     }
-    queryOptions.where = string.substitute(where, [relatedDataPath, relatedValue]);
+    queryOptions.where = `${relatedDataPath} eq '${relatedValue}'`;
     if (relationship.where) {
       if (typeof relationship.where === 'function') {
         queryOptions.where = relationship.where.apply(this, [entry]);
@@ -255,6 +261,7 @@ const __class = declare('argos.Models.SDataModelBase', [_ModelBase], {
         queryOptions.where = `${queryOptions.where} and ${relationship.where}`;
       }
     }
+
     return queryOptions;
   },
   applyRelatedResults: function applyRelatedResults(entry, relatedResults) {
