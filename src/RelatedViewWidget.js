@@ -15,8 +15,9 @@ import SDataStore from './Store/SData';
 import _CustomizationMixin from './_CustomizationMixin';
 import _ActionMixin from './_ActionMixin';
 import _RelatedViewWidgetBase from 'argos/_RelatedViewWidgetBase';
+import getResource from './I18n';
 
-const resource = window.localeContext.getEntitySync('relatedViewWidget').attributes;
+const resource = getResource('relatedViewWidget');
 
 const __class = declare('argos.RelatedViewWidget', [_RelatedViewWidgetBase, _CustomizationMixin, _ActionMixin], {
   cls: 'related-view-widget',
@@ -145,7 +146,16 @@ const __class = declare('argos.RelatedViewWidget', [_RelatedViewWidgetBase, _Cus
     '</div>',
   ]),
   loadingTemplate: new Simplate([
-    '<div class="loading-indicator"><div>{%= $.loadingText %}</div></div>',
+    '<div class="busyIndicator__container busyIndicator--active" aria-live="polite">',
+      '<div class="busyIndicator busyIndicator--large">',
+        '<div class="busyIndicator__bar busyIndicator__bar--large busyIndicator__bar--one"></div>',
+        '<div class="busyIndicator__bar busyIndicator__bar--large busyIndicator__bar--two"></div>',
+        '<div class="busyIndicator__bar busyIndicator__bar--large busyIndicator__bar--three"></div>',
+        '<div class="busyIndicator__bar busyIndicator__bar--large busyIndicator__bar--four"></div>',
+        '<div class="busyIndicator__bar busyIndicator__bar--large busyIndicator__bar--five"></div>',
+      '</div>',
+      '<span class="busyIndicator__label">{%: $.loadingText %}</span>',
+    '</div>',
   ]),
 
   relatedActionTemplate: new Simplate([

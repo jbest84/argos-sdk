@@ -21,8 +21,9 @@ import query from 'dojo/query';
 import utility from '../Utility';
 import _Field from './_Field';
 import FieldManager from '../FieldManager';
+import getResource from '../I18n';
 
-const resource = window.localeContext.getEntitySync('lookupField').attributes;
+const resource = getResource('lookupField');
 
 /**
  * @class argos.Fields.LookupField
@@ -680,6 +681,10 @@ const control = declare('argos.Fields.LookupField', [_Field], {
    * @param {String} key data-key attribute of the selected row (typically $key from SData)
    */
   setSelection: function setSelection(val, key) {
+    this.currentSelection = val;
+    if (val === null || typeof val === 'undefined') {
+      return false;
+    }
     let text = utility.getValue(val, this.textProperty);
     const newKey = utility.getValue(val, this.keyProperty, val) || key; // if we can extract the key as requested, use it instead of the selection key
 
@@ -689,11 +694,9 @@ const control = declare('argos.Fields.LookupField', [_Field], {
       text = this.textRenderer.call(this, val, newKey, text);
     }
 
-    this.currentSelection = val;
-
     this.currentValue = {
-      key: newKey || text,
-      text: text || newKey,
+     key: newKey || text,
+     text: text || newKey,
     };
 
     this.setText(this.currentValue.text);
@@ -788,6 +791,7 @@ const control = declare('argos.Fields.LookupField', [_Field], {
    */
   clearValue: function clearValue(flag) {
     const initial = flag !== true;
+    this.setSelection(null);
     this.setValue(null, initial);
   },
 });

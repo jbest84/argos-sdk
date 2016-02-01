@@ -16,8 +16,9 @@ import json from 'dojo/json';
 import lang from 'dojo/_base/lang';
 import connect from 'dojo/_base/connect';
 import utility from './Utility';
+import getResource from './I18n';
 
-const resource = window.localeContext.getEntitySync('errorManager').attributes;
+const resource = getResource('errorManager');
 let errors = [];
 
 try {
@@ -264,6 +265,24 @@ const __class = lang.setObject('argos.ErrorManager', {
     } catch (e) {
       console.error(e);//eslint-disable-line
     }
+  },
+  showErrorDialog: function showErrorDialog(title, message, onOkay) {
+    App.modal.disableClose = true;
+    App.modal.showToolbar = true;
+    App.modal.resolveDeferred(true);
+    const promise = App.modal.createSimpleDialog({
+      title: (title) ? title : 'alert',
+      content: message,
+      getContent: () => { return; },
+      rightButton: 'okay',
+    });
+    promise.then(() => {
+      App.modal.disableClose = false;
+      App.modal.hide();
+      if (onOkay) {
+        onOkay();
+      }
+    });
   },
 });
 

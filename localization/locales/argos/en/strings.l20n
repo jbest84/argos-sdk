@@ -2,6 +2,9 @@
     emptyText: ''
     dateFormatText: "MM/DD/YYYY"
     invalidDateFormatErrorText: "Field '${0}' has Invalid date format."
+    cancelText: "Cancel"
+    confirmText: "Confirm"
+    advancedText: "Advanced"
 >
 
 <durationField ""
@@ -94,7 +97,7 @@
   titleText: "Detail"
   entityText: "Entity"
   detailsText: "Details"
-  loadingText: "loading..."
+  loadingText: "Loading"
   notAvailableText: "The requested data is not available."
   toggleCollapseText: "toggle collapse"
   editText: "Edit"
@@ -108,7 +111,7 @@
   validationSummaryText: "Validation Summary"
   concurrencySummaryText: "Concurrency Error(s)"
   detailsText: "Details"
-  loadingText: "loading..."
+  loadingText: "Loading"
   errorGeneral: "A server error occured while requesting data."
   error410:  "Error saving. This record no longer exists."
 >
@@ -127,7 +130,7 @@
   cancelText: "Cancel"
   insertText: "New"
   noDataText: "no records"
-  loadingText: "loading..."
+  loadingText: "Loading"
 >
 
 <pullToRefreshMixin ""
@@ -136,7 +139,7 @@
 >
 
 <relatedViewWidgetBase ""
-  loadingText: "loading ... "
+  loadingText: "Loading"
 >
 
 <calendar ""
@@ -198,7 +201,7 @@
   selectMoreDataText: "see ${0} more of ${1} ... "
   selectMoreDataText2: "see ${0} more ... "
   navToListText: "see list"
-  loadingText: "loading ... "
+  loadingText: "Loading"
   refreshViewText: "refresh"
   itemOfCountText: " ${0} of ${1}"
   totalCountText: " (${0})"
@@ -229,4 +232,52 @@
   tomorrowAfternoonText: "Tomorrow Evening"
   nextWeekText: "Next Week"
   nextMonthText: "Next Month"
+  cancelText: "Cancel"
+  confirmText: "Confirm"
+>
+<briefcaseModel ""
+  entityDisplayName: "Briefcase"
+  entityDisplayNamePlural : "Briefcases"
+>
+
+<recentlyViewedModel ""
+  entityDisplayName: "Recently Viewed"
+  entityDisplayNamePlural : "RecentlyViewed"
+>
+
+<busyIndicator ""
+  loadingText: "Loading"
+  progressText: "Progress"
+>
+
+<modal
+  alertText: "Alert"
+  completeText: "Complete"
+  cancelText: "Cancel"
+  confirmText: "Confirm"
+  editText: "Edit"
+  okayText: "Okay"
+  submitText: "Submit"
+  warningText: "Warning"
+>
+<_listOfflineMixin
+  goToListViewText: "Items have been briefcased. Would you like to move to the briefcase list view?"
+  interruptedText: "The process was interrupted and was not able to fully complete. Please try the process again to fully briefcase the items."
+  briefcasingText: "Briefcasing please wait."
+  errorBriefcasingText: "Error briefcasing"
+>
+
+<_detailOfflineMixin
+  goToDetailViewText: "Item and related items have been briefcased. Would you like to move to the briefcase list view?"
+  interruptedText: "The process was interrupted and was not able to fully complete. Please try the process again to fully briefcase the items."
+  briefcasingText: "Briefcasing please wait."
+  errorBriefcasingText: "Error briefcasing"
+  errorSavingOfflineViewText: "error saving offline view:"
+>
+
+<sdkApplication
+  connectionToastTitleText: "Connection"
+  checkingText: "Checking connectivity"
+  loadingApplicationStateText: "Loading application state"
+  initializingText: "Initializing:"
 >

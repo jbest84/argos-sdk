@@ -16,7 +16,6 @@
 /* detail veiw */
 .panel .panel-loading-indicator div.row > div {
     display: inline-block;
-    padding: 0 0 0 20px;
 }
 
 .panel .panel-loading-indicator div.row {
@@ -283,71 +282,6 @@ body > .viewContainer > .dialog {
     margin: 2px 0 0 0px;
 }
 
-.modal {
-  visibility: hidden;
-  position: absolute;
-  background-color: #fff;
-  overflow: scroll;
-  padding: 0 15px;
-  top: 0;
-  box-shadow: 0 0 5px @color-light-slate;
-
-  .picklist {
-    height: auto;
-    min-height: inherit;
-    max-height: 260px;
-    position: relative;
-    overflow: auto;
-    margin: 0;
-    padding: 0;
-    text-indent: 10px;
-    border: 1px solid @color-azure;
-
-    .selected {
-      background-color: @color-azure;
-      color: #fff;
-    }
-  }
-  .button {
-    background-color: transparent;
-    border: none;
-    font-size: @font-size-h3;
-    font-weight: @button-font-weight;
-    text-transform: uppercase;
-    text-align: @button-text-align;
-    text-decoration: @button-text-decoration;
-    height: 44px;
-    line-height: 44px;
-    min-width: 100px;
-    width: 50%;
-    overflow: hidden;
-    position: relative;
-    display: inline-block;
-    padding: 0;
-  }
-  .tertiary {
-    color: @color-azure;
-    transition: 0.2s background-color ease;
-    -webkit-transition: 0.2s background-color ease;
-    -moz-transition: 0.2s background-color ease;
-    -ms-transition: 0.2s background-color ease;
-  }
-  .modal-toolbar {
-    margin-top: 5px;
-    border-top: 1px solid @color-light-graphite;
-  }
-}
-
-.modal-backdrop {
-  visibility: hidden;
-  background-color: #000;
-  position: absolute;
-  width: 100%;
-  top: 0;
-  left: 0;
-  opacity: 0.3;
-}
-
 .no-data {
     text-align: center;
 }
@@ -377,7 +311,6 @@ img {
 }
 
 .panel-loading > .panel-loading-indicator span {
-    display: inline;
     padding: 0;
 }
 
@@ -498,12 +431,11 @@ img {
 .row > a {
     display: block;
     margin: 0 0 0 0;
-    padding: 0 0 0 10px;
+    width: 70%;
     position: relative;
     overflow: hidden;
     text-overflow: ellipsis;
     float: right;
-    text-align: right;
 }
 
 .href {
@@ -736,7 +668,9 @@ img {
         > li {
             background-color: #fff;
             color: #aaa;
-            padding-right: 6px;
+            padding: 0;
+            height: 40px;
+            line-height: 40px;
 
             .resource {
                 display: block;
@@ -746,7 +680,7 @@ img {
 
             h3 {
               vertical-align: middle;
-              line-height: 24px;
+              line-height: 40px;
 
                 > span {
                     &:first-child {
@@ -754,21 +688,12 @@ img {
                     }
                 }
 
-                > [data-action="moveUp"],
-                > [data-action="moveDown"] {
-                    float: right;
-                    display: block;
-                    width: 48px;
-                    height: 24px;
-                    cursor: pointer;
-                    text-align: center;
-                }
-
                 > .draggable {
                   float: right;
                   width: 24px;
-                  height: 24px;
-                  line-height: 24px;
+                  height: 40px;
+                  line-height: 40px;
+                  margin-right: 15px;
                   cursor: pointer;
                   text-align: center;
                   .transform(scale(1.5, 0.75));

@@ -1,5 +1,7 @@
 // This file will be used to declare theme values that are applied instantly by switching the class name of the body.
 // New themes will match this file's structure and should modify the variable values to whatever value is desired.
+@import "variables.less";
+@import "mixins.less";
 
 // NOTE: Ensure that BEM notation is followed, hence the only nesting should occur here and is necessary for
 // the theming to work.
@@ -128,6 +130,15 @@ body > .viewContainer {
 .panel-content > div > .row > label {
     color: @form-label-color;
     padding: @panel-content-label-padding;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+
+.detailContent > fieldset > .row > div > label,
+.detailContent > .row > div > label,
+.detailContent > .row > label {
+  width: 25%;
 }
 
 .panel-content > fieldset > .row-edit {
@@ -136,6 +147,94 @@ body > .viewContainer {
 
 .panel-content > fieldset > .row-edit:first-of-type {
     border-top: 0 none black;
+}
+
+.quick-actions > .action-list {
+    background-color: @color-deep-slate;
+    padding: 10px 5px 15px 5px;
+}
+
+.tab-list > .tab,
+.more-tab-dropdown > .tab {
+        border-radius: 2px 2px 0 0;
+        cursor: pointer;
+        padding: 4px 6px 5px;
+        position: relative;
+        -webkit-transition: background-color 0.25s ease;
+        -moz-transition: background-color 0.25s ease;
+        -ms-transition: background-color 0.25s ease;
+        -o-transition: background-color 0.25s ease;
+        transition: background-color 0.25s ease;
+        color: @color-graphite;
+        font-size: 15px;
+        font-weight: normal;
+        text-decoration: none;
+}
+
+.tab-list {
+    border-bottom: 1px solid @color-lighter-slate !important;
+    height: 30px;
+    list-style: none outside none;
+    overflow: hidden;
+    .tab {
+        display: inline-block;
+    }
+    .selected {
+        color: @color-azure;
+    }
+}
+
+.more-tab-dropdown {
+    position: absolute;
+    visibility: hidden;
+    z-index: 10;
+    background-color: @background-lighter;
+    box-shadow: 0 2px 3px @color-light-slate;
+    margin: 0;
+    padding: 0;
+    overflow-y: auto;
+    .tab {
+        display: block;
+    }
+    .selected {
+        background-color: @color-azure;
+        color: #fff;
+    }
+}
+
+.detailContent {
+    padding-top: 15px !important;
+    li {
+        border-bottom: 1px solid @color-lighter-slate;
+    }
+    .row {
+        width: 100%;
+    }
+}
+
+.detailContent.list {
+    padding-top: 0 !important;
+}
+
+.detail-header {
+    padding: 25px 0 10px 0 !important;
+    font-size: 18px;
+}
+
+.detail-sub-header {
+    padding: 2px 0 2px 0 !important;
+    font-size: 16px;
+}
+.animated-bar {
+    top: -2px;
+    height: 2px;
+    position: relative;
+    background-color: @color-azure;
+    -webkit-transition: left 0.25s ease;
+    -moz-transition: left 0.25s ease;
+    -ms-transition: left 0.25s ease;
+    -o-transition: left 0.25s ease;
+    transition: left 0.25s ease;
 }
 
 body > .viewContainer {

@@ -19,8 +19,9 @@ import string from 'dojo/string';
 import domClass from 'dojo/dom-class';
 import _Widget from 'dijit/_Widget';
 import _Templated from './_Templated';
+import getResource from './I18n';
 
-const resource = window.localeContext.getEntitySync('searchWidget').attributes;
+const resource = getResource('searchWidget');
 
 /**
  * @class argos.SearchWidget
@@ -295,6 +296,18 @@ const __class = declare('argos.SearchWidget', [_Widget, _Templated], {
    */
   getSearchExpression: function getSearchExpression() {
     return this.queryNode.value;
+  },
+  disable: function disable() {
+    if (this.queryNode) {
+      this.queryNode.disabled = true;
+      domClass.add(this.domNode, 'disabled');
+    }
+  },
+  enable: function enable() {
+    if (this.queryNode) {
+      this.queryNode.disabled = false;
+      domClass.remove(this.domNode, 'disabled');
+    }
   },
 });
 

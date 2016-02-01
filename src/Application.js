@@ -25,7 +25,21 @@ import domConstruct from 'dojo/dom-construct';
 import all from 'dojo/promise/all';
 import snap from 'snap';
 import ReUI from './ReUI/main';
+import ready from 'dojo/ready';
+import util from './Utility';
+import ModelManager from './Models/Manager';
+import Toast from './Dialogs/Toast';
+import {model} from './Model';
+import {intent} from './Intent';
+import {updateConnectionState} from './Intents/update-connection';
+import Modal from './Dialogs/Modal';
+import BusyIndicator from './Dialogs/BusyIndicator';
+import Deferred from 'dojo/Deferred';
+import ErrorManager from './ErrorManager';
+import getResource from './I18n';
 import 'dojo/sniff';
+
+const resource = getResource('sdkApplication');
 
 has.add('html5-file-api', function hasFileApi(global) {
   if (has('ie')) {
@@ -55,6 +69,12 @@ lang.extend(Function, {
       return self.apply(scope || this, called.concat(optional));
     };
   },
+});
+
+// Patching backwards compatablity so that customizations will not break and where moment
+// was required.
+define('moment', [], function getMoment() { // eslint-disable-line
+  return window.moment;
 });
 
 function applyLocalizationTo(object, localization) {
@@ -205,10 +225,31 @@ const __class = declare('argos.Application', null, {
    * @property {int}
    */
   maxUploadFileSize: 4000000,
+
+  /**
+   * Timeout for the connection check.
+   */
+  PING_TIMEOUT: 3000,
+
+  /**
+   * Ping debounce time.
+   */
+  PING_DEBOUNCE: 1000,
+
+  /**
+   * Number of times to attempt to ping.
+   */
+  PING_RETRY: 5,
+
+  /*
+   * Static resource to request on the ping. Should be a small file.
+   */
+  PING_RESOURCE: 'ping.gif',
   /**
    * All options are mixed into App itself
    * @param {Object} options
    */
+  ModelManager: null,
   constructor: function constructor(options) {
     this._connects = [];
     this._appStatePromises = [];
@@ -224,7 +265,34 @@ const __class = declare('argos.Application', null, {
 
     this.context = {};
     this.viewShowOptions = [];
+    const actions = intent();
+    this.state$ = model(actions);
+    this.state$.subscribe(this._onStateChange.bind(this), this._onStateError.bind(this));
 
+    this.ping = options.ping || util.debounce(() => {
+      this.toast.add({ message: resource.checkingText, title: resource.connectionToastTitleText });
+      const ping$ = Rx.Observable.interval(this.PING_TIMEOUT)
+        .flatMap(() => {
+          return Rx.Observable.fromPromise(this._ping())
+            .flatMap((online) => {
+              if (online) {
+                return Rx.Observable.just(online);
+              }
+
+              return Rx.Observable.throw(new Error());
+            });
+        })
+        .retry(this.PING_RETRY)
+        .take(1);
+
+      ping$.subscribe(function onNext() {
+        updateConnectionState(true);
+      }, function onError() {
+        updateConnectionState(false);
+      });
+    }, this.PING_DEBOUNCE);
+
+    this.ModelManager = ModelManager;
     lang.mixin(this, options);
   },
   /**
@@ -244,23 +312,12 @@ const __class = declare('argos.Application', null, {
       signal.remove();
     });
 
-    for (const name in this._connections) {
-      if (this._connections.hasOwnProperty(name)) {
-        const connection = this._connections[name];
-        if (connection) {
-          connection.un('beforerequest', this._loadSDataRequest, this);
-          connection.un('requestcomplete', this._cacheSDataRequest, this);
-        }
-      }
-    }
-
     this.uninitialize();
   },
   /**
    * Shelled function that is called from {@link #destroy destroy}, may be used to release any further handles.
    */
-  uninitialize: function uninitialize() {
-  },
+  uninitialize: function uninitialize() {},
   /**
    * Cleans up URL to prevent ReUI url handling and then invokes ReUI.
    */
@@ -272,26 +329,40 @@ const __class = declare('argos.Application', null, {
       this.redirectHash = h;
     }
 
-    location.hash = '';
-
+    history.replaceState(null, '', '#');
     ReUI.init();
   },
-  /**
-   * If caching is enable and App is {@link #isOnline online} the empties the SData cache via {@link #_clearSDataRequestCache _clearSDataRequestCache}.
-   */
-  initCaching: function initCaching() {
-    if (this.enableCaching) {
-      if (this.isOnline()) {
-        this._clearSDataRequestCache();
-      }
+  _onOffline: function _onOffline() {
+    this.ping();
+  },
+  _onOnline: function _onOnline() {
+    this.ping();
+  },
+  _onStateChange: function _onStateChange(val) {
+    this._updateConnectionState(val.connectionState);
+    this.onStateChange(val);
+  },
+  _onStateError: function _onStateError(error) {
+    this.onStateError(error);
+  },
+  onStateChange: function onStateChange(val) {}, // eslint-disable-line
+  onStateError: function onStateError(error) {}, // eslint-disable-line
+  _updateConnectionState: function _updateConnectionState(online) {
+    // Don't fire the onConnectionChange if we are in the same state.
+    if (this.onLine === online) {
+      return;
     }
+
+    this.onLine = online;
+    this.onConnectionChange(online);
   },
-  onOffline: function onOffline() {
-    this.onLine = false;
+  forceOnline: function forceOnline() {
+    updateConnectionState(true);
   },
-  onOnline: function onOnline() {
-    this.onLine = true;
+  forceOffline: function forceOffline() {
+    updateConnectionState(false);
   },
+  onConnectionChange: function onConnectionChange( /*online*/ ) {},
   /**
    * Establishes various connections to events.
    */
@@ -300,10 +371,41 @@ const __class = declare('argos.Application', null, {
     this._connects.push(connect.connect(win.body(), 'beforetransition', this, this._onBeforeTransition));
     this._connects.push(connect.connect(win.body(), 'aftertransition', this, this._onAfterTransition));
     this._connects.push(connect.connect(win.body(), 'show', this, this._onActivate));
-    this._connects.push(connect.connect(window, 'offline', this, this.onOffline));
-    this._connects.push(connect.connect(window, 'online', this, this.onOnline));
+    ready(() => {
+      window.addEventListener('online', this._onOnline.bind(this));
+      window.addEventListener('offline', this._onOffline.bind(this));
+    });
 
-    this.onLine = navigator.onLine;
+    this.ping();
+  },
+
+  /**
+   * Returns a promise. The results are true of the resource came back
+   * before the PING_TIMEOUT. The promise is rejected if there is timeout or
+   * the response is not a 200 or 304.
+   */
+  _ping: function _ping() {
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.ontimeout = () => resolve(false);
+      xhr.onerror = () => resolve(false);
+      xhr.onload = () => {
+        const DONE = 4;
+        const HTTP_OK = 200;
+        const HTTP_NOT_MODIFIED = 304;
+
+        if (xhr.readyState === DONE) {
+          if (xhr.status === HTTP_OK || xhr.status === HTTP_NOT_MODIFIED) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        }
+      };
+      xhr.open('GET', `${this.PING_RESOURCE}?cache=${Math.random()}`);
+      xhr.timeout = this.PING_TIMEOUT;
+      xhr.send();
+    });
   },
 
   /**
@@ -317,7 +419,7 @@ const __class = declare('argos.Application', null, {
         this.onSetOrientation(value);
         connect.publish('/app/setOrientation', [value]);
       }
-    }.bind(this)));
+    }));
 
     return this;
   },
@@ -325,22 +427,149 @@ const __class = declare('argos.Application', null, {
    * Executes the chain of promises registered with registerAppStatePromise.
    * When all promises are done, a new promise is returned to the caller, and all
    * registered promises are flushed.
+   * Each app state can be processed all at once or in a specfic seqence.
+   * Example:
+   * We can register  App state seqeunces as the following, where each sequence
+   * is proccessed in a desending order form 0 to n. The first two in this example are defeulted to a
+   * sequence of zero (0) and are procced first in which after the next sequence (1) is proccessed
+   * and once all of its items are finshed then the last sequence 2 will start and process all of its items.
+   *
+   * If two seqences have the same number then thay will get combinded as if they where registerd together.
+   * Aso not all items whith in a process are processed and ansync of each other and may not finish at the same time.
+   *
+   * To make two items process one after the other simpley put them in to diffrent sequences.
+   *
+   *   this.registerAppStatePromise(() => {some functions that returns a promise});
+   *   this.registerAppStatePromise(() => {some functions that returns a promise});
+   *
+   *   this.registerAppStatePromise({
+   *     seq: 1,
+   *     description: 'Sequence 1',
+   *     items: [{
+   *       name: 'itemA',
+   *       description: 'item A',
+   *       fn: () => { some functions that returns a promise },
+   *       }, {
+   *         name: 'itemb',
+   *         description: 'Item B',
+   *         fn: () => {some functions that returns a promise},
+   *       }],
+   *   });
+   *
+   *   this.registerAppStatePromise({
+   *     seq: 2,
+   *     description: 'Sequence 2',
+   *     items: [{
+   *       name: 'item C',
+   *       description: 'item C',
+   *       fn: () => { some functions that returns a promise },
+   *       },
+   *    });
+   *
+   * There are there App state seqences re
+   *
    * @return {Promise}
    */
   initAppState: function initAppState() {
-    const promises = array.map(this._appStatePromises, (item) => {
-      let results = item;
+    const def = new Deferred();
+    const sequences = [];
+    this._appStatePromises.forEach((item) => {
+      let seq;
       if (typeof item === 'function') {
-        results = item();
+        seq = sequences.find(x => x.seq === 0);
+        if (!seq) {
+          seq = {
+            seq: 0,
+            description: resource.loadingApplicationStateText,
+            items: [],
+          };
+          sequences.push(seq);
+        }
+        seq.items.push({
+          name: 'default',
+          description: '',
+          fn: item,
+        });
+      } else {
+        if (item.seq && item.items ) {
+          seq = sequences.find(x => x.seq === ((item.seq) ? item.seq : 0));
+          if (seq) {
+            item.items.forEach((_item) => {
+              seq.items.push(_item);
+            });
+          } else {
+            sequences.push(item);
+          }
+        }
+      }
+    });
+    // Sort the sequence ascending so we can processes them in the right order.
+    sequences.sort((a, b) => {
+      if (a.seq > b.seq) {
+        return 1;
       }
 
-      return results;
+      if (a.seq < b.seq) {
+        return -1;
+      }
+
+      return 0;
     });
 
-    return all(promises).then((results) => {
+    this._initAppStateSequence(0, sequences).then((results) => {
       this.clearAppStatePromises();
-      return results;
+      def.resolve(results);
+    }, (err) => {
+      this.clearAppStatePromises();
+      def.reject(err);
     });
+    return def.promise;
+  },
+  /**
+   * Process a app state sequence and start the next sequnce when done.
+   * @param {index) the index of the sequence to start
+   * @param {sequences) an array of sequences
+   */
+  _initAppStateSequence: function _initAppStateSequnce(index, sequences) {
+    const def = new Deferred();
+    const seq = sequences[index];
+
+    if (seq) { // We need to send an observable and get ride of the ui element.
+      const indicator = new BusyIndicator({
+        id: 'busyIndicator__appState_' + seq.seq,
+        label: resource.initializingText + ' ' + seq.description,
+      });
+      this.modal.disableClose = true;
+      this.modal.showToolbar = false;
+      this.modal.add(indicator);
+      indicator.start();
+      const promises = array.map(seq.items, (item)=> {
+        return item.fn();
+      });
+      const odef = def;
+      all(promises).then(() => {
+        indicator.complete(true);
+        this.modal.disableClose = false;
+        this.modal.hide();
+        this._initAppStateSequence(index + 1, sequences).then((results) => {
+          odef.resolve(results);
+        }, (err) => {
+          indicator.complete(true);
+          this.modal.disableClose = false;
+          this.modal.hide();
+          odef.reject(err);
+        });
+      }, (err) => {
+        ErrorManager.addSimpleError(indicator.label, err);
+        indicator.complete(true);
+        this.modal.disableClose = false;
+        this.modal.hide();
+        def.reject(err);
+      });
+    } else {
+      def.resolve();
+    }
+    return def.promise;
   },
   /**
    * Registers a promise that will resolve when initAppState is invoked.
@@ -353,7 +582,7 @@ const __class = declare('argos.Application', null, {
   clearAppStatePromises: function clearAppStatePromises() {
     this._appStatePromises = [];
   },
-  onSetOrientation: function onSetOrientation(/*value*/) {},
+  onSetOrientation: function onSetOrientation( /*value*/ ) {},
   /**
    * Loops through connections and calls {@link #registerService registerService} on each.
    */
@@ -395,15 +624,25 @@ const __class = declare('argos.Application', null, {
     this.initPreferences();
     this.initConnects();
     this.initSignals();
-    this.initCaching();
     this.initServices(); // TODO: Remove
     this._startupConnections();
     this.initModules();
     this.initToolbars();
     this.initReUI();
+    this.initModal();
+    this.initToasts();
   },
+  initToasts: function initToasts() {
+  this.toast = new Toast();
+  this.toast.show();
+},
   initPreferences: function initPreferences() {
     this._loadPreferences();
+  },
+  initModal: function initModal() {
+    this.modal = new Modal();
+    this.modal.place(document.body)
+      .hide();
   },
   /**
    * Check if the browser supports touch events.
@@ -456,7 +695,7 @@ const __class = declare('argos.Application', null, {
    * Returns the `window.navigator.onLine` property for detecting if an internet connection is available.
    */
   isOnline: function isOnline() {
-    return window.navigator.onLine;
+    return this.onLine;
   },
   /**
    * Returns true/false if the current view is the first/initial view.
@@ -464,69 +703,7 @@ const __class = declare('argos.Application', null, {
    * @returns {boolean}
    */
   isOnFirstView: function isOnFirstView() {},
-  /**
-   * Removes all keys from localStorage that start with `sdata.cache`.
-   */
-  _clearSDataRequestCache: function _clearSDataRequestCache() {
-    function check(k) {
-      return (/^sdata\.cache/i).test(k);
-    }
 
-    if (window.localStorage) {
-      /* todo: find a better way to detect */
-      for (let i = window.localStorage.length - 1; i >= 0; i--) {
-        const key = window.localStorage.key(i);
-        if (check(key)) {
-          window.localStorage.removeItem(key);
-        }
-      }
-    }
-  },
-  /**
-   * Creates a cache key based on the URL of the request
-   * @param {Object} request Sage.SData.Client.SDataBaseRequest
-   * @return {String} Key to be used for localStorage cache
-   */
-  _createCacheKey: function _createCacheKey(request) {
-    return 'sdata.cache[' + request.build() + ']';
-  },
-  /**
-   * If the app is {@link #isOnline offline} and cache is allowed this function will attempt to load the passed
-   * request from localStorage by {@link #_createCacheKey creating} a key from the requested URL.
-   * @param request Sage.SData.Client.SDataBaseRequest
-   * @param o XHR object with namely the `result` property
-   */
-  _loadSDataRequest: function _loadSDataRequest(request, o) {
-    // todo: find a better way of indicating that a request can prefer cache
-    if (window.localStorage) {
-      if (this.isOnline() && (request.allowCacheUse !== true)) {
-        return;
-      }
-
-      const key = this._createCacheKey(request);
-      const feed = window.localStorage.getItem(key);
-      if (feed) {
-        o.result = json.parse(feed);
-      }
-    }
-  },
-  /**
-   * Attempts to store all GET request results into localStorage
-   * @param request SData request
-   * @param o XHR object
-   * @param feed The data from the request to store
-   */
-  _cacheSDataRequest: function _cacheSDataRequest(request, o, feed) {
-    /* todo: decide how to handle PUT/POST/DELETE */
-    if (window.localStorage) {
-      if (/get/i.test(o.method) && typeof feed === 'object') {
-        const key = this._createCacheKey(request);
-
-        window.localStorage.removeItem(key);
-        window.localStorage.setItem(key, json.stringify(feed));
-      }
-    }
-  },
   /**
    * Optional creates, then registers an Sage.SData.Client.SDataService and adds the result to `App.services`.
    * @param {String} name Unique identifier for the service.
@@ -538,10 +715,7 @@ const __class = declare('argos.Application', null, {
 
     this.services[name] = instance;
 
-    if (this.enableCaching && (options.offline || service.offline)) {
-      instance.on('beforerequest', this._loadSDataRequest, this);
-      instance.on('requestcomplete', this._cacheSDataRequest, this);
-    }
+    instance.on('requesttimeout', this.onRequestTimeout, this);
 
     if ((options.isDefault || service.isDefault) || !this.defaultService) {
       this.defaultService = instance;
@@ -560,16 +734,16 @@ const __class = declare('argos.Application', null, {
 
     this._connections[name] = instance;
 
-    if (this.enableCaching && (options.offline || definition.offline)) {
-      instance.on('beforerequest', this._loadSDataRequest, this);
-      instance.on('requestcomplete', this._cacheSDataRequest, this);
-    }
+    instance.on('requesttimeout', this.onRequestTimeout, this);
 
     if ((options.isDefault || definition.isDefault) || !this._connections.default) {
       this._connections.default = instance;
     }
 
     return this;
+  },
+  onRequestTimeout: function _onTimeout() {
+    this.ping();
   },
   /**
    * Determines the the specified service name is found in the Apps service object.
@@ -723,7 +897,7 @@ const __class = declare('argos.Application', null, {
       }
 
       if (init && view && !view._started) {
-        view.init();
+        view.init(this.state$);
         view.placeAt(view._placeAt, 'first');
         view._started = true;
         view._placeAt = null;
@@ -799,12 +973,12 @@ const __class = declare('argos.Application', null, {
       connect.publish('/app/resize', []);
     }, 100);
   },
-  onRegistered: function onRegistered(/*view*/) {},
-  onBeforeViewTransitionAway: function onBeforeViewTransitionAway(/*view*/) {},
-  onBeforeViewTransitionTo: function onBeforeViewTransitionTo(/*view*/) {},
-  onViewTransitionAway: function onViewTransitionAway(/*view*/) {},
-  onViewTransitionTo: function onViewTransitionTo(/*view*/) {},
-  onViewActivate: function onViewActivate(/*view, tag, data*/) {},
+  onRegistered: function onRegistered( /*view*/ ) {},
+  onBeforeViewTransitionAway: function onBeforeViewTransitionAway( /*view*/ ) {},
+  onBeforeViewTransitionTo: function onBeforeViewTransitionTo( /*view*/ ) {},
+  onViewTransitionAway: function onViewTransitionAway( /*view*/ ) {},
+  onViewTransitionTo: function onViewTransitionTo( /*view*/ ) {},
+  onViewActivate: function onViewActivate( /*view, tag, data*/ ) {},
   _onBeforeTransition: function _onBeforeTransition(evt) {
     const view = this.getView(evt.target);
     if (view) {
@@ -1012,7 +1186,7 @@ const __class = declare('argos.Application', null, {
 
     return forPath.concat(forSet);
   },
-  hasAccessTo: function hasAccessTo(/*security*/) {
+  hasAccessTo: function hasAccessTo( /*security*/ ) {
     return true;
   },
   /**
@@ -1061,6 +1235,13 @@ const __class = declare('argos.Application', null, {
     this.showLeftDrawer();
     this.showRightDrawer();
     return this;
+  },
+  setToolBarMode: function setToolBarMode(onLine) {
+    for (const n in this.bars) {
+      if (this.bars[n].managed) {
+        this.bars[n].setMode(onLine);
+      }
+    }
   },
 });
 

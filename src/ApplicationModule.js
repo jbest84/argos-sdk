@@ -19,6 +19,8 @@ import lang from 'dojo/_base/lang';
 import ConfigureQuickActions from './Views/ConfigureQuickActions';
 import './Application';
 import './CultureInfo';
+import './Models/RecentlyViewed/Offline';
+import './Models/Briefcase/Offline';
 
 /**
  * @class argos.ApplicationModule
