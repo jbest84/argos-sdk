@@ -1,6 +1,4 @@
-.button,
-.button--secondary,
-.button--tertiary {
+.button {
   background-color: transparent;
   border: none;
   font-size: @font-size-h3;
@@ -16,6 +14,34 @@
   position: relative;
 }
 
+.button--primary {
+  background-color: @color-azure;
+  border: 1px solid @color-azure;
+  color: #fff;
+}
+
+.button--primary:not([DISABLED]):hover {
+  background-color: @color-deep-azure;
+  border: 1px solid @color-deep-azure;
+}
+
+.button--secondary {
+  background-color: @color-light-slate;
+  border: 1px solid @color-light-slate;
+  color: #fff;
+}
+
+.button--secondary:not([DISABLED]):hover {
+  background-color: #656871;
+  border: 1px solid #656871;
+}
+
+.button--primary,
+.button--secondary {
+  border-radius: 2px;
+  padding: 0 15px;
+}
+
 .button--tertiary {
   padding: 0 10px;
   .border-radius(18px);
@@ -26,4 +52,34 @@
 
 .button--selected {
   color: @color-azure;
+}
+
+.button--flat {
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-left: 1px solid #d8d8d8;
+  border-radius: 0;
+  box-sizing: border-box;
+  color: #5c5c5c;
+  cursor: pointer;
+  float: left;
+  font-weight: bold;
+  font-size: 12px;
+  height: 50px;
+  line-height: 50px;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  position: relative;
+  text-align: center;
+  text-transform: uppercase;
+  .transition(color 0.3s ease 0s);
+}
+
+.button--flat--split {
+  width: 50%;
+}
+
+.button--flat--split:nth-child(1) {
+  border-left: 1px solid transparent;
 }

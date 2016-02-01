@@ -1,64 +1,72 @@
 .modal {
-  visibility: hidden;
-  position: absolute;
+  position: relative;
+  max-width: 95%;
+  max-height: 95%;
+  margin: auto;
   background-color: #fff;
-  overflow: scroll;
-  padding: 0 15px;
-  top: 0;
+  overflow: auto;
   box-shadow: 0 0 5px @color-light-slate;
-
-  .picklist {
-    height: auto;
-    min-height: inherit;
-    max-height: 260px;
-    position: relative;
-    overflow: auto;
-    margin: 0;
-    padding: 0;
-    text-indent: 10px;
-    border: 1px solid @color-azure;
-
-    .selected {
-      background-color: @color-azure;
-      color: #fff;
-    }
-  }
-  .button {
-    background-color: transparent;
-    border: none;
-    font-size: @font-size-h3;
-    font-weight: @button-font-weight;
-    text-transform: uppercase;
-    text-align: @button-text-align;
-    text-decoration: @button-text-decoration;
-    height: 44px;
-    line-height: 44px;
-    min-width: 100px;
-    width: 50%;
-    overflow: hidden;
-    position: relative;
-    display: inline-block;
-    padding: 0;
-  }
-  .tertiary {
-    color: @color-azure;
-    transition: 0.2s background-color ease;
-    -webkit-transition: 0.2s background-color ease;
-    -moz-transition: 0.2s background-color ease;
-    -ms-transition: 0.2s background-color ease;
-  }
-  .modal-toolbar {
-    margin-top: 5px;
-    border-top: 1px solid @color-light-graphite;
-  }
+  z-index: 50;
 }
 
-.modal-backdrop {
-  visibility: hidden;
-  background-color: #000;
-  position: absolute;
+.modal__content {
+  padding: 0 15px;
+}
+
+.modal__container {
+  position: fixed;
+  .display-flex();
+  align-items: center;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  z-index: 49;
+  top: 0px;
+  left: 0px;
   width: 100%;
+  height: 100%;
+}
+
+.modal__container--hidden {
+  display: none;
+}
+
+.modal__content__text {
+  font-size: 14px;
+  line-height: 24px;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility !important;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.004);
+  font-weight: normal;
+}
+
+.modal__header__title {
+  font-size: 18px;
+  color: @color-graphite;
+  font-weight: normal;
+  margin: 20px 0;
+  text-align: left
+}
+
+.modal__overlay {
+  opacity: 0.3;
+  visibility: visible;
+  position: fixed;
   top: 0;
   left: 0;
-  opacity: 0.3;
+  height: 100%;
+  width: 100%;
+  background-color: #000;
+  z-index: 49;
+}
+
+.modal__overlay--hidden {
+  display: none;
+}
+
+.modal__toolbar {
+  width: 100%;
+  border-top: 1px solid #d8d8d8;
+  height: 50px;
+  margin: 5px 0 0;
 }
