@@ -178,8 +178,10 @@ const __class = declare('argos.Calendar', [ _Widget, _ActionMixin, _Templated], 
     } else {
       this.changeWeek(params);
     }
-
+    this.onChangeDay(params);
     return this;
+  },
+  onChangeDay: function onChangeDay() {
   },
   changeMonthShown: function changeMonthShown({ month }) {
     this._monthDropdown.setValue(month.toLowerCase());
@@ -312,22 +314,23 @@ const __class = declare('argos.Calendar', [ _Widget, _ActionMixin, _Templated], 
     }
     return this.date;
   },
-  goToToday: function goToToday() {
-    if (this.date.selectedDateMoment.month() !== this.date.todayMoment.month() || this.date.selectedDateMoment.year() !== this.date.todayMoment.year()) {
-      this.date.selectedDateMoment = this.date.todayMoment;
-      this.refreshCalendar(this.date);
-    }
-    const day = query('.isToday', this.weeksNode)[0];
-    let params = {};
-    if (day) {
-      params = { $source: day, date: day.dataset.date };
-    }
-    this.changeDay(params);
-    this.setDropdownsToday();
-  },
+goToToday: function goToToday() {
+  this.date.todayMoment = this.getCurrentDateMoment();
+  this.refreshCalendar(this.date);
+  const day = query('.isToday', this.weeksNode)[0];
+  let params = {};
+  if (day) {
+    params = { $source: day, date: day.dataset.date };
+  }
+  this.changeDay(params);
+  this.setDropdownsToday();
+},
   getDateTime: function getDateTime() {
     const result = this.date.selectedDateMoment;
     return result.toDate();
+  },
+  getCurrentDateMoment: function getCurrentDateMoment() {
+    return moment();
   },
   getSelectedDateMoment: function getSelectedDateMoment() {
     return this.date.selectedDateMoment;
@@ -362,11 +365,24 @@ const __class = declare('argos.Calendar', [ _Widget, _ActionMixin, _Templated], 
       this.changeWeek({ $source: this._selectedDay });
     }
   },
+  refresh: function refresh(options) {
+    this.date.todayMoment = this.getCurrentDateMoment();
+    this._refreshCalendar(this.date);
+    this.onRefreshCalendar(options);
+  },
+  onRefreshCalendar: function onRefreshCalendar() {
+  },
   refreshCalendar: function refreshCalendar(date = {}) {
+    this._refreshCalendar(date);
+    this.onRefreshCalendar(true);
+    return this;
+  },
+  _refreshCalendar: function _refreshCalendar(date = {}) {
     domConstruct.empty(this.weeksNode);
+    date.todayMoment = this.getCurrentDateMoment();
     this.renderCalendar(date)
-        .changeMonthShown(date)
-        .changeYearShown(date);
+      .changeMonthShown(date)
+      .changeYearShown(date);
     return this;
   },
   removeActive: function removeActive(day) {
@@ -500,7 +516,7 @@ const __class = declare('argos.Calendar', [ _Widget, _ActionMixin, _Templated], 
     } else {
       this.date.selectedDateMoment = moment((this.options && this.options.date) || moment().clone());
     }
-    this.date.todayMoment = moment();
+    this.date.todayMoment = this.getCurrentDateMoment();
     if (this.isModal || this.options.isModal || this.noClearButton || this.options.noClearButton) {
       this.clearButton.style.display = 'none';
     }
