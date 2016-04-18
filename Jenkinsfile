@@ -9,7 +9,7 @@ node {
     stage 'Build'
     bat 'build\\release.cmd'
 
-    stage 'archive'
-    archive 'deploy/**/*.*'
+    stage 'Archive and Fingerprint'
+    step([$class: 'ArtifactArchiver', artifacts: 'deploy/**/*.*', excludes: null, fingerprint: true])
   }
 }
